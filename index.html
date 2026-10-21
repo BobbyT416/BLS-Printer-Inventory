@@ -72,7 +72,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
   <div class="panel-head"><h2>Inventory</h2><div class="tools no-print"><button id="addBtn" class="primary">＋ Add printer</button><button id="archiveBtn">Archived machines</button><button id="printBtn">Print list</button></div></div>
   <div class="filters no-print">
    <input id="search" placeholder="Search barcode, model, family, notes…">
-   <select id="filterType"><option value="">All types</option><option>Mono</option><option>Color</option></select>
+   <select id="filterType"><option value="">All types</option><option value="Single function printer">Single function printer</option><option value="MFP">MFP</option></select>
    <select id="filterDisposition"><option value="">All dispositions</option><option>Ready for sale</option><option>Needs minor work</option><option>Needs major work</option><option>Waiting for parts</option><option>Parts only / scrap</option><option>Not evaluated</option><option>Sold</option></select>
   </div>
   <div id="archiveBanner" class="note no-print" style="display:none;margin-bottom:12px">Archived machines — sold devices remain here for 30 days, then are automatically removed from the active archive view.</div><div id="printHeader"><h2>Printer Inventory Report</h2><div id="printMeta"></div></div>
@@ -81,7 +81,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.2.8
+ Version 1.2.9
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
