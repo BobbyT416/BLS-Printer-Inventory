@@ -1,6 +1,9 @@
 name: Vendor barcode decoder
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'index.html'
 permissions:
   contents: write
 jobs:
