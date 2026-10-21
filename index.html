@@ -82,7 +82,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.1.0
+ Version 1.1.1
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -248,12 +248,18 @@ async function startCamera(){
     if(!window.ZXingBrowser?.BrowserMultiFormatReader)throw new Error('Barcode reader did not initialize.');
     const reader=new window.ZXingBrowser.BrowserMultiFormatReader();
     $('scanStatus').textContent='Camera running. Hold the barcode steady in view.';
-    // Let ZXing open and manage the selected camera itself for continuous decoding.
+    // Restart the stream through ZXing with rear-camera and higher-resolution preferences.
     if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
-    zxingControls=await reader.decodeFromVideoDevice(undefined,$('scanVideo'),(result,error,controls)=>{
-     if(controls)zxingControls=controls;
-     if(result?.getText){const value=result.getText();stopCamera();useScanned(value)}
-    });
+    const video=$('scanVideo');
+    video.style.width='100%';video.style.height='auto';video.setAttribute('playsinline','');video.muted=true;
+    zxingControls=await reader.decodeFromConstraints(
+     {video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false},
+     video,
+     (result,error,controls)=>{
+      if(controls)zxingControls=controls;
+      if(result?.getText){const value=result.getText();stopCamera();useScanned(value)}
+     }
+    );
    } catch(readerError) {
     $('scanStatus').textContent='Camera is working, but barcode scanning failed: '+(readerError?.message||readerError?.name||'reader error')+'. You can still enter the barcode manually.';
    }
