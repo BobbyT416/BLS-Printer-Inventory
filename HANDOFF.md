@@ -4,7 +4,7 @@ Last updated: 2026-10-21
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.4.0
+Current version: 1.4.1
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -50,3 +50,11 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Printed report includes every record field: Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Page Count, Disposition, Refurbished By, Cost, Selling Price, Sale Status, Salesperson, and Refurbishment Notes.
 - Report respects the current archive mode, search text, type filter, and disposition filter. Print Setup visibility preferences do not omit fields from the report because the requirement is to include all fields.
 - v1.4.0 committed to main; JavaScript syntax check passed. Print output has not been physically tested on a printer.
+
+
+## v1.4.1 — Print report refinements
+- Printed report excludes Barcode, Date Received, Refurbished By, and Salesperson.
+- Remaining report columns: Serial Number, Asset Tag, Type, Model, Page Count, Disposition, Cost, Selling Price, Sale Status, Refurbishment Notes.
+- Print stylesheet requests landscape orientation with 10 mm margins via @page.
+- Home list remains unchanged.
+- Committed to main; JavaScript syntax check passed. Browser/printer print dialog behavior not physically tested.
