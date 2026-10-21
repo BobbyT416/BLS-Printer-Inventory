@@ -55,10 +55,6 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  <div class="header-actions no-print"><button class="dark" id="homeBtn">⌂ Home</button><button class="dark" id="scanBtn">▦ Scan barcode</button><button class="dark" id="printSetupBtn">Print setup</button><button class="dark" id="exportBtn">Export backup</button><button class="dark" id="importBtn">Import backup</button><input id="importFile" type="file" accept=".json,application/json" hidden></div>
 </header>
 <main>
- <div class="cards">
-  <div class="stat"><div class="label">Devices in inventory</div><div class="value" id="statCount">0</div><small>Unique barcode stickers</small></div>
-  <div class="stat"><div class="label">Ready for sale</div><div class="value" id="statReady">0</div><small>Disposition marked ready</small></div>
- </div>
  <section class="panel">
   <div class="panel-head"><h2>Inventory</h2><div class="tools no-print"><button id="addBtn" class="primary">＋ Add printer</button><button id="archiveBtn">Archived machines</button><button id="printBtn">Print list</button></div></div>
   <div class="filters no-print">
@@ -72,7 +68,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.4.4
+ Version 1.4.5
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
