@@ -81,7 +81,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.2.3
+ Version 1.2.4
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -149,7 +149,7 @@ let archiveMode=false;
 const money=n=>Number(n||0).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(msg){$('toast').textContent=msg;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2600)}
-function persist(){safeSet(STORE,JSON.stringify(devices));render()}
+function persist(){try{safeSet(STORE,JSON.stringify(devices));render();return true}catch(e){console.error('Inventory save failed',e);toast('Could not update the inventory display. Your changes may not have been saved.');return false}}
 function badge(d){let c=d.disposition==='Ready for sale'?'ready':(['Needs minor work','Waiting for parts'].includes(d.disposition)?'partial':(['Needs major work','Parts only / scrap','Sold'].includes(d.disposition)?'hold':''));return `<span class="badge ${c}">${esc(d.disposition||'Not evaluated')}</span>`}
 function render(){
  const q=$('search').value.toLowerCase(),type=$('filterType').value,disp=$('filterDisposition').value;
@@ -190,14 +190,20 @@ $('deviceForm').addEventListener('submit',e=>{
  if(d.disposition==='Sold'){if(old.disposition!=='Sold'||!old.soldAt)d.soldAt=new Date().toISOString();}else d.soldAt=null;
  d.pageCount=d.pageCount===''?'':Number(d.pageCount);d.cost=d.cost===''?0:Number(d.cost);d.price=d.price===''?0:Number(d.price);
  if(editingId)devices=devices.map(x=>x.id===editingId?d:x);else devices.push(d);
- persist();closeDevice();toast(editingId?'Printer updated':'Printer added to inventory');
+ const saved=persist();
+ if(!saved){if(editingId)devices=devices.map(x=>x.id===editingId?old:x);else devices=devices.filter(x=>x.id!==d.id);return}
+ closeDevice();
+ archiveMode=false;listView=false;
+ ['search','filterType','filterDisposition'].forEach(id=>$(id).value='');
+ render();window.scrollTo({top:0,behavior:'smooth'});
+ toast(editingId?'Printer updated':'Printer added to inventory');
 });
 $('deleteBtn').onclick=()=>{if(!editingId)return;const d=devices.find(x=>x.id===editingId);if(confirm(`Delete ${d?.model||'this printer'} (${d?.barcode}) from inventory? This cannot be undone unless you have a backup.`)){devices=devices.filter(x=>x.id!==editingId);persist();closeDevice();toast('Printer deleted')}};
 $('listViewBtn').onclick=()=>{listView=!listView;render()};
 $('archiveBtn').onclick=()=>{archiveMode=!archiveMode;['search','filterType','filterDisposition'].forEach(id=>$(id).value='');render()};
-$('homeBtn').onclick=()=>{archiveMode=false;['search','filterType','filterFamily','filterDisposition'].forEach(id=>$(id).value='');listView=false;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory home')};
+$('homeBtn').onclick=()=>{archiveMode=false;['search','filterType','filterDisposition'].forEach(id=>$(id).value='');listView=false;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory home')};
 $('addBtn').onclick=()=>openDevice();$('closeDevice').onclick=closeDevice;$('cancelDevice').onclick=closeDevice;
-['search','filterType','filterFamily','filterDisposition'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
+['search','filterType','filterDisposition'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
 function openScanner(target='inventory'){scanTarget=target;$('manualBarcode').value='';$('scanStatus').textContent='Camera has not started.';showDialog($('scanDialog'));setTimeout(()=>$('manualBarcode').focus(),100)}
 $('scanBtn').onclick=()=>openScanner('inventory');$('scanFromForm').onclick=()=>openScanner('form');
 async function startCamera(){
