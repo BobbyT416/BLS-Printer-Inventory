@@ -69,7 +69,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
   <div class="stat"><div class="label">Ready for sale</div><div class="value" id="statReady">0</div><small>Disposition marked ready</small></div>
  </div>
  <section class="panel">
-  <div class="panel-head"><h2>Inventory</h2><div class="tools no-print"><button id="addBtn" class="primary">＋ Add printer</button><button id="listViewBtn">Machine detail</button><button id="archiveBtn">Archived machines</button><button id="printBtn">Print list</button></div></div>
+  <div class="panel-head"><h2>Inventory</h2><div class="tools no-print"><button id="addBtn" class="primary">＋ Add printer</button><button id="archiveBtn">Archived machines</button><button id="printBtn">Print list</button></div></div>
   <div class="filters no-print">
    <input id="search" placeholder="Search barcode, model, family, notes…">
    <select id="filterType"><option value="">All types</option><option>Mono</option><option>Color</option></select>
@@ -81,8 +81,13 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.2.7
+ Version 1.2.8
 </footer>
+<dialog id="detailDialog">
+ <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
+ <div class="modal-body"><div id="detailContent" class="form-grid"></div></div>
+ <div class="modal-foot"><button type="button" id="closeDetailBottom">Close</button><button type="button" class="primary" id="editDetailBtn">Edit printer</button></div>
+</dialog>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
  <form id="deviceForm">
@@ -163,10 +168,20 @@ function render(){
  $('tableBody').innerHTML=filtered.map(d=>`<tr>
  <td class="mono">${esc(d.serialNumber||'—')}</td><td class="mono">${esc(d.assetTag||'—')}</td><td class="mono">${esc(d.dateReceived||'—')}</td><td>${esc(d.deviceType||'—')}</td><td><strong>${esc(d.model||'—')}</strong></td><td class="mono">${d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString()}</td><td>${badge(d)}</td><td>${esc(d.refurbishedBy||'—')}</td><td class="mono">${money(d.cost)}</td><td class="mono">${money(d.price)}</td><td>${d.pendingSale?`<span class="badge partial">Sale pending</span>${d.claimedBy?`<small>Sales: ${esc(d.claimedBy)}</small>`:''}`:'<span class="badge ready">Available</span>'}</td><td style="white-space:pre-wrap;min-width:220px">${esc(d.notes||'—')}</td><td class="no-print"><div class="actions"><button data-edit="${esc(d.id)}">Edit</button></div></td></tr>`).join('');
  $('emptyState').style.display=filtered.length?'none':'block';
- $('inventoryTable').classList.toggle('list-view',!listView);$('listViewBtn').textContent=listView?'List view':'Machine detail';
- $('tableBody').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openDevice(b.dataset.edit)}));
- $('tableBody').querySelectorAll('tr').forEach(tr=>{tr.style.cursor='pointer';tr.addEventListener('click',()=>{const b=tr.querySelector('[data-edit]');if(b)openDevice(b.dataset.edit)})});
+ $('inventoryTable').classList.add('list-view');
+ $('tableBody').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openDetail(b.dataset.edit)}));
+ $('tableBody').querySelectorAll('tr').forEach(tr=>{tr.style.cursor='pointer';tr.addEventListener('click',()=>{const b=tr.querySelector('[data-edit]');if(b)openDetail(b.dataset.edit)})});
 }
+function openDetail(id){
+ const d=devices.find(x=>x.id===id);if(!d)return;
+ $('detailTitle').textContent=(d.model||'Printer')+' — Details';
+ const items=[['Serial number',d.serialNumber],['Asset tag',d.assetTag],['Date received',d.dateReceived],['Type',d.deviceType],['Model',d.model],['Page count',d.pageCount],['Disposition',d.disposition],['Refurbished by',d.refurbishedBy],['Cost',money(d.cost)],['Selling price',money(d.price)],['Sale status',d.pendingSale?'Sale pending':'Available'],['Salesperson',d.claimedBy],['Refurbishment notes',d.notes],['Barcode',d.barcode]];
+ $('detailContent').innerHTML=items.map(([label,value])=>`<div class="field"><label>${esc(label)}</label><div style="white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 0">${esc(value===undefined||value===null||value===''?'—':value)}</div></div>`).join('');
+ $('editDetailBtn').onclick=()=>{closeDialog($('detailDialog'));openDevice(id)};
+ showDialog($('detailDialog'));
+}
+$('closeDetail').onclick=()=>closeDialog($('detailDialog'));
+$('closeDetailBottom').onclick=()=>closeDialog($('detailDialog'));
 function openDevice(id=null,barcode=''){
  editingId=id;const d=id?devices.find(x=>x.id===id):{};
  $('deviceTitle').textContent=id?'Edit printer':'Add printer';$('deleteBtn').style.display=id?'inline-block':'none';
@@ -203,7 +218,6 @@ $('deviceForm').addEventListener('submit',e=>{
  toast(editingId?'Printer updated':'Printer added to inventory');
 });
 $('deleteBtn').onclick=()=>{if(!editingId)return;const d=devices.find(x=>x.id===editingId);if(confirm(`Delete ${d?.model||'this printer'} (${d?.barcode}) from inventory? This cannot be undone unless you have a backup.`)){devices=devices.filter(x=>x.id!==editingId);persist();closeDevice();toast('Printer deleted')}};
-$('listViewBtn').onclick=()=>{listView=!listView;render()};
 $('archiveBtn').onclick=()=>{archiveMode=!archiveMode;['search','filterType','filterDisposition'].forEach(id=>$(id).value='');render()};
 $('homeBtn').onclick=()=>{archiveMode=false;['search','filterType','filterDisposition'].forEach(id=>$(id).value='');listView=false;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory home')};
 $('addBtn').onclick=()=>openDevice();$('closeDevice').onclick=closeDevice;$('cancelDevice').onclick=closeDevice;
