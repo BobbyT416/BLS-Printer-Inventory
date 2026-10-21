@@ -82,7 +82,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.0.9
+ Version 1.1.0
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -210,7 +210,21 @@ async function startCamera(){
    const detector=new BarcodeDetector({formats:['code_128','code_39','ean_13','ean_8','upc_a','upc_e','qr_code','itf']});
    const video=$('scanVideo');video.srcObject=stream;
    $('scanStatus').textContent='Camera running. Hold the barcode steady in view.';
-   const loop=async()=>{if(!stream||!video.isConnected)return;try{if(video.readyState>=2){const codes=await detector.detect(video);if(codes.length&&codes[0].rawValue){const value=codes[0].rawValue;stopCamera();useScanned(value);return}}}catch(e){}requestAnimationFrame(loop)};video.onloadedmetadata=()=>requestAnimationFrame(loop);
+   let detecting=false;
+   const loop=async()=>{
+    if(!stream||!video.isConnected)return;
+    if(!detecting&&video.readyState>=2){
+     detecting=true;
+     try{
+      const codes=await detector.detect(video);
+      if(codes.length&&codes[0].rawValue){const value=codes[0].rawValue;stopCamera();useScanned(value);return}
+     }catch(e){}
+     detecting=false;
+    }
+    requestAnimationFrame(loop);
+   };
+   // Start polling immediately; loadedmetadata may already have fired before this point.
+   requestAnimationFrame(loop);
   } else {
    // Safari may not provide BarcodeDetector. Try the official ZXing browser UMD build.
    try {
