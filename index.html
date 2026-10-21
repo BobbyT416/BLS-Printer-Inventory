@@ -82,7 +82,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.1.6
+ Version 1.1.7
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -90,7 +90,8 @@ dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));
   <div class="modal-body">
    <div class="note" style="margin-bottom:15px">The barcode sticker identifies the individual device. Scan with your camera or use a USB/Bluetooth scanner that types into the barcode field.</div>
    <div class="form-grid">
-    <div class="field"><label for="barcode">Barcode / asset sticker *</label><div style="display:flex;gap:7px"><input id="barcode" required autocomplete="off" placeholder="Scan or enter barcode"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Must be unique for each printer.</div></div>
+    <div class="field"><label for="barcode">Barcode / asset sticker *</label><div style="display:flex;gap:7px"><input id="barcode" required autocomplete="off" placeholder="Enter barcode manually"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Must be unique for each printer.</div></div>
+    <div class="field"><label for="assetTag">Asset tag</label><input id="assetTag" autocomplete="off" placeholder="Enter company asset tag"></div>
     <div class="field"><label for="dateReceived">Date received</label><input id="dateReceived" type="date"></div>
     <div class="field"><label for="pageCount">Page count</label><input id="pageCount" type="number" min="0" step="1" placeholder="e.g. 128450"></div>
     <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="Mono">Mono</option><option value="Color">Color</option></select></div>
@@ -137,7 +138,7 @@ const memoryStore={};
 function safeGet(key){try{return window.localStorage.getItem(key)}catch(e){return Object.prototype.hasOwnProperty.call(memoryStore,key)?memoryStore[key]:null}}
 function safeSet(key,value){memoryStore[key]=String(value);try{window.localStorage.setItem(key,String(value))}catch(e){/* Continue with in-memory session if browser storage is blocked. */}}
 const fields=[
- ['barcode','Barcode'],['dateReceived','Date received'],['deviceType','Type'],['family','Family'],['model','Model'],['pageCount','Page count'],['disposition','Disposition'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
+ ['barcode','Barcode'],['assetTag','Asset tag'],['dateReceived','Date received'],['deviceType','Type'],['family','Family'],['model','Model'],['pageCount','Page count'],['disposition','Disposition'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
 ];
 const defaults={barcode:true,dateReceived:true,deviceType:true,family:true,model:true,pageCount:true,disposition:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
 let devices=[],editingId=null,stream=null,zxingControls=null,scanTarget='inventory',printPrefs={...defaults};
@@ -157,13 +158,13 @@ function render(){
  const q=$('search').value.toLowerCase(),type=$('filterType').value,fam=$('filterFamily').value,disp=$('filterDisposition').value;
  const now=Date.now(),thirtyDays=30*24*60*60*1000;
  devices=devices.filter(d=>!(d.disposition==='Sold'&&d.soldAt&&now-new Date(d.soldAt).getTime()>thirtyDays));
- const filtered=devices.filter(d=>(archiveMode?(d.disposition==='Sold'&&d.soldAt):d.disposition!=='Sold')&&(!q||[d.barcode,d.family,d.model,d.notes,d.deviceType,d.claimedBy].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||d.deviceType===type)&&(!fam||d.family===fam)&&(!disp||d.disposition===disp)).sort((a,b)=>(b.dateReceived||'').localeCompare(a.dateReceived||'')||String(a.model).localeCompare(String(b.model)));
+ const filtered=devices.filter(d=>(archiveMode?(d.disposition==='Sold'&&d.soldAt):d.disposition!=='Sold')&&(!q||[d.barcode,d.assetTag,d.family,d.model,d.notes,d.deviceType,d.claimedBy].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||d.deviceType===type)&&(!fam||d.family===fam)&&(!disp||d.disposition===disp)).sort((a,b)=>(b.dateReceived||'').localeCompare(a.dateReceived||'')||String(a.model).localeCompare(String(b.model)));
  $('archiveBanner').style.display=archiveMode?'block':'none';$('archiveBtn').textContent=archiveMode?'Back to active inventory':'Archived machines';
  $('statCount').textContent=devices.filter(d=>d.disposition!=='Sold').length;$('statReady').textContent=devices.filter(d=>d.disposition==='Ready for sale').length;
- const heads=[['barcode','Barcode'],['dateReceived','Received'],['deviceType','Type'],['family','Family'],['model','Model'],['pageCount','Pages'],['disposition','Disposition'],['cost','Cost'],['price','Price'],['pendingSale','Sale status'],['notes','Notes']];
+ const heads=[['barcode','Barcode'],['assetTag','Asset tag'],['dateReceived','Received'],['deviceType','Type'],['family','Family'],['model','Model'],['pageCount','Pages'],['disposition','Disposition'],['cost','Cost'],['price','Price'],['pendingSale','Sale status'],['notes','Notes']];
  $('tableHead').innerHTML=heads.map(([k,t])=>`<th>${t}</th>`).join('')+'<th class="no-print">Actions</th>';
  $('tableBody').innerHTML=filtered.map(d=>`<tr>
- <td class="mono">${esc(d.barcode)}</td><td class="mono">${esc(d.dateReceived||'—')}</td><td>${esc(d.deviceType||'—')}</td><td>${esc(d.family||'—')}</td><td><strong>${esc(d.model||'—')}</strong></td><td class="mono">${d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString()}</td><td>${badge(d)}</td><td class="mono">${money(d.cost)}</td><td class="mono">${money(d.price)}</td><td>${d.pendingSale?`<span class="badge partial">Sale pending</span>${d.claimedBy?`<small>Sales: ${esc(d.claimedBy)}</small>`:''}`:'<span class="badge ready">Available</span>'}</td><td style="white-space:pre-wrap;min-width:220px">${esc(d.notes||'—')}</td><td class="no-print"><div class="actions"><button data-edit="${esc(d.id)}">Edit</button></div></td></tr>`).join('');
+ <td class="mono">${esc(d.barcode)}</td><td class="mono">${esc(d.assetTag||'—')}</td><td class="mono">${esc(d.dateReceived||'—')}</td><td>${esc(d.deviceType||'—')}</td><td>${esc(d.family||'—')}</td><td><strong>${esc(d.model||'—')}</strong></td><td class="mono">${d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString()}</td><td>${badge(d)}</td><td class="mono">${money(d.cost)}</td><td class="mono">${money(d.price)}</td><td>${d.pendingSale?`<span class="badge partial">Sale pending</span>${d.claimedBy?`<small>Sales: ${esc(d.claimedBy)}</small>`:''}`:'<span class="badge ready">Available</span>'}</td><td style="white-space:pre-wrap;min-width:220px">${esc(d.notes||'—')}</td><td class="no-print"><div class="actions"><button data-edit="${esc(d.id)}">Edit</button></div></td></tr>`).join('');
  $('emptyState').style.display=filtered.length?'none':'block';
  $('inventoryTable').classList.toggle('list-view',listView);$('listViewBtn').textContent=listView?'Table view':'List view';
  $('tableBody').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openDevice(b.dataset.edit)));
@@ -273,7 +274,7 @@ $('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{stopCamera();$
 $('useBarcode').onclick=()=>useScanned($('manualBarcode').value);
 $('manualBarcode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();useScanned(e.target.value)}});
 $('closeScan').onclick=$('cancelScan').onclick=()=>{stopCamera();closeDialog($('scanDialog'))};
-$('printBtn').onclick=()=>{const now=new Date();$('printMeta').textContent=`Printed ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · ${$('tableBody').querySelectorAll('tr').length} device(s)`;$('printHeader').querySelector('h2').textContent=$('reportTitle').value||'Printer Inventory Report';const tableKeys=['barcode','dateReceived','deviceType','family','model','pageCount','disposition','cost','price','pendingSale','notes','actions'];
+$('printBtn').onclick=()=>{const now=new Date();$('printMeta').textContent=`Printed ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · ${$('tableBody').querySelectorAll('tr').length} device(s)`;$('printHeader').querySelector('h2').textContent=$('reportTitle').value||'Printer Inventory Report';const tableKeys=['barcode','assetTag','dateReceived','deviceType','family','model','pageCount','disposition','cost','price','pendingSale','notes','actions'];
  document.querySelectorAll('#inventoryTable th').forEach((th,i)=>{const key=tableKeys[i];th.classList.toggle('print-hide',key==='actions'||(key&&!printPrefs[key]))});
  document.querySelectorAll('#inventoryTable tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>{const key=tableKeys[i];td.classList.toggle('print-hide',key==='actions'||(key&&!printPrefs[key]))}));document.getElementById('inventoryTable').classList.add('printing');window.print();document.getElementById('inventoryTable').classList.remove('printing')};
 function buildPrintOptions(){$('printOptions').innerHTML=fields.map(([k,label])=>`<label style="display:flex;align-items:center;gap:9px;padding:8px;border:1px solid var(--line);border-radius:8px"><input type="checkbox" data-print="${k}" ${printPrefs[k]?'checked':''} style="width:auto"> ${label}</label>`).join('')}
