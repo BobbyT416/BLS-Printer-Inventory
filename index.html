@@ -82,7 +82,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.1.1
+ Version 1.1.2
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -115,7 +115,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));
    <div><h3 style="margin-top:0">Enter a barcode</h3><p style="color:var(--muted);font-size:13px">If camera scanning is not supported, use a USB/Bluetooth barcode reader or type the sticker value here.</p><div class="scan-input"><input id="manualBarcode" placeholder="Barcode value" autocomplete="off"><button id="useBarcode" class="primary">Use barcode</button></div><p class="hint">Most handheld scanners act like a keyboard and can enter the code directly.</p><div class="note" id="scanStatus">Camera has not started.</div></div>
   </div>
  </div>
- <div class="modal-foot"><span class="hint">Camera scanning requires a supported browser and HTTPS or localhost.</span><button id="cancelScan">Close</button></div>
+ <div class="modal-foot"><span class="hint">Keep the barcode sharp, straight, well lit, and large in the camera preview. Camera access uses this secure HTTPS page.</span><button id="cancelScan">Close</button></div>
 </dialog>
 <dialog id="printDialog">
  <div class="modal-head"><h2>Print setup</h2><button id="closePrintSetup">✕</button></div>
@@ -253,7 +253,7 @@ async function startCamera(){
     const video=$('scanVideo');
     video.style.width='100%';video.style.height='auto';video.setAttribute('playsinline','');video.muted=true;
     zxingControls=await reader.decodeFromConstraints(
-     {video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false},
+     {video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},focusMode:{ideal:'continuous'}},audio:false},
      video,
      (result,error,controls)=>{
       if(controls)zxingControls=controls;
