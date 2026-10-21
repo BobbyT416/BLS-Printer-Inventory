@@ -137,7 +137,7 @@ const fields=[
  ['barcode','Barcode'],['dateReceived','Date received'],['deviceType','Type'],['family','Family'],['model','Model'],['pageCount','Page count'],['disposition','Disposition'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
 ];
 const defaults={barcode:true,dateReceived:true,deviceType:true,family:true,model:true,pageCount:true,disposition:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
-let devices=[],editingId=null,stream=null,scanTarget='inventory',printPrefs={...defaults};
+let devices=[],editingId=null,stream=null,zxingControls=null,scanTarget='inventory',printPrefs={...defaults};
 try{devices=JSON.parse(safeGet(STORE)||'[]');if(!Array.isArray(devices))devices=[];}catch(e){devices=[]}
 try{printPrefs={...defaults,...JSON.parse(safeGet(PRINT)||'{}')};}catch(e){}
 let listView=false;
@@ -194,16 +194,28 @@ function openScanner(target='inventory'){scanTarget=target;$('manualBarcode').va
 $('scanBtn').onclick=()=>openScanner('inventory');$('scanFromForm').onclick=()=>openScanner('form');
 async function startCamera(){
  if(!navigator.mediaDevices?.getUserMedia){$('scanStatus').textContent='Camera access is not available in this browser. Enter the barcode or use a handheld scanner.';return}
- if(!('BarcodeDetector' in window)){$('scanStatus').textContent='This browser does not support native barcode detection. Use a handheld scanner or enter the barcode manually.';return}
+ $('scanStatus').textContent='Starting camera…';
+ $('scanBox').innerHTML='<video id="scanVideo" autoplay muted playsinline></video>';
  try{
-  const detector=new BarcodeDetector({formats:['code_128','code_39','ean_13','ean_8','upc_a','upc_e','qr_code','itf']});
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
-  $('scanBox').innerHTML='<video id="scanVideo" autoplay muted playsinline></video>';const video=$('scanVideo');video.srcObject=stream;
-  $('scanStatus').textContent='Camera running. Hold the barcode steady in view.';
-  const loop=async()=>{if(!stream||!video.isConnected)return;try{if(video.readyState>=2){const codes=await detector.detect(video);if(codes.length&&codes[0].rawValue){stopCamera();useScanned(codes[0].rawValue);return}}}catch(e){}requestAnimationFrame(loop)};video.onloadedmetadata=()=>requestAnimationFrame(loop)
- }catch(e){$('scanStatus').textContent='Could not start camera. Check camera permission, or use manual entry / a handheld scanner.'}
+  if('BarcodeDetector' in window){
+   const detector=new BarcodeDetector({formats:['code_128','code_39','ean_13','ean_8','upc_a','upc_e','qr_code','itf']});
+   stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+   const video=$('scanVideo');video.srcObject=stream;
+   $('scanStatus').textContent='Camera running. Hold the barcode steady in view.';
+   const loop=async()=>{if(!stream||!video.isConnected)return;try{if(video.readyState>=2){const codes=await detector.detect(video);if(codes.length&&codes[0].rawValue){const value=codes[0].rawValue;stopCamera();useScanned(value);return}}}catch(e){}requestAnimationFrame(loop)};video.onloadedmetadata=()=>requestAnimationFrame(loop);
+  } else {
+   // iOS Safari often lacks BarcodeDetector; use ZXing as a browser-compatible fallback.
+   if(!window.ZXingBrowser){
+    await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js';script.onload=resolve;script.onerror=()=>reject(new Error('Could not load barcode scanner library'));document.head.appendChild(script)});
+   }
+   if(!window.ZXingBrowser?.BrowserMultiFormatReader)throw new Error('Barcode scanner library did not initialize');
+   const reader=new window.ZXingBrowser.BrowserMultiFormatReader();
+   $('scanStatus').textContent='Camera running. Hold the barcode steady in view.';
+   zxingControls=await reader.decodeFromVideoDevice(undefined,'scanVideo',(result,error,controls)=>{if(result?.getText){const value=result.getText();stopCamera();useScanned(value)}});
+  }
+ }catch(e){stopCamera();$('scanStatus').textContent='Could not start camera scanner. Allow camera access and try again, or enter the barcode manually. '+(e?.message||'')}
 }
-function stopCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
+function stopCamera(){if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
 function useScanned(value){const code=String(value||'').trim();if(!code)return;if(scanTarget==='form'){$('barcode').value=code;closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Barcode entered')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>d.barcode.toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);toast('Existing printer found')}else{openDevice(null,code);toast('New barcode — complete printer details')}}}
 $('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{stopCamera();$('scanStatus').textContent='Camera stopped.'};
 $('useBarcode').onclick=()=>useScanned($('manualBarcode').value);
