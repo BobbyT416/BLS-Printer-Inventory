@@ -82,7 +82,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.0.5
+ Version 1.0.6
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -212,28 +212,8 @@ async function startCamera(){
    $('scanStatus').textContent='Camera running. Hold the barcode steady in view.';
    const loop=async()=>{if(!stream||!video.isConnected)return;try{if(video.readyState>=2){const codes=await detector.detect(video);if(codes.length&&codes[0].rawValue){const value=codes[0].rawValue;stopCamera();useScanned(value);return}}}catch(e){}requestAnimationFrame(loop)};video.onloadedmetadata=()=>requestAnimationFrame(loop);
   } else {
-   // iOS Safari often lacks BarcodeDetector; use ZXing as a browser-compatible fallback.
-   if(!window.ZXingBrowser){
-    await new Promise((resolve,reject)=>{
-     const urls=[
-      'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/index.min.js',
-      'https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js'
-     ];
-     let i=0;
-     const tryNext=()=>{
-      if(i>=urls.length){reject(new Error('Could not load barcode scanner library from available CDNs'));return}
-      const script=document.createElement('script');script.src=urls[i++];
-      script.onload=()=>{if(window.ZXingBrowser?.BrowserMultiFormatReader||window.Html5Qrcode){resolve()}else{script.remove();tryNext()}};
-      script.onerror=()=>{script.remove();tryNext()};
-      document.head.appendChild(script);
-     };
-     tryNext();
-    });
-   }
-   if(!window.ZXingBrowser?.BrowserMultiFormatReader)throw new Error('Barcode scanner library did not initialize');
-   const reader=new window.ZXingBrowser.BrowserMultiFormatReader();
-   $('scanStatus').textContent='Camera running. Hold the barcode steady in view.';
-   zxingControls=await reader.decodeFromVideoElement($('scanVideo'),(result,error,controls)=>{if(result?.getText){const value=result.getText();stopCamera();useScanned(value)}});
+   // Fallback to manual entry if this browser lacks a native barcode detector.
+   $('scanStatus').textContent='Camera permission was granted, but this version of Safari cannot decode barcodes without an external library. Camera is available; please enter the barcode manually for now.';
   }
  }catch(e){stopCamera();let reason='';if(e?.name==='NotAllowedError'||e?.name==='PermissionDeniedError')reason=' Camera permission was denied or blocked. In iPhone Settings, open Safari → Camera and allow access, then reload this website.';else if(e?.name==='NotFoundError')reason=' No camera was found on this device.';else if(e?.name==='NotReadableError')reason=' The camera may already be in use by another app.';else reason=' '+(e?.message||'');$('scanStatus').textContent='Could not start camera scanner. '+reason+' You can still enter the barcode manually.'}
 }
