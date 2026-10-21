@@ -82,7 +82,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.2.1
+ Version 1.2.2
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -97,7 +97,6 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
     <div class="field"><label for="pageCount">Page count</label><input id="pageCount" type="number" min="0" step="1" placeholder="e.g. 128450"></div>
     <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="">Select type</option><option value="Single function printer">Single function printer</option><option value="MFP">MFP</option></select></div>
     <div class="field"><label for="model">Model number *</label><input id="model" required placeholder="e.g. M607"></div>
-     <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"></div>
     <div class="field"><label for="disposition">Disposition / readiness</label><select id="disposition"><option>Not evaluated</option><option>Needs major work</option><option>Needs minor work</option><option>Waiting for parts</option><option>Ready for sale</option><option>Parts only / scrap</option><option>Sold</option></select></div>
     <div class="field"><label for="cost">Cost ($)</label><input id="cost" type="number" min="0" step="0.01" placeholder="0.00"></div>
     <div class="field"><label for="price">Selling price ($)</label><input id="price" type="number" min="0" step="0.01" placeholder="0.00"></div>
@@ -176,9 +175,14 @@ function openDevice(id=null,barcode=''){
  showDialog($('deviceDialog'));setTimeout(()=>$('barcode').focus(),100)
 }
 function closeDevice(){closeDialog($('deviceDialog'))}
+const barcodeInput=$('barcode'),serialInput=$('serialNumber');
+barcodeInput.addEventListener('input',()=>{if(!editingId||!serialInput.value.trim())serialInput.value=barcodeInput.value.trim().toUpperCase()});
+barcodeInput.addEventListener('change',()=>{barcodeInput.value=barcodeInput.value.trim();serialInput.value=barcodeInput.value.toUpperCase()});
+barcodeInput.addEventListener('blur',()=>{barcodeInput.value=barcodeInput.value.trim();serialInput.value=barcodeInput.value.toUpperCase()});
+serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.trim().toUpperCase()});
 $('deviceForm').addEventListener('invalid',e=>{const el=e.target;toast((el.labels?.[0]?.textContent||el.id||'A required field')+' is required. Please complete the highlighted field.');},{capture:true});
 $('deviceForm').addEventListener('submit',e=>{
- e.preventDefault();const barcode=$('barcode').value.trim();if(!barcode){$('barcode').focus();toast('Enter a barcode or inventory ID before saving.');return}
+ e.preventDefault();const barcode=$('barcode').value.trim();$('barcode').value=barcode;$('serialNumber').value=($('serialNumber').value.trim()||barcode).toUpperCase();if(!barcode){$('barcode').focus();toast('Enter a barcode before saving.');return}
  if(devices.some(d=>String(d.barcode||'').toLowerCase()===barcode.toLowerCase()&&d.id!==editingId)){toast('That barcode is already in inventory. Open the existing device instead.');return}
  const old=devices.find(d=>d.id===editingId)||{};
  const d={...old,id:editingId||('dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,7))};
@@ -270,7 +274,7 @@ async function startCamera(){
  }catch(e){stopCamera();let reason='';if(e?.name==='NotAllowedError'||e?.name==='PermissionDeniedError')reason=' Camera permission was denied or blocked. In iPhone Settings, open Safari → Camera and allow access, then reload this website.';else if(e?.name==='NotFoundError')reason=' No camera was found on this device.';else if(e?.name==='NotReadableError')reason=' The camera may already be in use by another app.';else reason=' '+(e?.message||'');$('scanStatus').textContent='Could not start camera scanner. '+reason+' You can still enter the barcode manually.'}
 }
 function stopCamera(){if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
-function useScanned(value){const code=String(value||'').trim();if(!code)return;if(scanTarget==='form'){$('serialNumber').value=code;closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Serial number entered')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>String(d.serialNumber||'').toLowerCase()===code.toLowerCase()||String(d.barcode||'').toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);$('serialNumber').value=code;toast('Existing printer found')}else{openDevice(null,'');$('serialNumber').value=code;toast('Scanned serial number — complete printer details')}}}
+function useScanned(value){const code=String(value||'').trim();if(!code)return;if(scanTarget==='form'){$('barcode').value=code;$('serialNumber').value=code.toUpperCase();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Barcode and serial number entered')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>String(d.serialNumber||'').toLowerCase()===code.toLowerCase()||String(d.barcode||'').toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);$('barcode').value=code;$('serialNumber').value=code.toUpperCase();toast('Existing printer found')}else{openDevice(null,code);$('serialNumber').value=code.toUpperCase();toast('Scanned value entered as barcode and serial number')}}}
 $('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{stopCamera();$('scanStatus').textContent='Camera stopped.'};
 $('useBarcode').onclick=()=>useScanned($('manualBarcode').value);
 $('manualBarcode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();useScanned(e.target.value)}});
