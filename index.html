@@ -82,7 +82,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.0.7
+ Version 1.0.8
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -217,8 +217,8 @@ async function startCamera(){
     if(!window.ZXingBrowser?.BrowserMultiFormatReader){
      await new Promise((resolve,reject)=>{
       const urls=[
-       'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js',
-       'https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js'
+       'https://unpkg.com/@zxing/browser@0.1.5',
+       'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5'
       ];
       let i=0;
       const tryNext=()=>{
@@ -234,10 +234,10 @@ async function startCamera(){
     if(!window.ZXingBrowser?.BrowserMultiFormatReader)throw new Error('Barcode reader did not initialize.');
     const reader=new window.ZXingBrowser.BrowserMultiFormatReader();
     $('scanStatus').textContent='Camera running. Hold the barcode steady in view.';
-    zxingControls=await reader.decodeFromVideoElement($('scanVideo'),(result,error,controls)=>{
-     if(controls)zxingControls=controls;
+    reader.decodeFromVideoElementContinuously($('scanVideo'),(result,error)=>{
      if(result?.getText){const value=result.getText();stopCamera();useScanned(value)}
     });
+    zxingControls={stop:()=>{try{reader.stopContinuousDecode()}catch(e){}try{reader.reset()}catch(e){}}};
    } catch(readerError) {
     $('scanStatus').textContent='Camera is working, but the barcode reader could not load. Check your internet connection and try again, or enter the barcode manually.';
    }
