@@ -82,7 +82,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.0.8
+ Version 1.0.9
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -234,12 +234,14 @@ async function startCamera(){
     if(!window.ZXingBrowser?.BrowserMultiFormatReader)throw new Error('Barcode reader did not initialize.');
     const reader=new window.ZXingBrowser.BrowserMultiFormatReader();
     $('scanStatus').textContent='Camera running. Hold the barcode steady in view.';
-    reader.decodeFromVideoElementContinuously($('scanVideo'),(result,error)=>{
+    // Let ZXing open and manage the selected camera itself for continuous decoding.
+    if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+    zxingControls=await reader.decodeFromVideoDevice(undefined,$('scanVideo'),(result,error,controls)=>{
+     if(controls)zxingControls=controls;
      if(result?.getText){const value=result.getText();stopCamera();useScanned(value)}
     });
-    zxingControls={stop:()=>{try{reader.stopContinuousDecode()}catch(e){}try{reader.reset()}catch(e){}}};
    } catch(readerError) {
-    $('scanStatus').textContent='Camera is working, but the barcode reader could not load. Check your internet connection and try again, or enter the barcode manually.';
+    $('scanStatus').textContent='Camera is working, but barcode scanning failed: '+(readerError?.message||readerError?.name||'reader error')+'. You can still enter the barcode manually.';
    }
   }
  }catch(e){stopCamera();let reason='';if(e?.name==='NotAllowedError'||e?.name==='PermissionDeniedError')reason=' Camera permission was denied or blocked. In iPhone Settings, open Safari → Camera and allow access, then reload this website.';else if(e?.name==='NotFoundError')reason=' No camera was found on this device.';else if(e?.name==='NotReadableError')reason=' The camera may already be in use by another app.';else reason=' '+(e?.message||'');$('scanStatus').textContent='Could not start camera scanner. '+reason+' You can still enter the barcode manually.'}
