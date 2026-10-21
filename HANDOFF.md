@@ -4,22 +4,23 @@ Last updated: 2026-10-21
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.3.8
+Current version: 1.3.9
 
 ## Purpose
-Mobile-friendly browser app to track printers received for refurbishment, disposition, costs, sale status, and related inventory details.
+Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
 
-## Current home inventory design
-- Home page is a selectable list; tapping a row opens read-only Machine Details.
-- Edit is done through the separate Edit Printer action.
-- Home list columns, in order: Serial Number, Asset Tag, Disposition, Page Count.
-- Full serial number must never be visually truncated.
-- Model and other details remain available in Machine Details.
-- Column labels are visible above the rows.
-- On small screens, prioritize fitting Serial Number, Asset Tag, and Disposition. Page Count may require horizontal scrolling.
-- Keep the heading and row columns aligned exactly. Avoid large empty gaps; use compact fixed column widths and small gaps/padding rather than large fractional grid columns.
-- Current v1.3.8 mobile columns use 150px / 70px / 110px / 85px with 3px gaps. Verify on a real iPhone; adjust only if the first three columns are not legible and visible.
-- The current screenshot before v1.3.8 showed only Serial Number and Asset Tag labels/values because a mobile CSS override restored large min-widths and gaps. v1.3.8 removes that override mismatch and uses compact matching widths in the header and rows.
+## Current home inventory design (v1.3.9)
+- Simple selectable list; tapping a machine opens read-only Machine Details.
+- Editing is through a separate Edit Printer button.
+- No visible column labels on the home list.
+- Two columns per machine, each machine row has two stacked lines:
+  - Left column: Model number on top; Serial Number directly underneath.
+  - Right column: Disposition on top; Page Count underneath (formatted as “Pages: …”).
+- Alternating row shading: odd rows white, even rows light blue-gray.
+- Keep the two-column layout compact and visually balanced on phones.
+- Model is now intentionally shown on the home list; Asset Tag is omitted from the home list but remains available in Machine Details.
+- Keep the full serial number visible; allow wrapping only if needed rather than clipping it.
+- Do not reintroduce the old four-column header/table layout unless user asks.
 
 ## Record fields / behavior
 Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Page Count, Disposition, Refurbished By, Cost, Selling Price, Sale Status, Salesperson, and Refurbishment Notes.
@@ -29,17 +30,15 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - After saving, close the edit form and return to inventory.
 - Do not claim persistence is confirmed without reload testing. Existing storage code has a possible issue: safeSet falls back to memory storage and suppresses localStorage errors, while persist can still return true. If save issues recur, verify storage persistence and communicate when data is session-only.
 
-## Version history (recent)
-- 1.3.3: five home columns; no-wrap/truncation styling.
-- 1.3.4: removed Model from home list; order became Serial Number, Asset Tag, Disposition, Page Count; stopped clipping serial text and allowed horizontal scrolling.
-- 1.3.5: restored visible column labels.
-- 1.3.6: tightened padding and spacing.
-- 1.3.7: attempted additional compact spacing, but mobile media rule still applied wider columns and 8px gaps; screenshot showed only first two columns.
-- 1.3.8: aligned compact header/row columns and corrected mobile override to 150px / 70px / 110px / 85px with 3px gaps.
+## Recent version history
+- 1.3.4: home list became Serial Number, Asset Tag, Disposition, Page Count; no serial truncation and horizontal scrolling.
+- 1.3.5: visible column labels.
+- 1.3.6–1.3.8: repeated column spacing refinements; mobile layout remained too spread out in screenshot.
+- 1.3.9: replaced four-column list with compact two-column, two-line rows; left Model + Serial Number, right Disposition + Page Count; removed labels; alternating shaded rows.
 
 ## Verification / release discipline
-- Latest v1.3.8 committed to main.
-- JavaScript syntax check passed; this does not verify visual layout on physical iPhone.
-- Always fetch current main index.html before edits, make targeted changes, increment visible version, run JavaScript syntax check, commit to main, and report exact verification level.
+- v1.3.9 and this handoff committed to main.
+- JavaScript syntax check passed; this does not verify appearance on a physical iPhone.
+- Always fetch current main index.html before editing, make targeted changes, increment visible version, run JavaScript syntax check, commit to main, and report exact verification level.
 - Never claim a real-device test unless one actually occurred.
 - Do not alter unrelated repositories or projects.
