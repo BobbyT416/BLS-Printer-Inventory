@@ -19,18 +19,16 @@ input,select,textarea{width:100%;border:1px solid #cbd5df;border-radius:8px;padd
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}table{border-collapse:collapse;width:100%;min-width:1050px}th,td{text-align:left;padding:11px 12px;border-bottom:1px solid #e8edf2;vertical-align:top}th{background:#f6f8fb;color:#526071;font-size:12px;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0}tbody tr:hover{background:#f8fbff}td small{display:block;color:var(--muted);margin-top:3px}.mono{font-variant-numeric:tabular-nums;white-space:nowrap}.actions{display:flex;gap:6px}.actions button{padding:6px 9px;font-size:12px}.empty{text-align:center;padding:35px;color:var(--muted)}
 body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:none}dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);box-shadow:0 20px 70px #14223855;overflow:hidden;overscroll-behavior:contain;flex-direction:column}dialog[open]{display:flex}#deviceForm{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden}dialog::backdrop{background:#14223888}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:17px 20px;border-bottom:1px solid var(--line);flex:0 0 auto}.modal-body{padding:20px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1 1 auto;min-height:0;max-height:none}.modal-foot{padding:14px 20px max(14px,env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;flex:0 0 auto;background:#fff}.scanner-area{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.8fr);gap:16px}.scan-box{background:#101820;border-radius:12px;overflow:hidden;min-height:240px;display:grid;place-items:center;color:#fff}.scan-box video{width:100%;max-height:360px;object-fit:cover}.scan-box .scan-placeholder{padding:24px;text-align:center}.scan-input{display:flex;gap:8px;margin-top:12px}.scan-input input{flex:1}
 .note{background:#f4f8ff;border:1px solid #d9e6fb;border-radius:9px;padding:11px 13px;color:#344b6c;font-size:13px}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#182433;color:#fff;padding:11px 16px;border-radius:10px;display:none;z-index:99;box-shadow:0 6px 25px #0003}
-#inventoryTable.list-view{min-width:0}
-#inventoryTable.list-view thead{display:none}
-#inventoryTable.list-view tbody{display:block}
 #inventoryTable.list-view{width:100%;min-width:0}
 #inventoryTable.list-view thead{display:none}
 #inventoryTable.list-view tbody{display:block}
-#inventoryTable.list-view tbody tr{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr) auto;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding:10px 12px}
+#inventoryTable.list-view tbody tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:14px 12px;cursor:pointer}
+#inventoryTable.list-view tbody tr:hover{background:var(--soft)}
 #inventoryTable.list-view tbody td{display:block;border:0;padding:3px 0;min-width:0;white-space:normal!important;overflow-wrap:anywhere}
-#inventoryTable.list-view tbody td:last-child{justify-self:end}
-#inventoryTable.list-view tbody td .actions{justify-content:flex-end}
-@media(max-width:700px){#inventoryTable.list-view tbody tr{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:4px 10px}#inventoryTable.list-view tbody td:nth-child(1){grid-column:1/-1;font-size:15px}#inventoryTable.list-view tbody td:nth-child(2)::before{content:'Asset tag: ';color:var(--muted);font-size:11px}#inventoryTable.list-view tbody td:nth-child(3)::before{content:'Type: ';color:var(--muted);font-size:11px}#inventoryTable.list-view tbody td:nth-child(4)::before{content:'Model: ';color:var(--muted);font-size:11px}#inventoryTable.list-view tbody td:nth-child(5){grid-column:1/3}#inventoryTable.list-view tbody td:nth-child(6){grid-column:3;grid-row:2/5}}
-@media(max-width:440px){#inventoryTable.list-view tbody tr{grid-template-columns:1fr}}
+#inventoryTable.list-view tbody td:first-child{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+#inventoryTable.list-view tbody td:last-child{font-weight:650}
+#inventoryTable.list-view tbody tr:focus{outline:2px solid var(--accent);outline-offset:-2px}
+@media(max-width:440px){#inventoryTable.list-view tbody tr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}}
 /* Financial details stay in the individual printer record and optional printed reports, not the main inventory view. */
 #inventoryTable:not(.printing) thead th:nth-child(8),
 #inventoryTable:not(.printing) thead th:nth-child(9),
@@ -71,7 +69,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.3.0
+ Version 1.3.1
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -153,14 +151,13 @@ function render(){
  const filtered=devices.filter(d=>(archiveMode?(d.disposition==='Sold'&&d.soldAt):d.disposition!=='Sold')&&(!q||[d.barcode,d.assetTag,d.family,d.model,d.serialNumber,d.notes,d.deviceType,d.claimedBy].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||d.deviceType===type)&&(!disp||d.disposition===disp)).sort((a,b)=>(b.dateReceived||'').localeCompare(a.dateReceived||'')||String(a.model).localeCompare(String(b.model)));
  $('archiveBanner').style.display=archiveMode?'block':'none';$('archiveBtn').textContent=archiveMode?'Back to active inventory':'Archived machines';
  $('statCount').textContent=devices.filter(d=>d.disposition!=='Sold').length;$('statReady').textContent=devices.filter(d=>d.disposition==='Ready for sale').length;
- const heads=[['serialNumber','Serial number'],['assetTag','Asset tag'],['dateReceived','Received'],['deviceType','Type'],['model','Model'],['pageCount','Pages'],['disposition','Disposition'],['refurbishedBy','Refurbished by'],['cost','Cost'],['price','Price'],['pendingSale','Sale status'],['notes','Notes']];
+ const heads=[['serialNumber','Serial number'],['model','Model']];
  $('tableHead').innerHTML=heads.map(([k,t])=>`<th>${t}</th>`).join('')+'<th class="no-print">Actions</th>';
- $('tableBody').innerHTML=filtered.map(d=>`<tr>
- <td class="mono"><strong>${esc(d.serialNumber||'—')}</strong></td><td class="mono">${esc(d.assetTag||'—')}</td><td>${esc(d.deviceType||'—')}</td><td><strong>${esc(d.model||'—')}</strong></td><td>${badge(d)}</td><td class="no-print"><button data-edit="${esc(d.id)}">Details</button></td></tr>`).join('');
+ $('tableBody').innerHTML=filtered.map(d=>`<tr tabindex="0" role="button" aria-label="View printer ${esc(d.serialNumber||d.model||'details')}">
+ <td class="mono">${esc(d.serialNumber||'—')}</td><td><strong>${esc(d.model||'—')}</strong></td></tr>`).join('');
  $('emptyState').style.display=filtered.length?'none':'block';
  $('inventoryTable').classList.add('list-view');
- $('tableBody').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openDetail(b.dataset.edit)}));
- $('tableBody').querySelectorAll('tr').forEach(tr=>{tr.style.cursor='pointer';tr.addEventListener('click',()=>{const b=tr.querySelector('[data-edit]');if(b)openDetail(b.dataset.edit)})});
+ $('tableBody').querySelectorAll('tr').forEach((tr,index)=>{const d=filtered[index];if(!d)return;tr.addEventListener('click',()=>openDetail(d.id));tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(d.id)}})});
 }
 function openDetail(id){
  const d=devices.find(x=>x.id===id);if(!d)return;
