@@ -73,7 +73,6 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
   <div class="filters no-print">
    <input id="search" placeholder="Search barcode, model, family, notes…">
    <select id="filterType"><option value="">All types</option><option>Mono</option><option>Color</option></select>
-   <select id="filterFamily"><option value="">All families</option></select>
    <select id="filterDisposition"><option value="">All dispositions</option><option>Ready for sale</option><option>Needs minor work</option><option>Needs major work</option><option>Waiting for parts</option><option>Parts only / scrap</option><option>Not evaluated</option><option>Sold</option></select>
   </div>
   <div id="archiveBanner" class="note no-print" style="display:none;margin-bottom:12px">Archived machines — sold devices remain here for 30 days, then are automatically removed from the active archive view.</div><div id="printHeader"><h2>Printer Inventory Report</h2><div id="printMeta"></div></div>
@@ -82,7 +81,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.2.2
+ Version 1.2.3
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -98,6 +97,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
     <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="">Select type</option><option value="Single function printer">Single function printer</option><option value="MFP">MFP</option></select></div>
     <div class="field"><label for="model">Model number *</label><input id="model" required placeholder="e.g. M607"></div>
     <div class="field"><label for="disposition">Disposition / readiness</label><select id="disposition"><option>Not evaluated</option><option>Needs major work</option><option>Needs minor work</option><option>Waiting for parts</option><option>Ready for sale</option><option>Parts only / scrap</option><option>Sold</option></select></div>
+    <div class="field"><label for="refurbishedBy">Refurbished by (optional)</label><input id="refurbishedBy" autocomplete="name" placeholder="Name of technician"></div>
     <div class="field"><label for="cost">Cost ($)</label><input id="cost" type="number" min="0" step="0.01" placeholder="0.00"></div>
     <div class="field"><label for="price">Selling price ($)</label><input id="price" type="number" min="0" step="0.01" placeholder="0.00"></div>
     <div class="field"><label style="display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink)"><input id="pendingSale" type="checkbox" style="width:auto"> Tentatively claimed by sales</label><div class="hint">Device remains available, but others can see a sale is pending.</div></div>
@@ -138,9 +138,9 @@ const memoryStore={};
 function safeGet(key){try{return window.localStorage.getItem(key)}catch(e){return Object.prototype.hasOwnProperty.call(memoryStore,key)?memoryStore[key]:null}}
 function safeSet(key,value){memoryStore[key]=String(value);try{window.localStorage.setItem(key,String(value))}catch(e){/* Continue with in-memory session if browser storage is blocked. */}}
 const fields=[
- ['barcode','Barcode'],['serialNumber','Serial number'],['assetTag','Asset tag'],['dateReceived','Date received'],['deviceType','Type'],['model','Model'],['pageCount','Page count'],['disposition','Disposition'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
+ ['barcode','Barcode'],['serialNumber','Serial number'],['assetTag','Asset tag'],['dateReceived','Date received'],['deviceType','Type'],['model','Model'],['pageCount','Page count'],['disposition','Disposition'],['refurbishedBy','Refurbished by'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
 ];
-const defaults={barcode:true,serialNumber:true,assetTag:true,dateReceived:true,deviceType:true,model:true,pageCount:true,disposition:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
+const defaults={barcode:true,serialNumber:true,assetTag:true,dateReceived:true,deviceType:true,model:true,pageCount:true,disposition:true,refurbishedBy:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
 let devices=[],editingId=null,stream=null,zxingControls=null,scanTarget='inventory',printPrefs={...defaults};
 try{devices=JSON.parse(safeGet(STORE)||'[]');if(!Array.isArray(devices))devices=[];}catch(e){devices=[]}
 try{printPrefs={...defaults,...JSON.parse(safeGet(PRINT)||'{}')};}catch(e){}
@@ -152,17 +152,16 @@ function toast(msg){$('toast').textContent=msg;$('toast').style.display='block';
 function persist(){safeSet(STORE,JSON.stringify(devices));render()}
 function badge(d){let c=d.disposition==='Ready for sale'?'ready':(['Needs minor work','Waiting for parts'].includes(d.disposition)?'partial':(['Needs major work','Parts only / scrap','Sold'].includes(d.disposition)?'hold':''));return `<span class="badge ${c}">${esc(d.disposition||'Not evaluated')}</span>`}
 function render(){
- fillFamilies();
  const q=$('search').value.toLowerCase(),type=$('filterType').value,disp=$('filterDisposition').value;
  const now=Date.now(),thirtyDays=30*24*60*60*1000;
  devices=devices.filter(d=>!(d.disposition==='Sold'&&d.soldAt&&now-new Date(d.soldAt).getTime()>thirtyDays));
  const filtered=devices.filter(d=>(archiveMode?(d.disposition==='Sold'&&d.soldAt):d.disposition!=='Sold')&&(!q||[d.barcode,d.assetTag,d.family,d.model,d.serialNumber,d.notes,d.deviceType,d.claimedBy].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||d.deviceType===type)&&(!disp||d.disposition===disp)).sort((a,b)=>(b.dateReceived||'').localeCompare(a.dateReceived||'')||String(a.model).localeCompare(String(b.model)));
  $('archiveBanner').style.display=archiveMode?'block':'none';$('archiveBtn').textContent=archiveMode?'Back to active inventory':'Archived machines';
  $('statCount').textContent=devices.filter(d=>d.disposition!=='Sold').length;$('statReady').textContent=devices.filter(d=>d.disposition==='Ready for sale').length;
- const heads=[['barcode','Barcode'],['serialNumber','Serial number'],['assetTag','Asset tag'],['dateReceived','Received'],['deviceType','Type'],['model','Model'],['pageCount','Pages'],['disposition','Disposition'],['cost','Cost'],['price','Price'],['pendingSale','Sale status'],['notes','Notes']];
+ const heads=[['barcode','Barcode'],['serialNumber','Serial number'],['assetTag','Asset tag'],['dateReceived','Received'],['deviceType','Type'],['model','Model'],['pageCount','Pages'],['disposition','Disposition'],['refurbishedBy','Refurbished by'],['cost','Cost'],['price','Price'],['pendingSale','Sale status'],['notes','Notes']];
  $('tableHead').innerHTML=heads.map(([k,t])=>`<th>${t}</th>`).join('')+'<th class="no-print">Actions</th>';
  $('tableBody').innerHTML=filtered.map(d=>`<tr>
- <td class="mono">${esc(d.barcode)}</td><td class="mono">${esc(d.assetTag||'—')}</td><td class="mono">${esc(d.dateReceived||'—')}</td><td>${esc(d.deviceType||'—')}</td><td>${esc(d.family||'—')}</td><td><strong>${esc(d.model||'—')}</strong>${d.serialNumber?`<small>Serial: ${esc(d.serialNumber)}</small>`:''}</td><td class="mono">${d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString()}</td><td>${badge(d)}</td><td class="mono">${money(d.cost)}</td><td class="mono">${money(d.price)}</td><td>${d.pendingSale?`<span class="badge partial">Sale pending</span>${d.claimedBy?`<small>Sales: ${esc(d.claimedBy)}</small>`:''}`:'<span class="badge ready">Available</span>'}</td><td style="white-space:pre-wrap;min-width:220px">${esc(d.notes||'—')}</td><td class="no-print"><div class="actions"><button data-edit="${esc(d.id)}">Edit</button></div></td></tr>`).join('');
+ <td class="mono">${esc(d.barcode)}</td><td class="mono">${esc(d.serialNumber||'—')}</td><td class="mono">${esc(d.assetTag||'—')}</td><td class="mono">${esc(d.dateReceived||'—')}</td><td>${esc(d.deviceType||'—')}</td><td><strong>${esc(d.model||'—')}</strong></td><td class="mono">${d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString()}</td><td>${badge(d)}</td><td>${esc(d.refurbishedBy||'—')}</td><td class="mono">${d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString()}</td><td>${badge(d)}</td><td class="mono">${money(d.cost)}</td><td class="mono">${money(d.price)}</td><td>${d.pendingSale?`<span class="badge partial">Sale pending</span>${d.claimedBy?`<small>Sales: ${esc(d.claimedBy)}</small>`:''}`:'<span class="badge ready">Available</span>'}</td><td style="white-space:pre-wrap;min-width:220px">${esc(d.notes||'—')}</td><td class="no-print"><div class="actions"><button data-edit="${esc(d.id)}">Edit</button></div></td></tr>`).join('');
  $('emptyState').style.display=filtered.length?'none':'block';
  $('inventoryTable').classList.toggle('list-view',listView);$('listViewBtn').textContent=listView?'Table view':'List view';
  $('tableBody').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openDevice(b.dataset.edit)));
@@ -195,7 +194,7 @@ $('deviceForm').addEventListener('submit',e=>{
 });
 $('deleteBtn').onclick=()=>{if(!editingId)return;const d=devices.find(x=>x.id===editingId);if(confirm(`Delete ${d?.model||'this printer'} (${d?.barcode}) from inventory? This cannot be undone unless you have a backup.`)){devices=devices.filter(x=>x.id!==editingId);persist();closeDevice();toast('Printer deleted')}};
 $('listViewBtn').onclick=()=>{listView=!listView;render()};
-$('archiveBtn').onclick=()=>{archiveMode=!archiveMode;['search','filterType','filterFamily','filterDisposition'].forEach(id=>$(id).value='');render()};
+$('archiveBtn').onclick=()=>{archiveMode=!archiveMode;['search','filterType','filterDisposition'].forEach(id=>$(id).value='');render()};
 $('homeBtn').onclick=()=>{archiveMode=false;['search','filterType','filterFamily','filterDisposition'].forEach(id=>$(id).value='');listView=false;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory home')};
 $('addBtn').onclick=()=>openDevice();$('closeDevice').onclick=closeDevice;$('cancelDevice').onclick=closeDevice;
 ['search','filterType','filterFamily','filterDisposition'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
