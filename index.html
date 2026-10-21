@@ -81,7 +81,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.2.5
+ Version 1.2.6
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -164,7 +164,8 @@ function render(){
  <td class="mono">${esc(d.barcode)}</td><td class="mono">${esc(d.serialNumber||'—')}</td><td class="mono">${esc(d.assetTag||'—')}</td><td class="mono">${esc(d.dateReceived||'—')}</td><td>${esc(d.deviceType||'—')}</td><td><strong>${esc(d.model||'—')}</strong></td><td class="mono">${d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString()}</td><td>${badge(d)}</td><td>${esc(d.refurbishedBy||'—')}</td><td class="mono">${money(d.cost)}</td><td class="mono">${money(d.price)}</td><td>${d.pendingSale?`<span class="badge partial">Sale pending</span>${d.claimedBy?`<small>Sales: ${esc(d.claimedBy)}</small>`:''}`:'<span class="badge ready">Available</span>'}</td><td style="white-space:pre-wrap;min-width:220px">${esc(d.notes||'—')}</td><td class="no-print"><div class="actions"><button data-edit="${esc(d.id)}">Edit</button></div></td></tr>`).join('');
  $('emptyState').style.display=filtered.length?'none':'block';
  $('inventoryTable').classList.toggle('list-view',listView);$('listViewBtn').textContent=listView?'Table view':'List view';
- $('tableBody').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openDevice(b.dataset.edit)));
+ $('tableBody').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openDevice(b.dataset.edit)}));
+ $('tableBody').querySelectorAll('tr').forEach(tr=>{tr.style.cursor='pointer';tr.addEventListener('click',()=>{const b=tr.querySelector('[data-edit]');if(b)openDevice(b.dataset.edit)})});
 }
 function openDevice(id=null,barcode=''){
  editingId=id;const d=id?devices.find(x=>x.id===id):{};
@@ -176,9 +177,10 @@ function openDevice(id=null,barcode=''){
 function closeDevice(){closeDialog($('deviceDialog'))}
 const barcodeInput=$('barcode'),serialInput=$('serialNumber');
 barcodeInput.addEventListener('input',()=>{if(!editingId||!serialInput.value.trim())serialInput.value=barcodeInput.value.trim().toUpperCase()});
-barcodeInput.addEventListener('change',()=>{barcodeInput.value=barcodeInput.value.trim();serialInput.value=barcodeInput.value.toUpperCase()});
-barcodeInput.addEventListener('blur',()=>{barcodeInput.value=barcodeInput.value.trim();serialInput.value=barcodeInput.value.toUpperCase()});
+barcodeInput.addEventListener('change',()=>{barcodeInput.value=barcodeInput.value.trim();if(!serialInput.value.trim())serialInput.value=barcodeInput.value.toUpperCase()});
+barcodeInput.addEventListener('blur',()=>{barcodeInput.value=barcodeInput.value.trim();if(!serialInput.value.trim())serialInput.value=barcodeInput.value.toUpperCase()});
 serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.trim().toUpperCase()});
+$('disposition').addEventListener('change',()=>{$('disposition').dataset.userChanged='true'});
 $('deviceForm').addEventListener('invalid',e=>{const el=e.target;toast((el.labels?.[0]?.textContent||el.id||'A required field')+' is required. Please complete the highlighted field.');},{capture:true});
 $('deviceForm').addEventListener('submit',e=>{
  e.preventDefault();const barcode=$('barcode').value.trim();$('barcode').value=barcode;$('serialNumber').value=($('serialNumber').value.trim()||barcode).toUpperCase();if(!barcode){$('barcode').focus();toast('Enter a barcode before saving.');return}
@@ -186,6 +188,8 @@ $('deviceForm').addEventListener('submit',e=>{
  const old=devices.find(d=>d.id===editingId)||{};
  const d={...old,id:editingId||('dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,7))};
  for(const [k] of fields){if(k==='pendingSale')d[k]=$(k).checked;else if(k==='claimedBy')d[k]=$('claimedBy').value.trim();else d[k]=$(k).value.trim();}
+ d.disposition=$('disposition').value;
+ d.serialNumber=String($('serialNumber').value.trim()||$('barcode').value.trim()).toUpperCase();
  d.serialNumber=String(d.serialNumber||'').toUpperCase();
  if(d.disposition==='Sold'){if(old.disposition!=='Sold'||!old.soldAt)d.soldAt=new Date().toISOString();}else d.soldAt=null;
  d.pageCount=d.pageCount===''?'':Number(d.pageCount);d.cost=d.cost===''?0:Number(d.cost);d.price=d.price===''?0:Number(d.price);
