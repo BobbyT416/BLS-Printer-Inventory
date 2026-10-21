@@ -184,6 +184,7 @@ $('deviceForm').addEventListener('submit',e=>{
  const old=devices.find(d=>d.id===editingId)||{};
  const d={...old,id:editingId||('dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,7))};
  for(const [k] of fields){if(k==='pendingSale')d[k]=$(k).checked;else if(k==='claimedBy')d[k]=$('claimedBy').value.trim();else d[k]=$(k).value.trim();}
+ d.serialNumber=String(d.serialNumber||'').toUpperCase();
  if(d.disposition==='Sold'){if(old.disposition!=='Sold'||!old.soldAt)d.soldAt=new Date().toISOString();}else d.soldAt=null;
  d.pageCount=d.pageCount===''?'':Number(d.pageCount);d.cost=d.cost===''?0:Number(d.cost);d.price=d.price===''?0:Number(d.price);
  if(editingId)devices=devices.map(x=>x.id===editingId?d:x);else devices.push(d);
