@@ -82,7 +82,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.2.0
+ Version 1.2.1
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -90,12 +90,12 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
   <div class="modal-body">
    <div class="note" style="margin-bottom:15px">The barcode sticker identifies the individual device. Scan with your camera or use a USB/Bluetooth scanner that types into the barcode field.</div>
    <div class="form-grid">
-    <div class="field"><label for="barcode">Barcode / asset sticker *</label><div style="display:flex;gap:7px"><input id="barcode" required autocomplete="off" placeholder="Enter barcode manually"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Must be unique for each printer.</div></div>
+    <div class="field"><label for="barcode">Barcode</label><div style="display:flex;gap:7px"><input id="barcode" required autocomplete="off" placeholder="Enter barcode manually"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Must be unique for each printer.</div></div>
+    <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"></div>
     <div class="field"><label for="assetTag">Asset tag</label><input id="assetTag" autocomplete="off" placeholder="Enter company asset tag"></div>
     <div class="field"><label for="dateReceived">Date received</label><input id="dateReceived" type="date"></div>
     <div class="field"><label for="pageCount">Page count</label><input id="pageCount" type="number" min="0" step="1" placeholder="e.g. 128450"></div>
-    <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="Mono">Mono</option><option value="Color">Color</option></select></div>
-    <div class="field"><label for="family">Family *</label><input id="family" required list="familyOptions" placeholder="e.g. LaserJet Enterprise"><datalist id="familyOptions"></datalist></div>
+    <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="">Select type</option><option value="Single function printer">Single function printer</option><option value="MFP">MFP</option></select></div>
     <div class="field"><label for="model">Model number *</label><input id="model" required placeholder="e.g. M607"></div>
      <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"></div>
     <div class="field"><label for="disposition">Disposition / readiness</label><select id="disposition"><option>Not evaluated</option><option>Needs major work</option><option>Needs minor work</option><option>Waiting for parts</option><option>Ready for sale</option><option>Parts only / scrap</option><option>Sold</option></select></div>
@@ -139,9 +139,9 @@ const memoryStore={};
 function safeGet(key){try{return window.localStorage.getItem(key)}catch(e){return Object.prototype.hasOwnProperty.call(memoryStore,key)?memoryStore[key]:null}}
 function safeSet(key,value){memoryStore[key]=String(value);try{window.localStorage.setItem(key,String(value))}catch(e){/* Continue with in-memory session if browser storage is blocked. */}}
 const fields=[
- ['barcode','Barcode'],['assetTag','Asset tag'],['dateReceived','Date received'],['deviceType','Type'],['family','Family'],['model','Model'],['serialNumber','Serial number'],['pageCount','Page count'],['disposition','Disposition'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
+ ['barcode','Barcode'],['serialNumber','Serial number'],['assetTag','Asset tag'],['dateReceived','Date received'],['deviceType','Type'],['model','Model'],['pageCount','Page count'],['disposition','Disposition'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
 ];
-const defaults={barcode:true,dateReceived:true,deviceType:true,family:true,model:true,pageCount:true,disposition:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
+const defaults={barcode:true,serialNumber:true,assetTag:true,dateReceived:true,deviceType:true,model:true,pageCount:true,disposition:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
 let devices=[],editingId=null,stream=null,zxingControls=null,scanTarget='inventory',printPrefs={...defaults};
 try{devices=JSON.parse(safeGet(STORE)||'[]');if(!Array.isArray(devices))devices=[];}catch(e){devices=[]}
 try{printPrefs={...defaults,...JSON.parse(safeGet(PRINT)||'{}')};}catch(e){}
@@ -151,18 +151,16 @@ const money=n=>Number(n||0).toLocaleString('en-US',{style:'currency',currency:'U
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(msg){$('toast').textContent=msg;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2600)}
 function persist(){safeSet(STORE,JSON.stringify(devices));render()}
-function families(){return [...new Set(devices.map(d=>d.family).filter(Boolean))].sort((a,b)=>a.localeCompare(b))}
-function fillFamilies(){const current=$('filterFamily').value; $('filterFamily').innerHTML='<option value="">All families</option>'+families().map(f=>`<option>${esc(f)}</option>`).join('');if(families().includes(current))$('filterFamily').value=current;$('familyOptions').innerHTML=families().map(f=>`<option value="${esc(f)}">`).join('')}
 function badge(d){let c=d.disposition==='Ready for sale'?'ready':(['Needs minor work','Waiting for parts'].includes(d.disposition)?'partial':(['Needs major work','Parts only / scrap','Sold'].includes(d.disposition)?'hold':''));return `<span class="badge ${c}">${esc(d.disposition||'Not evaluated')}</span>`}
 function render(){
  fillFamilies();
- const q=$('search').value.toLowerCase(),type=$('filterType').value,fam=$('filterFamily').value,disp=$('filterDisposition').value;
+ const q=$('search').value.toLowerCase(),type=$('filterType').value,disp=$('filterDisposition').value;
  const now=Date.now(),thirtyDays=30*24*60*60*1000;
  devices=devices.filter(d=>!(d.disposition==='Sold'&&d.soldAt&&now-new Date(d.soldAt).getTime()>thirtyDays));
- const filtered=devices.filter(d=>(archiveMode?(d.disposition==='Sold'&&d.soldAt):d.disposition!=='Sold')&&(!q||[d.barcode,d.assetTag,d.family,d.model,d.serialNumber,d.notes,d.deviceType,d.claimedBy].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||d.deviceType===type)&&(!fam||d.family===fam)&&(!disp||d.disposition===disp)).sort((a,b)=>(b.dateReceived||'').localeCompare(a.dateReceived||'')||String(a.model).localeCompare(String(b.model)));
+ const filtered=devices.filter(d=>(archiveMode?(d.disposition==='Sold'&&d.soldAt):d.disposition!=='Sold')&&(!q||[d.barcode,d.assetTag,d.family,d.model,d.serialNumber,d.notes,d.deviceType,d.claimedBy].some(v=>String(v||'').toLowerCase().includes(q)))&&(!type||d.deviceType===type)&&(!disp||d.disposition===disp)).sort((a,b)=>(b.dateReceived||'').localeCompare(a.dateReceived||'')||String(a.model).localeCompare(String(b.model)));
  $('archiveBanner').style.display=archiveMode?'block':'none';$('archiveBtn').textContent=archiveMode?'Back to active inventory':'Archived machines';
  $('statCount').textContent=devices.filter(d=>d.disposition!=='Sold').length;$('statReady').textContent=devices.filter(d=>d.disposition==='Ready for sale').length;
- const heads=[['barcode','Barcode'],['assetTag','Asset tag'],['dateReceived','Received'],['deviceType','Type'],['family','Family'],['model','Model'],['pageCount','Pages'],['disposition','Disposition'],['cost','Cost'],['price','Price'],['pendingSale','Sale status'],['notes','Notes']];
+ const heads=[['barcode','Barcode'],['serialNumber','Serial number'],['assetTag','Asset tag'],['dateReceived','Received'],['deviceType','Type'],['model','Model'],['pageCount','Pages'],['disposition','Disposition'],['cost','Cost'],['price','Price'],['pendingSale','Sale status'],['notes','Notes']];
  $('tableHead').innerHTML=heads.map(([k,t])=>`<th>${t}</th>`).join('')+'<th class="no-print">Actions</th>';
  $('tableBody').innerHTML=filtered.map(d=>`<tr>
  <td class="mono">${esc(d.barcode)}</td><td class="mono">${esc(d.assetTag||'—')}</td><td class="mono">${esc(d.dateReceived||'—')}</td><td>${esc(d.deviceType||'—')}</td><td>${esc(d.family||'—')}</td><td><strong>${esc(d.model||'—')}</strong>${d.serialNumber?`<small>Serial: ${esc(d.serialNumber)}</small>`:''}</td><td class="mono">${d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString()}</td><td>${badge(d)}</td><td class="mono">${money(d.cost)}</td><td class="mono">${money(d.price)}</td><td>${d.pendingSale?`<span class="badge partial">Sale pending</span>${d.claimedBy?`<small>Sales: ${esc(d.claimedBy)}</small>`:''}`:'<span class="badge ready">Available</span>'}</td><td style="white-space:pre-wrap;min-width:220px">${esc(d.notes||'—')}</td><td class="no-print"><div class="actions"><button data-edit="${esc(d.id)}">Edit</button></div></td></tr>`).join('');
@@ -173,7 +171,7 @@ function render(){
 function openDevice(id=null,barcode=''){
  editingId=id;const d=id?devices.find(x=>x.id===id):{};
  $('deviceTitle').textContent=id?'Edit printer':'Add printer';$('deleteBtn').style.display=id?'inline-block':'none';
- for(const [k] of fields){$(k).value=d?.[k]??(k==='dateReceived'&&!id?new Date().toISOString().slice(0,10):'')}
+ for(const [k] of fields){$(k).value=d?.[k]??''}
  if(barcode)$('barcode').value=barcode;
  showDialog($('deviceDialog'));setTimeout(()=>$('barcode').focus(),100)
 }
@@ -272,7 +270,7 @@ async function startCamera(){
  }catch(e){stopCamera();let reason='';if(e?.name==='NotAllowedError'||e?.name==='PermissionDeniedError')reason=' Camera permission was denied or blocked. In iPhone Settings, open Safari → Camera and allow access, then reload this website.';else if(e?.name==='NotFoundError')reason=' No camera was found on this device.';else if(e?.name==='NotReadableError')reason=' The camera may already be in use by another app.';else reason=' '+(e?.message||'');$('scanStatus').textContent='Could not start camera scanner. '+reason+' You can still enter the barcode manually.'}
 }
 function stopCamera(){if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
-function useScanned(value){const code=String(value||'').trim();if(!code)return;if(scanTarget==='form'){$('barcode').value=code;closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Barcode entered')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>d.barcode.toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);toast('Existing printer found')}else{openDevice(null,code);toast('New barcode — complete printer details')}}}
+function useScanned(value){const code=String(value||'').trim();if(!code)return;if(scanTarget==='form'){$('serialNumber').value=code;closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Serial number entered')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>String(d.serialNumber||'').toLowerCase()===code.toLowerCase()||String(d.barcode||'').toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);$('serialNumber').value=code;toast('Existing printer found')}else{openDevice(null,'');$('serialNumber').value=code;toast('Scanned serial number — complete printer details')}}}
 $('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{stopCamera();$('scanStatus').textContent='Camera stopped.'};
 $('useBarcode').onclick=()=>useScanned($('manualBarcode').value);
 $('manualBarcode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();useScanned(e.target.value)}});
