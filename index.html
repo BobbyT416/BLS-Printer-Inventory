@@ -82,7 +82,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.1.9
+ Version 1.2.0
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -178,9 +178,10 @@ function openDevice(id=null,barcode=''){
  showDialog($('deviceDialog'));setTimeout(()=>$('barcode').focus(),100)
 }
 function closeDevice(){closeDialog($('deviceDialog'))}
+$('deviceForm').addEventListener('invalid',e=>{const el=e.target;toast((el.labels?.[0]?.textContent||el.id||'A required field')+' is required. Please complete the highlighted field.');},{capture:true});
 $('deviceForm').addEventListener('submit',e=>{
- e.preventDefault();const barcode=$('barcode').value.trim();if(!barcode)return;
- if(devices.some(d=>d.barcode.toLowerCase()===barcode.toLowerCase()&&d.id!==editingId)){toast('That barcode is already in inventory. Open the existing device instead.');return}
+ e.preventDefault();const barcode=$('barcode').value.trim();if(!barcode){$('barcode').focus();toast('Enter a barcode or inventory ID before saving.');return}
+ if(devices.some(d=>String(d.barcode||'').toLowerCase()===barcode.toLowerCase()&&d.id!==editingId)){toast('That barcode is already in inventory. Open the existing device instead.');return}
  const old=devices.find(d=>d.id===editingId)||{};
  const d={...old,id:editingId||('dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,7))};
  for(const [k] of fields){if(k==='pendingSale')d[k]=$(k).checked;else if(k==='claimedBy')d[k]=$('claimedBy').value.trim();else d[k]=$(k).value.trim();}
