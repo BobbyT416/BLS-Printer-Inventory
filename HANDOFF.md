@@ -4,7 +4,7 @@ Last updated: 2026-10-21
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.4.3
+Current version: 1.4.4
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -74,3 +74,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - On load, existing saved records with deviceType exactly “Single function printer” are migrated to “Printer” and written back to browser storage. MFP remains unchanged.
 - Home list design unchanged; landscape print request retained.
 - JavaScript syntax check passed; not tested on physical device/print dialog.
+
+
+## v1.4.4 — Print layout and landscape investigation
+- Print table changed to fixed layout with assigned column proportions, smaller 6pt uppercase headings and 7pt body, tighter cell padding, and controlled wrapping to reduce broken heading words and improve fit.
+- @page now explicitly requests US Letter landscape with 0.25-inch margins.
+- Important platform limitation investigated: CSS @page size is not reliably honored by Safari's native print dialog on iPhone; evidence includes MDN browser compatibility and Safari-specific compatibility reports. CSS can request landscape but cannot force the iOS print UI to select it in all cases. User may still need to choose Landscape manually. A truly reliable automatic landscape workflow would require generating a PDF with landscape page dimensions and opening/sharing that PDF instead of calling window.print().
+- Home list unchanged. JS syntax check passed; print preview not tested in a live browser/device.
