@@ -81,3 +81,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - @page now explicitly requests US Letter landscape with 0.25-inch margins.
 - Important platform limitation investigated: CSS @page size is not reliably honored by Safari's native print dialog on iPhone; evidence includes MDN browser compatibility and Safari-specific compatibility reports. CSS can request landscape but cannot force the iOS print UI to select it in all cases. User may still need to choose Landscape manually. A truly reliable automatic landscape workflow would require generating a PDF with landscape page dimensions and opening/sharing that PDF instead of calling window.print().
 - Home list unchanged. JS syntax check passed; print preview not tested in a live browser/device.
+
+
+## Update — 2026-10-21 (v1.4.5)
+- Removed the two summary cards at the top of the inventory page: “Devices in inventory” and “Ready for sale.”
+- The inventory list, filters, and printer-record behavior are otherwise unchanged.
+- Updated the visible app version to 1.4.5.
+- Validation: extracted inline JavaScript passed `new Function` syntax compilation. Visual/browser testing was not performed in this change.
