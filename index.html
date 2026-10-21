@@ -82,7 +82,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.1.3
+ Version 1.1.4
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -231,9 +231,9 @@ async function startCamera(){
     if(!window.ZXingBrowser?.BrowserMultiFormatReader){
      await new Promise((resolve,reject)=>{
       const urls=[
+       './vendor/zxing-browser.min.js',
        'https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js',
-       'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js',
-       'https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.js'
+       'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js'
       ];
       let i=0;
       const tryNext=()=>{
