@@ -209,7 +209,22 @@ async function startCamera(){
   } else {
    // iOS Safari often lacks BarcodeDetector; use ZXing as a browser-compatible fallback.
    if(!window.ZXingBrowser){
-    await new Promise((resolve,reject)=>{const urls=['https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/index.min.js','https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js'];let i=0;const tryNext=()=>{if(i>=urls.length){reject(new Error('Could not load barcode scanner library from either CDN'));return}const script=document.createElement('script');script.src=urls[i++];script.onload=resolve;script.onerror=()=>{script.remove();tryNext()};document.head.appendChild(script)};tryNext()});
+    await new Promise((resolve,reject)=>{
+     const urls=[
+      'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/index.min.js',
+      'https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js',
+      'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js'
+     ];
+     let i=0;
+     const tryNext=()=>{
+      if(i>=urls.length){reject(new Error('Could not load barcode scanner library from available CDNs'));return}
+      const script=document.createElement('script');script.src=urls[i++];
+      script.onload=()=>{if(window.ZXingBrowser?.BrowserMultiFormatReader||window.Html5Qrcode){resolve()}else{script.remove();tryNext()}};
+      script.onerror=()=>{script.remove();tryNext()};
+      document.head.appendChild(script);
+     };
+     tryNext();
+    });
    }
    if(!window.ZXingBrowser?.BrowserMultiFormatReader)throw new Error('Barcode scanner library did not initialize');
    const reader=new window.ZXingBrowser.BrowserMultiFormatReader();
