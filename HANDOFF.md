@@ -249,3 +249,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Replaced the flex-child scrolling approach after the user confirmed v1.7.1 still would not scroll on iPhone. The header is now fixed to the viewport top, the main inventory region is explicitly fixed between the measured header bottom and footer top, and the footer stays fixed at the bottom.
 - Added viewport measurement on initial render, resize, orientation change, and iOS visual viewport resize to keep the scroll region sized to the visible screen.
 - Validation: JavaScript syntax check passed. No physical iPhone test performed; user should test this build directly.
+
+
+## v1.7.3 — Header-only fixed scrolling (2026-10-22)
+- Reworked layout again after user reported content was hidden under the header and footer did not need to remain fixed. Only the header is fixed. The main inventory and version footer now participate in normal document scrolling; main content starts below the measured header height.
+- Header height is recalculated on load, resize, orientation/visual viewport changes, and with ResizeObserver to prevent the first content from starting beneath the header after logo/layout sizing settles.
+- Validation: JavaScript syntax check passed. No live iPhone test performed.
