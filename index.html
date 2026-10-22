@@ -50,14 +50,14 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
 @page{size:letter landscape;margin:0.25in}@media print{#inventoryTable{display:none!important}#printReportTableWrap{display:block!important}#printReportTable{display:table!important;min-width:0;width:100%;table-layout:fixed;font-size:7pt}#printReportTable th,#printReportTable td{padding:3px 4px;border:1px solid #bbb;vertical-align:top;overflow-wrap:anywhere;word-break:normal}#printReportTable th{position:static;background:#eee!important;color:#000;font-size:6pt;line-height:1.15;letter-spacing:0;text-transform:uppercase;white-space:nowrap}#printReportTable td{font-size:7pt}#printReportTable th:nth-child(1),#printReportTable td:nth-child(1){width:15%}#printReportTable th:nth-child(2),#printReportTable td:nth-child(2){width:8%}#printReportTable th:nth-child(3),#printReportTable td:nth-child(3){width:10%}#printReportTable th:nth-child(4),#printReportTable td:nth-child(4){width:9%}#printReportTable th:nth-child(5),#printReportTable td:nth-child(5){width:8%}#printReportTable th:nth-child(6),#printReportTable td:nth-child(6){width:12%}#printReportTable th:nth-child(7),#printReportTable td:nth-child(7){width:8%}#printReportTable th:nth-child(8),#printReportTable td:nth-child(8){width:8%}#printReportTable th:nth-child(9),#printReportTable td:nth-child(9){width:10%}body{background:white;font-size:10pt}header,.cards,.no-print,.panel-head .tools,.filters,.actions,.hint{display:none!important}main{padding:0;max-width:none}.panel{border:0;padding:0}#printHeader{display:block;margin:0 0 12px}#inventoryTable{min-width:0;width:100%;font-size:8pt}#inventoryTable th,#inventoryTable td{padding:5px;border:1px solid #bbb}#inventoryTable th{position:static;background:#eee!important;color:#000}#inventoryTable td .badge{border:1px solid #888;background:white;color:#000}#inventoryTable .print-hide{display:none!important}.table-wrap{overflow:visible;border:0}table{page-break-inside:auto}tr{page-break-inside:avoid;page-break-after:auto}thead{display:table-header-group}}
 
 /* v1.6.9: compact fixed header with a single scrolling content region */
-html,body{height:100%;height:100dvh;min-height:0;margin:0}
-body{overflow:hidden}
+html,body{min-height:100%;margin:0}
+body{overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
 header{position:fixed;top:0;left:0;right:0;min-height:0;padding:8px clamp(12px,3vw,30px);gap:8px;z-index:20}
 .brand{gap:8px}
 .brand:before{top:-10px;height:calc(100% + 20px);left:-12px}
 .brand-logo{max-height:110px}
-main{position:fixed;top:var(--app-header-bottom,180px);bottom:var(--app-footer-height,44px);left:0;right:0;display:block;height:auto;min-height:0;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;touch-action:pan-y;padding:14px clamp(12px,3vw,30px) 24px}
-#appVersion{position:fixed;bottom:0;left:0;right:0;z-index:10;background:var(--paper);padding:6px 12px!important}
+main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bottom,180px));margin-top:var(--app-header-bottom,180px);overflow:visible;padding:14px clamp(12px,3vw,30px) 24px}
+#appVersion{position:static;background:var(--paper);padding:18px 12px 28px!important;margin-top:0}
 @media(max-width:520px){
  header{min-height:0;padding:6px 12px;gap:4px}
  .brand{gap:4px}
@@ -65,7 +65,7 @@ main{position:fixed;top:var(--app-header-bottom,180px);bottom:var(--app-footer-h
  h1{font-size:22px;line-height:1.2}
  main{padding-top:10px}
 }
-@media print{html,body{height:auto;overflow:visible;display:block}header,main,#appVersion{position:static}main{height:auto;overflow:visible}#appVersion{display:none}}
+@media print{html,body{height:auto;overflow:visible;display:block}header,main,#appVersion{position:static;margin-top:0}main{height:auto;overflow:visible}#appVersion{display:none}}
 </style>
 </head>
 <body>
@@ -86,7 +86,7 @@ main{position:fixed;top:var(--app-header-bottom,180px);bottom:var(--app-footer-h
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.7.2
+ Version 1.7.3
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -153,8 +153,8 @@ main{position:fixed;top:var(--app-header-bottom,180px);bottom:var(--app-footer-h
 <script>
 (() => {
 const $ = id => document.getElementById(id);
-function syncViewportRegions(){const header=document.querySelector('header'),footer=$('appVersion');if(!header||!footer)return;document.documentElement.style.setProperty('--app-header-bottom',Math.ceil(header.getBoundingClientRect().bottom)+'px');document.documentElement.style.setProperty('--app-footer-height',Math.ceil(footer.getBoundingClientRect().height)+'px')}
-window.addEventListener('resize',syncViewportRegions,{passive:true});window.addEventListener('orientationchange',()=>setTimeout(syncViewportRegions,100));if(window.visualViewport)window.visualViewport.addEventListener('resize',syncViewportRegions,{passive:true});
+function syncViewportRegions(){const header=document.querySelector('header');if(!header)return;document.documentElement.style.setProperty('--app-header-bottom',Math.ceil(header.getBoundingClientRect().height)+'px')}
+window.addEventListener('resize',syncViewportRegions,{passive:true});window.addEventListener('orientationchange',()=>setTimeout(syncViewportRegions,100));window.addEventListener('load',syncViewportRegions,{once:true});if(window.visualViewport)window.visualViewport.addEventListener('resize',syncViewportRegions,{passive:true});if(window.ResizeObserver){new ResizeObserver(syncViewportRegions).observe(document.querySelector('header'))}
 requestAnimationFrame(syncViewportRegions);
 function showDialog(el){if(!el)return;if(typeof el.showModal==='function')el.showModal();else{el.setAttribute('open','');el.style.display='block'}}
 function closeDialog(el){if(!el)return;if(typeof el.close==='function')el.close();else{el.removeAttribute('open');el.style.display='none'}}
