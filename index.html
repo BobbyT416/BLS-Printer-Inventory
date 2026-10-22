@@ -86,7 +86,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.7.7
+ Version 1.7.8
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -102,6 +102,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
     <div class="field"><label for="barcode">Barcode</label><div style="display:flex;gap:7px"><input id="barcode" required autocomplete="off" placeholder="Enter barcode manually"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Must be unique for each printer.</div></div>
     <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"></div>
     <div class="field"><label for="assetTag">Asset tag</label><input id="assetTag" autocomplete="off" placeholder="Enter company asset tag"></div>
+    <div class="field"><label for="acquiredFrom">Acquired from</label><input id="acquiredFrom" autocomplete="off" placeholder="Company, person, auction, etc."></div>
     <div class="field"><label for="dateReceived">Date received</label><input id="dateReceived" type="date"></div>
     <div class="field"><label for="pageCount">Page count</label><input id="pageCount" type="number" min="0" step="1" placeholder="e.g. 128450"></div>
     <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="">Select type</option><option value="Single function printer">Single function printer</option><option value="MFP">MFP</option></select></div>
@@ -163,7 +164,7 @@ const memoryStore={};
 function safeGet(key){try{return window.localStorage.getItem(key)}catch(e){return Object.prototype.hasOwnProperty.call(memoryStore,key)?memoryStore[key]:null}}
 function safeSet(key,value){memoryStore[key]=String(value);try{window.localStorage.setItem(key,String(value))}catch(e){/* Continue with in-memory session if browser storage is blocked. */}}
 const fields=[
-['serialNumber','Serial number'],['assetTag','Asset tag'],['dateReceived','Date received'],['deviceType','Type'],['model','Model'],['pageCount','Page count'],['disposition','Disposition'],['refurbishedBy','Refurbished by'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
+['serialNumber','Serial number'],['assetTag','Asset tag'],['acquiredFrom','Acquired from'],['dateReceived','Date received'],['deviceType','Type'],['model','Model'],['pageCount','Page count'],['disposition','Disposition'],['refurbishedBy','Refurbished by'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
 ];
 const defaults={serialNumber:true,assetTag:true,dateReceived:true,deviceType:true,model:true,pageCount:true,disposition:true,refurbishedBy:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
 let devices=[],editingId=null,stream=null,zxingControls=null,scanTarget='inventory',printPrefs={...defaults};
@@ -194,7 +195,7 @@ function render(){
 function openDetail(id){
  const d=devices.find(x=>x.id===id);if(!d)return;
  $('detailTitle').textContent=(d.model||'Printer')+' — Details';
- const items=[['Serial number',d.serialNumber],['Asset tag',d.assetTag],['Date received',d.dateReceived],['Type',d.deviceType],['Model',d.model],['Page count',d.pageCount],['Disposition',d.disposition],['Refurbished by',d.refurbishedBy],['Cost',money(d.cost)],['Selling price',money(d.price)],['Sale status',d.pendingSale?'Sale pending':'Available'],['Salesperson',d.claimedBy],['Refurbishment notes',d.notes],['Barcode',d.barcode]];
+ const items=[['Serial number',d.serialNumber],['Asset tag',d.assetTag],['Acquired from',d.acquiredFrom],['Date received',d.dateReceived],['Type',d.deviceType],['Model',d.model],['Page count',d.pageCount],['Disposition',d.disposition],['Refurbished by',d.refurbishedBy],['Cost',money(d.cost)],['Selling price',money(d.price)],['Sale status',d.pendingSale?'Sale pending':'Available'],['Salesperson',d.claimedBy],['Refurbishment notes',d.notes]];
  $('detailContent').innerHTML=items.map(([label,value])=>`<div class="field"><label>${esc(label)}</label><div style="white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 0">${esc(value===undefined||value===null||value===''?'—':value)}</div></div>`).join('');
  $('editDetailBtn').onclick=()=>{closeDialog($('detailDialog'));openDevice(id)};
  showDialog($('detailDialog'));
