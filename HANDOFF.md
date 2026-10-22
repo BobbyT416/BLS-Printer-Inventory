@@ -431,3 +431,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - User confirmed the inventory app opens in Safari and camera preview appears immediately, so startup delay is not the likely cause.
 - Restored requested 1920×1080 resolution for native and ZXing camera constraints after 720p may have reduced barcode detail; kept Code 128-specific label decoding and 100 ms ZXing interval.
 - JavaScript syntax checks passed for both inline script blocks. Not physically tested on the user's iPhone.
+
+
+## Version 1.8.22 — product lookup improvements and shorter display names (2026-10-22)
+- Expanded verified product lookup entry F2A80A to identify model `HP LaserJet Enterprise Flow MFP M527cm` and type `MFP` when product number is captured or edited. If that product number is changed to an unknown value, auto-filled model/type values are cleared; manually entered model values are preserved.
+- Added `shortModelName()` to simplify model labels on the inventory home list and generated reports (print/PDF/Word/CSV) while retaining full model name in Add/Edit and printer details. Example: `HP LaserJet Enterprise Flow MFP M527cm` displays as `M527cm` in list/reports.
+- Scanner glare itself cannot be removed by software; guidance is to keep the label flat, avoid direct reflections, and try a slight angle or diffuse lighting. Avoid aggressive image processing until scanner behavior is diagnosed.
+- JavaScript syntax checks passed for both inline script blocks. Not physically tested on the user's device.
