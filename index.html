@@ -24,20 +24,20 @@ input,select,textarea{width:100%;border:1px solid #cbd5df;border-radius:8px;padd
 body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:none}dialog{border:0;border-radius:16px;padding:0;width:min(980px,calc(100% - 24px));max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);box-shadow:0 20px 70px #14223855;overflow:hidden;overscroll-behavior:contain;flex-direction:column}
 /* Fit dialogs to Safari's currently visible viewport, including when browser chrome is present. */
 dialog{max-height:calc(var(--visible-vh, 100dvh) - 12px);margin:auto}dialog[open]{display:flex}
-/* Make the Add/Edit form easier to use on phones: more visible fields, less wasted space. */
+/* Make the Add/Edit form easy to scan and scroll on phones. */
 #deviceDialog{width:calc(100% - 12px);max-width:760px;max-height:calc(var(--visible-vh, 100dvh) - 12px);border-radius:12px}
 #deviceDialog .modal-head{padding:10px 14px}
 #deviceDialog .modal-head h2{font-size:19px}
 #deviceDialog .modal-body{padding:12px;overscroll-behavior:contain}
 #deviceDialog .note{margin-bottom:9px!important;padding:7px 9px;font-size:12px;line-height:1.3}
-#deviceDialog .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 10px}
+#deviceDialog .form-grid{grid-template-columns:minmax(0,1fr);gap:10px}
 #deviceDialog .field label{display:block;margin-bottom:3px;font-size:13px;line-height:1.25}
 #deviceDialog input:not([type=checkbox]),#deviceDialog select,#deviceDialog textarea{padding:9px 10px;min-height:38px;font-size:16px}
 #deviceDialog textarea{min-height:76px}
 #deviceDialog .hint{margin-top:3px;font-size:11px;line-height:1.25}
-#deviceDialog .span3{grid-column:1/-1}
+
 #deviceDialog .modal-foot{padding:9px 12px max(9px,env(safe-area-inset-bottom));gap:8px}
-@media(max-width:520px){#deviceDialog{width:calc(100% - 8px);max-height:calc(var(--visible-vh, 100dvh) - 8px)}#deviceDialog .modal-body{padding:9px}#deviceDialog .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#deviceDialog .field.span3{grid-column:1/-1}#deviceDialog .note{font-size:11px}#deviceDialog .modal-foot button{padding:9px 12px}}#deviceForm{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden}dialog::backdrop{background:#14223888}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:17px 20px;border-bottom:1px solid var(--line);flex:0 0 auto}.modal-body{padding:20px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1 1 auto;min-height:0;max-height:none}
+#deviceDialog .field.span3{grid-column:1/-1}@media(max-width:520px){#deviceDialog{width:calc(100% - 8px);max-height:calc(var(--visible-vh, 100dvh) - 8px)}#deviceDialog .modal-body{padding:9px}#deviceDialog .form-grid{grid-template-columns:minmax(0,1fr);gap:10px}#deviceDialog .note{font-size:11px}#deviceDialog .modal-foot button{padding:9px 12px}}#deviceForm{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden}dialog::backdrop{background:#14223888}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:17px 20px;border-bottom:1px solid var(--line);flex:0 0 auto}.modal-body{padding:20px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1 1 auto;min-height:0;max-height:none}
 /* Compact read-only printer details: keep labels close to their values. */
 #detailDialog .modal-body{padding:14px 18px}
 #detailDialog .form-grid{display:grid;grid-template-columns:1fr;gap:12px}
@@ -112,7 +112,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.7
+ Version 1.8.8
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -233,9 +233,20 @@ function openDevice(id=null,barcode=''){
  $('deviceTitle').textContent=id?'Edit printer':'Add printer';$('deleteBtn').style.display=id?'inline-block':'none';
  for(const [k] of fields){$(k).value=d?.[k]??''}
  if(barcode)$('barcode').value=barcode;
- showDialog($('deviceDialog'));setTimeout(()=>$('barcode').focus(),100)
+ showDialog($('deviceDialog'))
 }
 function closeDevice(){closeDialog($('deviceDialog'))}
+ // Dismiss the software keyboard when the Add/Edit form starts scrolling on mobile.
+ // Opening the dialog no longer auto-focuses Barcode; users tap a field when ready.
+ const deviceFormBody=$('deviceDialog').querySelector('.modal-body');
+ deviceFormBody.addEventListener('scroll',()=>{
+  const active=document.activeElement;
+  if(active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox')active.blur();
+ },{passive:true});
+ deviceFormBody.addEventListener('touchmove',()=>{
+  const active=document.activeElement;
+  if(active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA)$/.test(active.tagName))active.blur();
+ },{passive:true});
 const barcodeInput=$('barcode'),serialInput=$('serialNumber');
 barcodeInput.addEventListener('input',()=>{if(!editingId||!serialInput.value.trim())serialInput.value=barcodeInput.value.trim().toUpperCase()});
 barcodeInput.addEventListener('change',()=>{barcodeInput.value=barcodeInput.value.trim();if(!serialInput.value.trim())serialInput.value=barcodeInput.value.toUpperCase()});
