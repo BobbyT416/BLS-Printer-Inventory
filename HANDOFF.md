@@ -226,3 +226,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.6.8 — Logo size (2026-10-22)
 - Increased the logo's maximum width and height by approximately 10% for desktop and mobile breakpoints, preserving aspect-ratio containment and transparent styling.
 - Validation: JavaScript syntax check passed. No live browser/iPhone visual test performed.
+
+
+## v1.6.9 — Compact fixed header and contained scrolling (2026-10-22)
+- Reduced header vertical padding and logo/title gap; tightened mobile header spacing and title size to reduce unused space above and below.
+- Set the app viewport to a full-height flex layout with the header kept at the top and the main content area as the scroll container. Added touch scrolling and overscroll containment to prevent the page behind the active content from scrolling. Added print overrides to preserve report printing layout.
+- Validation: JavaScript syntax check passed. No live iPhone visual/scroll test performed.
