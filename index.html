@@ -112,7 +112,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.18
+ Version 1.8.19
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -322,13 +322,14 @@ async function startCamera(){
  $('scanBox').innerHTML='<video id="scanVideo" autoplay muted playsinline></video>';
  try{
   // Request camera permission immediately, before loading any barcode library.
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},focusMode:{ideal:'continuous'}},audio:false});
   const cameraVideo=$('scanVideo');cameraVideo.srcObject=stream;
   try{await cameraVideo.play()}catch(e){}
   $('scanStatus').textContent='Camera permission granted. Starting barcode reader…';
   const supportedBarcodeFormats=('BarcodeDetector' in window)?await BarcodeDetector.getSupportedFormats().catch(()=>[]):[];
   if(supportedBarcodeFormats.includes('code_128')){
-   const detector=new BarcodeDetector({formats:['code_128','code_39','ean_13','ean_8','upc_a','upc_e','qr_code','itf'].filter(f=>supportedBarcodeFormats.includes(f))});
+   const preferredFormats=scanTarget==='formLabel'?['code_128']:['code_128','code_39','ean_13','ean_8','upc_a','upc_e','qr_code','itf'];
+   const detector=new BarcodeDetector({formats:preferredFormats.filter(f=>supportedBarcodeFormats.includes(f))});
    const video=$('scanVideo');video.srcObject=stream;
    $('scanStatus').textContent='Camera running. Hold the barcode steady in view.';
    let detecting=false;
@@ -371,10 +372,9 @@ async function startCamera(){
     const ZX=window.ZXingBrowser;
     const hints=new Map();
     if(ZX.DecodeHintType&&ZX.BarcodeFormat){
-     hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,[ZX.BarcodeFormat.CODE_128,ZX.BarcodeFormat.CODE_39,ZX.BarcodeFormat.EAN_13,ZX.BarcodeFormat.EAN_8,ZX.BarcodeFormat.UPC_A,ZX.BarcodeFormat.UPC_E,ZX.BarcodeFormat.QR_CODE,ZX.BarcodeFormat.ITF].filter(Boolean));
-     if(ZX.DecodeHintType.TRY_HARDER)hints.set(ZX.DecodeHintType.TRY_HARDER,true);
+     hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,(scanTarget==='formLabel'?[ZX.BarcodeFormat.CODE_128]:[ZX.BarcodeFormat.CODE_128,ZX.BarcodeFormat.CODE_39,ZX.BarcodeFormat.EAN_13,ZX.BarcodeFormat.EAN_8,ZX.BarcodeFormat.UPC_A,ZX.BarcodeFormat.UPC_E,ZX.BarcodeFormat.QR_CODE,ZX.BarcodeFormat.ITF]).filter(Boolean));
     }
-    const reader=new ZX.BrowserMultiFormatReader(hints,150);
+    const reader=new ZX.BrowserMultiFormatReader(hints,scanTarget==='formLabel'?80:100);
     $('scanStatus').textContent='Camera running. Hold the barcode steady in view.';
     // Restart the stream through ZXing with rear-camera and higher-resolution preferences.
     if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
