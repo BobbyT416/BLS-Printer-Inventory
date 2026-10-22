@@ -174,3 +174,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.5.9 — Header color (2026-10-22)
 - Changed the header background to the cyan-blue sampled from the supplied HP logo image (`#42C0FB`).
 - Validation: JavaScript syntax check passed. No live visual browser/iPhone test performed.
+
+
+## v1.6.0 — Gradient header colors (2026-10-22)
+- Changed the header from a flat HP blue to a left-to-right gradient: HP cyan-blue `#42C0FB` on the left transitioning to the vivid blue sampled from the supplied Brothers Lazer bolt image (`#024AD8`) on the right.
+- Validation: JavaScript syntax check passed. No live visual browser/iPhone test performed.
