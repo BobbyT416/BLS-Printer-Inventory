@@ -88,3 +88,11 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - The inventory list, filters, and printer-record behavior are otherwise unchanged.
 - Updated the visible app version to 1.4.5.
 - Validation: extracted inline JavaScript passed `new Function` syntax compilation. Visual/browser testing was not performed in this change.
+
+
+## Update — 2026-10-22 (v1.4.6)
+- Replaced the single disposition dropdown with a checkbox multi-select containing all seven dispositions and an Archived machines checkbox.
+- Added Select all and Deselect all controls. Archived mode shows sold devices with an archive timestamp; normal mode excludes sold devices.
+- Removed the Archived machines button from the home-page header.
+- Print list now follows the disposition checkbox selection and archive checkbox.
+- Validation: inline JavaScript syntax check passed. Visual/browser testing was not performed.
