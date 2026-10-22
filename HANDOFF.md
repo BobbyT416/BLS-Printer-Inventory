@@ -149,3 +149,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.5.5 — Print report dialog fix (2026-10-22)
 - Fixed the Report setup dialog remaining open when **Print report** was clicked. The handler now prepares the inventory report, closes the setup dialog, then invokes the browser print UI after a short delay so the print stylesheet targets the inventory report rather than the setup screen.
 - Validation: JavaScript syntax check passed. Not visually tested in a live browser or on iPhone; verify the printed preview on-device.
+
+
+## v1.5.6 — Report column order (2026-10-22)
+- Reordered printed inventory report columns to: Serial Number, Model, Asset Tag, Type, Page Count, Disposition, Cost, Price, Status.
+- Reordered CSV export headers and row values to match the same requested order. Word document output inherits the report table order.
+- Validation: JavaScript syntax check passed. Live print preview and downloaded-file output were not tested on-device.
