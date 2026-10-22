@@ -139,3 +139,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Replaced the separate Export backup and Import backup header buttons with one gear icon.
 - Gear opens a compact choice prompt for Export backup or Import backup; both existing backup flows are retained. Report and Scan barcode remain visible.
 - Validation: inline JavaScript syntax check passed; iPhone interaction has not been live-tested.
+
+
+## Update — 2026-10-22 (v1.5.4)
+- Removed the homepage subtitle “Receiving, refurbishment tracking, and resale readiness.”
+- Validation: inline JavaScript syntax check passed.
