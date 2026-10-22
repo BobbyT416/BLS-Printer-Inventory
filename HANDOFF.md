@@ -418,3 +418,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Requests 1920×1080 video and continuous-focus preference at camera startup.
 - In label mode, both native BarcodeDetector and ZXing prioritize Code 128 rather than trying multiple barcode formats. ZXing polling interval reduced from 150 ms to 80 ms for label scanning (100 ms for general scanning), and the slower TRY_HARDER hint was removed.
 - JavaScript syntax checks passed for both inline script blocks. Not physically tested on the user's iPhone; validate scan speed on the same clear label. Camera hardware/browser support may limit the effect of requested resolution and focus.
+
+
+## Version 1.8.20 — scanning reliability adjustment (2026-10-22)
+- Lowered requested camera resolution to 1280×720 for both native BarcodeDetector and ZXing paths to reduce camera/decode load while retaining sufficient resolution for label barcodes.
+- Throttled native BarcodeDetector polling to a maximum of 10 attempts per second rather than scheduling a detect call every animation frame.
+- Updated scanner guidance to center one barcode and hold it steady while autofocus settles.
+- JavaScript syntax checks passed for both inline script blocks. Not physically tested on the user's device. If recognition remains inconsistent, next diagnostic step is to identify which reader path the browser is using and add fallback from native BarcodeDetector to ZXing after a short timeout.
