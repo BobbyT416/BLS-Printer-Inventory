@@ -295,3 +295,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Moved **Acquired from** to immediately follow **Disposition** in Printer Details.
 - Removed **Date received** from the read-only Printer Details list as well as the Add/Edit form.
 - Validation: JavaScript syntax check passed. No live iPhone/browser test performed.
+
+
+## v1.8.1 — Return home after saving (2026-10-22)
+- After a successful save from Add/Edit Printer, close both the edit dialog and any underlying Printer Details dialog, then reset inventory filters and scroll to the home inventory list.
+- Validation: JavaScript syntax check passed. No live iPhone/browser test performed.
