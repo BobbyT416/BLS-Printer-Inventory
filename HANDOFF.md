@@ -162,3 +162,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Added a compact barcode icon button at the right edge of the home search field. Tapping it opens the scanner in inventory-search mode; a scanned value fills the search field and filters the inventory rather than opening or creating a printer record.
 - Bumped the visible app version to 1.5.7.
 - Validation: JavaScript syntax check passed. No live browser or iPhone camera test performed.
+
+
+## v1.5.8 — Header and home toolbar redesign (2026-10-22)
+- Removed all interactive buttons from the header; header now uses a deep navy-to-blue gradient with a subtle diagonal accent and transparent logo styling.
+- Moved Report and gear/settings controls next to Add Printer below the header, with the search field and barcode-search button alongside them. Responsive CSS wraps the controls on narrow screens.
+- Logo asset replacement remains outstanding: the HTML still embeds the prior logo image; its white tile is removed by styling, but the exact newly supplied transparent logo has not yet been uploaded/embedded. Do not treat the exact-logo replacement as complete.
+- Validation: JavaScript syntax check passed. No live browser/iPhone visual test performed.
