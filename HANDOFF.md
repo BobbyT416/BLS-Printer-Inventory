@@ -366,3 +366,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## Version 1.8.10 — 2026-10-22
 - Corrected Add/Edit Printer field order: Serial number, Model number, then Asset tag.
 - Validation: both inline JavaScript blocks passed syntax compilation. No live iPhone test performed.
+
+
+## Version 1.8.11 — 2026-10-22
+- Adjusted Add/Edit form touch handling so a scroll gesture starting on an input, select, button, label, or Notes textarea does not immediately dismiss the keyboard. Gestures starting in non-control form space can still dismiss it.
+- Added extra scroll clearance after the Notes textarea to help keep the final field usable near the bottom of the form.
+- Validation: both inline JavaScript blocks passed syntax compilation. No live iPhone test performed.
