@@ -425,3 +425,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Throttled native BarcodeDetector polling to a maximum of 10 attempts per second rather than scheduling a detect call every animation frame.
 - Updated scanner guidance to center one barcode and hold it steady while autofocus settles.
 - JavaScript syntax checks passed for both inline script blocks. Not physically tested on the user's device. If recognition remains inconsistent, next diagnostic step is to identify which reader path the browser is using and add fallback from native BarcodeDetector to ZXing after a short timeout.
+
+
+## Version 1.8.21 — Safari scanner resolution adjustment (2026-10-22)
+- User confirmed the inventory app opens in Safari and camera preview appears immediately, so startup delay is not the likely cause.
+- Restored requested 1920×1080 resolution for native and ZXing camera constraints after 720p may have reduced barcode detail; kept Code 128-specific label decoding and 100 ms ZXing interval.
+- JavaScript syntax checks passed for both inline script blocks. Not physically tested on the user's iPhone.
