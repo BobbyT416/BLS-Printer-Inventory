@@ -112,7 +112,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.14
+ Version 1.8.15
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -128,6 +128,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
     <div class="field"><label for="barcode">Barcode</label><div style="display:flex;gap:7px"><input id="barcode" autocomplete="off" placeholder="Optional — enter or scan barcode"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Optional. Leave blank unless you enter or scan a barcode.</div></div>
     <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"></div>
      <div class="field"><label for="model">Model number *</label><input id="model" required placeholder="e.g. M607"></div>
+     <div class="field"><label for="productNumber">Product number</label><input id="productNumber" autocomplete="off" placeholder="Manufacturer product number"></div>
     <div class="field"><label for="assetTag">Asset tag</label><input id="assetTag" autocomplete="off" placeholder="Enter company asset tag"></div>
     <div class="field"><label for="acquiredFrom">Acquired from</label><input id="acquiredFrom" autocomplete="off" placeholder="Company, person, auction, etc."></div>
     
@@ -191,9 +192,9 @@ const memoryStore={};
 function safeGet(key){try{return window.localStorage.getItem(key)}catch(e){return Object.prototype.hasOwnProperty.call(memoryStore,key)?memoryStore[key]:null}}
 function safeSet(key,value){try{window.localStorage.setItem(key,String(value));memoryStore[key]=String(value);return true}catch(e){console.error('Storage write failed for '+key,e);return false}}
 const fields=[
-['serialNumber','Serial number'],['assetTag','Asset tag'],['deviceType','Type'],['model','Model'],['pageCount','Page count'],['disposition','Disposition'],['acquiredFrom','Acquired from'],['refurbishedBy','Refurbished by'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
+['serialNumber','Serial number'],['assetTag','Asset tag'],['deviceType','Type'],['model','Model'],['productNumber','Product number'],['pageCount','Page count'],['disposition','Disposition'],['acquiredFrom','Acquired from'],['refurbishedBy','Refurbished by'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
 ];
-const defaults={serialNumber:true,assetTag:true,deviceType:true,model:true,pageCount:true,disposition:true,acquiredFrom:true,refurbishedBy:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
+const defaults={serialNumber:true,assetTag:true,deviceType:true,model:true,productNumber:true,pageCount:true,disposition:true,acquiredFrom:true,refurbishedBy:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
 let devices=[],editingId=null,stream=null,zxingControls=null,scanTarget='inventory',printPrefs={...defaults};
 try{devices=JSON.parse(safeGet(STORE)||'[]');if(!Array.isArray(devices))devices=[];let typeMigrated=false;devices=devices.map(d=>{if(d&&d.deviceType==='Single function printer'){typeMigrated=true;return {...d,deviceType:'Printer'}}return d});if(typeMigrated)safeSet(STORE,JSON.stringify(devices));}catch(e){devices=[]}
 try{printPrefs={...defaults,...JSON.parse(safeGet(PRINT)||'{}')};}catch(e){}
@@ -275,7 +276,7 @@ $('deviceForm').addEventListener('submit',e=>{
  d.barcode=barcode;
  for(const [k] of fields){if(k==='pendingSale')d[k]=$(k).checked;else if(k==='claimedBy')d[k]=$('claimedBy').value.trim();else d[k]=$(k).value.trim();}
  d.disposition=$('disposition').value;
- d.serialNumber=String($('serialNumber').value.trim()||$('barcode').value.trim()).toUpperCase();
+ d.serialNumber=String($('serialNumber').value.trim()).toUpperCase();
  d.serialNumber=String(d.serialNumber||'').toUpperCase();
  if(d.disposition==='Sold'){if(old.disposition!=='Sold'||!old.soldAt)d.soldAt=new Date().toISOString();}else d.soldAt=null;
  d.pageCount=d.pageCount===''?'':Number(d.pageCount);d.cost=d.cost===''?0:Number(d.cost);d.price=d.price===''?0:Number(d.price);
