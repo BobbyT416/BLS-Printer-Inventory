@@ -307,3 +307,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Fixed a save-data bug: the form's barcode was validated but not copied onto a newly created device record. The barcode is now explicitly saved, which supports inventory matching and duplicate detection.
 - Confirmed the successful-save flow closes both Add/Edit and underlying Details dialogs, resets home inventory filters, renders the inventory, and scrolls to the top.
 - Validation: JavaScript syntax checks passed. No live iPhone/browser test or real save test performed in this environment.
+
+
+## v1.8.3 — Home-screen icon and web app metadata (2026-10-22)
+- Added `icon.svg`, a blue-gradient printer/checkmark icon branded BLS Inventory.
+- Added `manifest.webmanifest` with the app name, short name, standalone display mode, theme/background colors, and icon declaration for supported browsers/Android installation.
+- Added favicon, Apple touch icon, and manifest links to `index.html` with cache-busting query strings.
+- Validation: JavaScript syntax checks passed. Not tested on physical iPhone/Android. Note: iOS versions can require a PNG `apple-touch-icon`; this commit currently points that tag to SVG, so an actual iPhone home-screen icon still needs device verification and may require a PNG asset for reliable iOS support.
