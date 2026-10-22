@@ -127,3 +127,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Removed the Inventory heading from the home-page inventory panel.
 - Left the Add printer button aligned to the left side of the panel header.
 - Validation: inline JavaScript syntax check passed; no live iPhone visual test was performed.
+
+
+## Update — 2026-10-22 (v1.5.2)
+- Removed the Home button from the top navigation.
+- Made the Brothers Lazer Service logo a keyboard-accessible link that resets search/type/disposition/archive filters and returns to the top of the inventory.
+- Validation: inline JavaScript syntax check passed; no live iPhone visual test was performed.
