@@ -300,3 +300,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.8.1 — Return home after saving (2026-10-22)
 - After a successful save from Add/Edit Printer, close both the edit dialog and any underlying Printer Details dialog, then reset inventory filters and scroll to the home inventory list.
 - Validation: JavaScript syntax check passed. No live iPhone/browser test performed.
+
+
+## v1.8.2 — iPhone dialog viewport and printer-save fix (2026-10-22)
+- Dialogs now size to the current `visualViewport` height and update when that viewport resizes or scrolls, addressing iPhone Safari browser-chrome overlap that could hide the bottom action buttons.
+- Fixed a save-data bug: the form's barcode was validated but not copied onto a newly created device record. The barcode is now explicitly saved, which supports inventory matching and duplicate detection.
+- Confirmed the successful-save flow closes both Add/Edit and underlying Details dialogs, resets home inventory filters, renders the inventory, and scrolls to the top.
+- Validation: JavaScript syntax checks passed. No live iPhone/browser test or real save test performed in this environment.
