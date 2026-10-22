@@ -386,3 +386,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Configured the ZXing fallback scanner with explicit common barcode formats including Code 128, plus TRY_HARDER when the library exposes the corresponding hints. The native BarcodeDetector branch remains disabled because the implementation uses the ZXing fallback.
 - Scanning now fills only the Barcode field; it no longer copies scanned values into Serial number.
 - Validation: both inline JavaScript blocks passed syntax compilation. Scanner behavior still needs an on-device test with the supplied label; no physical iPhone test performed.
+
+
+## Version 1.8.14 — 2026-10-22
+- Fixed the native BarcodeDetector branch being hard-disabled; it is now used only when the browser reports Code 128 support, otherwise the ZXing fallback is used.
+- Raised requested camera resolution to 2560×1440 and reduced ZXing scan interval to 150 ms to improve chances of reading dense linear barcodes.
+- Validation: both inline JavaScript blocks passed syntax compilation. Still requires on-device testing against the user's physical label; no live iPhone test performed.
