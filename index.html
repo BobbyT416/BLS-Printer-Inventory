@@ -93,7 +93,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.0
+ Version 1.8.1
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -238,7 +238,7 @@ $('deviceForm').addEventListener('submit',e=>{
  if(editingId)devices=devices.map(x=>x.id===editingId?d:x);else devices.push(d);
  const saved=persist();
  if(!saved){if(editingId)devices=devices.map(x=>x.id===editingId?old:x);else devices=devices.filter(x=>x.id!==d.id);return}
- closeDevice();
+ closeDevice();closeDialog($('detailDialog'));
  archiveMode=false;listView=false;
  ['search','filterType'].forEach(id=>$(id).value='');document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=true);$('filterArchived').checked=false;
  render();window.scrollTo({top:0,behavior:'smooth'});
