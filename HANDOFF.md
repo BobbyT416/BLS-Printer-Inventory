@@ -271,3 +271,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.7.6 — Disposition filter summary label (2026-10-22)
 - Changed the filter summary so any nonzero partial selection displays **Disposition** instead of a count such as **5 selected**. All selected still displays **Dispositions**; zero selected displays **No dispositions selected**.
 - Validation: JavaScript syntax check passed. No live browser/iPhone test performed.
+
+
+## v1.7.7 — Apply Filter button label (2026-10-22)
+- Changed the disposition menu's **Close** button label to **Apply Filter**. Its existing behavior remains closing the menu with the current checkbox selections applied.
+- Validation: JavaScript syntax check passed. No live browser/iPhone test performed.
