@@ -113,3 +113,11 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Reworked the disposition filter popup to use fixed positioning and calculate its position/maximum height against the current viewport. It opens below the filter when possible, otherwise above, and keeps its own options scrollable on small screens.
 - Repositions on window resize and scrolling so it should not be clipped by the inventory panel or cover controls outside the viewport.
 - Validation: inline JavaScript syntax check passed. Physical iPhone Safari testing was not available.
+
+
+## Update — 2026-10-22 (v1.5.0)
+- Renamed the header button from Print setup to Report and changed the dialog heading to Report setup.
+- Removed the Print list button from the inventory panel.
+- Added report format selector (PDF, CSV, Word DOC), Save report and Print report actions inside Report setup. CSV exports the report rows. DOC exports a Word-compatible HTML document. PDF uses the browser print dialog so the user can choose Save as PDF/Files; Print report opens the print dialog.
+- Existing report field preferences and current inventory filters are retained. The report uses the nine approved columns.
+- Validation: inline JavaScript syntax check passed. PDF save behavior and download handling have not been physically tested on iPhone.
