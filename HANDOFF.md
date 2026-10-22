@@ -184,3 +184,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.6.1 — Logo vignette (2026-10-22)
 - Added a subtle, broad radial light-blue/white vignette behind the logo to lift it from the blue gradient without creating a hard box or sticker effect. It is a CSS-only effect and does not modify inventory data or the logo image.
 - Validation: JavaScript syntax check passed. No live browser/iPhone visual test performed.
+
+
+## v1.6.2 — App title (2026-10-22)
+- Updated the visible header title and browser document title to **BLS Used Printer Inventory**.
+- Validation: JavaScript syntax check passed. No live browser/iPhone visual test performed.
