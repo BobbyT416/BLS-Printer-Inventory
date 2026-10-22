@@ -342,3 +342,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Kept the longer refurbishment notes field full width and preserved a scrollable form body plus fixed footer actions. Dialog sizing uses the current visible viewport height.
 - Inputs retain a 16px font size on mobile to avoid iOS Safari auto-zoom while typing.
 - Validation: JavaScript syntax checks passed. No live iPhone layout test performed.
+
+
+## Version 1.8.8 — 2026-10-22
+- Changed Add/Edit Printer form to a single-column layout on desktop and mobile so fields are easier to read and the user can scroll vertically.
+- Removed automatic focus on Barcode when opening Add/Edit; the iPhone keyboard now stays hidden until the user taps a field.
+- Added scroll/touch-move handling inside the Add/Edit form to blur a focused text field and dismiss the software keyboard when scrolling begins. Tapping another field brings it back.
+- Validation: both inline JavaScript blocks passed syntax compilation. This is not a live iPhone Safari test; verify keyboard dismissal and field selection on-device.
