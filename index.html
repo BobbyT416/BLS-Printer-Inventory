@@ -112,7 +112,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.20
+ Version 1.8.21
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -322,7 +322,7 @@ async function startCamera(){
  $('scanBox').innerHTML='<video id="scanVideo" autoplay muted playsinline></video>';
  try{
   // Request camera permission immediately, before loading any barcode library.
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720},focusMode:{ideal:'continuous'}},audio:false});
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},focusMode:{ideal:'continuous'}},audio:false});
   const cameraVideo=$('scanVideo');cameraVideo.srcObject=stream;
   try{await cameraVideo.play()}catch(e){}
   $('scanStatus').textContent='Camera permission granted. Starting barcode reader…';
@@ -377,12 +377,12 @@ async function startCamera(){
     if(ZX.DecodeHintType&&ZX.BarcodeFormat){
      hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,(scanTarget==='formLabel'?[ZX.BarcodeFormat.CODE_128]:[ZX.BarcodeFormat.CODE_128,ZX.BarcodeFormat.CODE_39,ZX.BarcodeFormat.EAN_13,ZX.BarcodeFormat.EAN_8,ZX.BarcodeFormat.UPC_A,ZX.BarcodeFormat.UPC_E,ZX.BarcodeFormat.QR_CODE,ZX.BarcodeFormat.ITF]).filter(Boolean));
     }
-    const reader=new ZX.BrowserMultiFormatReader(hints,scanTarget==='formLabel'?80:100);
+    const reader=new ZX.BrowserMultiFormatReader(hints,scanTarget==='formLabel'?100:100);
     $('scanStatus').textContent='Camera running. Center one barcode, keep it steady, and allow a moment for focus.';
     // Restart the stream through ZXing with rear-camera and higher-resolution preferences.
     if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
     const video=$('scanVideo');
-    video.style.width='100%';video.style.height='auto';video.setAttribute('playsinline','');video.muted=true;
+    video.style.width='100%';video.style.height='auto';video.setAttribute('playsinline','');video.muted=true;video.setAttribute('autoplay','');
     zxingControls=await reader.decodeFromConstraints(
      {video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720},focusMode:{ideal:'continuous'}},audio:false},
      video,
