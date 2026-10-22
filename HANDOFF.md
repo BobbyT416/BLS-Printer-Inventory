@@ -314,3 +314,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Added `manifest.webmanifest` with the app name, short name, standalone display mode, theme/background colors, and icon declaration for supported browsers/Android installation.
 - Added favicon, Apple touch icon, and manifest links to `index.html` with cache-busting query strings.
 - Validation: JavaScript syntax checks passed. Not tested on physical iPhone/Android. Note: iOS versions can require a PNG `apple-touch-icon`; this commit currently points that tag to SVG, so an actual iPhone home-screen icon still needs device verification and may require a PNG asset for reliable iOS support.
+
+
+## v1.8.4 — Honest local-storage save failure handling (2026-10-22)
+- Self-audit found `safeSet()` swallowed `localStorage.setItem()` failures, then `persist()` returned success anyway because the write helper never reported failure. In Safari private/restricted storage or quota failure, the app could close the form and appear to save while the record only existed in memory and disappeared on reload.
+- `safeSet()` now returns true only after a successful `localStorage` write; `persist()` aborts the save flow and shows an explicit **Printer was NOT saved** message if the write fails. This prevents false-success navigation.
+- Barcode remains a required field. The form's submit button and successful-save navigation were inspected; successful persistence should close the form/details and reset the home inventory list.
+- Validation: JavaScript syntax checks passed. No live iPhone save/reload test performed.
