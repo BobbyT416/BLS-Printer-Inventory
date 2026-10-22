@@ -112,7 +112,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.11
+ Version 1.8.12
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -125,7 +125,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
   <div class="modal-body">
    <div class="note" style="margin-bottom:15px">The barcode sticker identifies the individual device. Scan with your camera or use a USB/Bluetooth scanner that types into the barcode field.</div>
    <div class="form-grid">
-    <div class="field"><label for="barcode">Barcode</label><div style="display:flex;gap:7px"><input id="barcode" autocomplete="off" placeholder="Optional — enter or scan barcode"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Optional. If left blank, a temporary unique ID is assigned.</div></div>
+    <div class="field"><label for="barcode">Barcode</label><div style="display:flex;gap:7px"><input id="barcode" autocomplete="off" placeholder="Optional — enter or scan barcode"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Optional. Leave blank unless you enter or scan a barcode.</div></div>
     <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"></div>
      <div class="field"><label for="model">Model number *</label><input id="model" required placeholder="e.g. M607"></div>
     <div class="field"><label for="assetTag">Asset tag</label><input id="assetTag" autocomplete="off" placeholder="Enter company asset tag"></div>
@@ -261,14 +261,14 @@ deviceFormBody.addEventListener('touchmove',e=>{
 deviceFormBody.addEventListener('touchend',()=>{formTouchStartY=null;},{passive:true});
 deviceFormBody.addEventListener('touchcancel',()=>{formTouchStartY=null;},{passive:true});
 const barcodeInput=$('barcode'),serialInput=$('serialNumber');
-barcodeInput.addEventListener('input',()=>{if(!editingId||!serialInput.value.trim())serialInput.value=barcodeInput.value.trim().toUpperCase()});
-barcodeInput.addEventListener('change',()=>{barcodeInput.value=barcodeInput.value.trim();if(!serialInput.value.trim())serialInput.value=barcodeInput.value.toUpperCase()});
-barcodeInput.addEventListener('blur',()=>{barcodeInput.value=barcodeInput.value.trim();if(!serialInput.value.trim())serialInput.value=barcodeInput.value.toUpperCase()});
+barcodeInput.addEventListener('input',()=>{});
+barcodeInput.addEventListener('change',()=>{barcodeInput.value=barcodeInput.value.trim()});
+barcodeInput.addEventListener('blur',()=>{barcodeInput.value=barcodeInput.value.trim()});
 serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.trim().toUpperCase()});
 $('disposition').addEventListener('change',()=>{$('disposition').dataset.userChanged='true'});
 $('deviceForm').addEventListener('invalid',e=>{const el=e.target;toast((el.labels?.[0]?.textContent||el.id||'A required field')+' is required. Please complete the highlighted field.');},{capture:true});
 $('deviceForm').addEventListener('submit',e=>{
- e.preventDefault();let barcode=$('barcode').value.trim();const serialEntered=$('serialNumber').value.trim();if(!$('deviceType').value){toast('Select a printer type before saving.');$('deviceType').focus();return}if(!$('model').value.trim()){toast('Enter the model number before saving.');$('model').focus();return}if(!barcode){barcode='AUTO-'+Date.now().toString(36).toUpperCase();$('barcode').value=barcode} $('serialNumber').value=(serialEntered||barcode).toUpperCase();
+ e.preventDefault();const barcode=$('barcode').value.trim();if(!$('deviceType').value){toast('Select a printer type before saving.');$('deviceType').focus();return}if(!$('model').value.trim()){toast('Enter the model number before saving.');$('model').focus();return}$('serialNumber').value=$('serialNumber').value.trim().toUpperCase();
  if(devices.some(d=>String(d.barcode||'').toLowerCase()===barcode.toLowerCase()&&d.id!==editingId)){toast('That barcode is already in inventory. Open the existing device instead.');return}
  const old=devices.find(d=>d.id===editingId)||{};
  const d={...old,id:editingId||('dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,7))};
