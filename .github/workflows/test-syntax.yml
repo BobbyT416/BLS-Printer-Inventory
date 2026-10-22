@@ -24,10 +24,10 @@ jobs:
           from pathlib import Path
           import re
           html = Path("index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r"<script(?:\\s[^>]*)?>(.*?)</script\\s*>", html, re.I | re.S)
+          scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script\s*>", html, re.I | re.S)
           if not scripts:
               raise SystemExit("No inline script blocks found")
-          Path("/tmp/app-inline.js").write_text("\\n".join(scripts), encoding="utf-8")
+          Path("/tmp/app-inline.js").write_text("\n".join(scripts), encoding="utf-8")
           print(f"Extracted {len(scripts)} inline script block(s)")
           PY
       - name: Check JavaScript syntax
