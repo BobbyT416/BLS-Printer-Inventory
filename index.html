@@ -33,7 +33,7 @@ dialog{max-height:calc(var(--visible-vh, 100dvh) - 12px);margin:auto}dialog[open
 #deviceDialog .form-grid{grid-template-columns:minmax(0,1fr);gap:10px}
 #deviceDialog .field label{display:block;margin-bottom:3px;font-size:13px;line-height:1.25}
 #deviceDialog input:not([type=checkbox]),#deviceDialog select,#deviceDialog textarea{padding:9px 10px;min-height:38px;font-size:16px}
-#deviceDialog textarea{min-height:76px}
+#deviceDialog textarea{min-height:76px;scroll-margin-bottom:180px}#deviceDialog .field:has(#notes){padding-bottom:24px}
 #deviceDialog .hint{margin-top:3px;font-size:11px;line-height:1.25}
 
 #deviceDialog .modal-foot{padding:9px 12px max(9px,env(safe-area-inset-bottom));gap:8px}
@@ -112,7 +112,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.10
+ Version 1.8.11
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -252,6 +252,9 @@ deviceFormBody.addEventListener('touchmove',e=>{
  const y=e.touches?.[0]?.clientY;
  if(typeof y!=='number'||Math.abs(y-formTouchStartY)<14)return;
  formTouchScrolled=true;
+ // A gesture starting on a field, especially Notes, should not dismiss the keyboard.
+ const startTarget=e.target;
+ if(startTarget&&startTarget.closest&&startTarget.closest('input,textarea,select,button,label'))return;
  const active=document.activeElement;
  if(active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox')active.blur();
 },{passive:true});
