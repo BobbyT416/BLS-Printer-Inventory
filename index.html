@@ -269,7 +269,7 @@ $('disposition').addEventListener('change',()=>{$('disposition').dataset.userCha
 $('deviceForm').addEventListener('invalid',e=>{const el=e.target;toast((el.labels?.[0]?.textContent||el.id||'A required field')+' is required. Please complete the highlighted field.');},{capture:true});
 $('deviceForm').addEventListener('submit',e=>{
  e.preventDefault();const barcode=$('barcode').value.trim();if(!$('deviceType').value){toast('Select a printer type before saving.');$('deviceType').focus();return}if(!$('model').value.trim()){toast('Enter the model number before saving.');$('model').focus();return}$('serialNumber').value=$('serialNumber').value.trim().toUpperCase();
- if(devices.some(d=>String(d.barcode||'').toLowerCase()===barcode.toLowerCase()&&d.id!==editingId)){toast('That barcode is already in inventory. Open the existing device instead.');return}
+ if(barcode&&devices.some(d=>String(d.barcode||'').toLowerCase()===barcode.toLowerCase()&&d.id!==editingId)){toast('That barcode is already in inventory. Open the existing device instead.');return}
  const old=devices.find(d=>d.id===editingId)||{};
  const d={...old,id:editingId||('dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,7))};
  d.barcode=barcode;
