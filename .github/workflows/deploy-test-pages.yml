@@ -1,6 +1,8 @@
 name: Restore production Pages deployment
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - supabase-sync-test
 
 permissions:
   contents: read
