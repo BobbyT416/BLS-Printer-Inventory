@@ -112,7 +112,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.22
+ Version 1.8.23
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -195,7 +195,7 @@ const fields=[
 ['serialNumber','Serial number'],['assetTag','Asset tag'],['deviceType','Type'],['model','Model'],['productNumber','Product number'],['pageCount','Page count'],['disposition','Disposition'],['acquiredFrom','Acquired from'],['refurbishedBy','Refurbished by'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
 ];
 const defaults={serialNumber:true,assetTag:true,deviceType:true,model:true,productNumber:true,pageCount:true,disposition:true,acquiredFrom:true,refurbishedBy:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
-let devices=[],editingId=null,stream=null,zxingControls=null,scanTarget='inventory',printPrefs={...defaults};
+let devices=[],editingId=null,stream=null,zxingControls=null,scanTarget='inventory',forceZXing=false,printPrefs={...defaults};
 try{devices=JSON.parse(safeGet(STORE)||'[]');if(!Array.isArray(devices))devices=[];let typeMigrated=false;devices=devices.map(d=>{if(d&&d.deviceType==='Single function printer'){typeMigrated=true;return {...d,deviceType:'Printer'}}return d});if(typeMigrated)safeSet(STORE,JSON.stringify(devices));}catch(e){devices=[]}
 try{printPrefs={...defaults,...JSON.parse(safeGet(PRINT)||'{}')};}catch(e){}
 let listView=false;
@@ -321,7 +321,7 @@ $('deleteBtn').onclick=()=>{if(!editingId)return;const d=devices.find(x=>x.id===
 $('homeLogoLink').onclick=e=>{e.preventDefault();['search','filterType'].forEach(id=>$(id).value='');document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=true);$('filterArchived').checked=false;listView=false;render();window.scrollTo({top:0,behavior:'smooth'});};
 $('addBtn').onclick=()=>openDevice();$('closeDevice').onclick=closeDevice;$('cancelDevice').onclick=closeDevice;
 ['search','filterType'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));document.querySelectorAll('.disposition-choice').forEach(el=>el.addEventListener('change',render));$('filterArchived').addEventListener('change',render);$('closeDispositionFilter').onclick=()=>{$('dispositionFilter').open=false};const positionDispositionMenu=()=>{const f=$('dispositionFilter'),menu=f.querySelector('.disposition-options'),summary=$('dispositionSummary'),header=document.querySelector('header');if(!f.open)return;const r=summary.getBoundingClientRect(),headerBottom=header?header.getBoundingClientRect().bottom:0,gap=8,bottomGap=12,viewportH=window.visualViewport?window.visualViewport.height:window.innerHeight;const top=Math.max(r.bottom+gap,headerBottom+gap);const available=Math.max(100,viewportH-top-bottomGap);const maxH=Math.min(viewportH*.62,560,available);menu.style.setProperty('--filter-top',Math.round(top)+'px');menu.style.setProperty('--filter-left',Math.max(12,Math.min(r.left,window.innerWidth-240))+'px');menu.style.setProperty('--filter-width',Math.min(Math.max(r.width,240),window.innerWidth-24)+'px');menu.style.setProperty('--filter-max-height',Math.max(100,maxH)+'px')};$('dispositionFilter').addEventListener('toggle',positionDispositionMenu);window.addEventListener('resize',positionDispositionMenu);window.addEventListener('scroll',positionDispositionMenu,true);document.addEventListener('click',e=>{const f=$('dispositionFilter');if(f.open&&!f.contains(e.target)){f.open=false}});$('selectAllDispositions').onclick=()=>{document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=true);render()};$('clearDispositions').onclick=()=>{document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=false);$('filterArchived').checked=false;render()};
-function openScanner(target='inventory'){scanTarget=target;$('manualBarcode').value='';$('scanStatus').textContent='Camera has not started.';showDialog($('scanDialog'));setTimeout(()=>$('manualBarcode').focus(),100)}
+function openScanner(target='inventory'){scanTarget=target;forceZXing=false;$('manualBarcode').value='';$('scanStatus').textContent='Camera has not started.';showDialog($('scanDialog'));setTimeout(()=>$('manualBarcode').focus(),100)}
 $('scanSearchBtn').onclick=()=>openScanner('search');$('scanFromForm').onclick=()=>openScanner('formLabel');
 async function startCamera(){
  $('scanStatus').textContent='Requesting camera access…';
@@ -335,16 +335,22 @@ async function startCamera(){
   try{await cameraVideo.play()}catch(e){}
   $('scanStatus').textContent='Camera permission granted. Starting barcode reader…';
   const supportedBarcodeFormats=('BarcodeDetector' in window)?await BarcodeDetector.getSupportedFormats().catch(()=>[]):[];
-  if(supportedBarcodeFormats.includes('code_128')){
+  if(!forceZXing&&supportedBarcodeFormats.includes('code_128')){
    const preferredFormats=scanTarget==='formLabel'?['code_128']:['code_128','code_39','ean_13','ean_8','upc_a','upc_e','qr_code','itf'];
    const detector=new BarcodeDetector({formats:preferredFormats.filter(f=>supportedBarcodeFormats.includes(f))});
    const video=$('scanVideo');video.srcObject=stream;
    $('scanStatus').textContent='Camera running. Center one barcode, keep it steady, and allow a moment for focus.';
    let detecting=false;
    let lastDetectAt=0;
+   const nativeStartedAt=performance.now();
    const loop=async()=>{
     if(!stream||!video.isConnected)return;
     const now=performance.now();
+    // If native decoding cannot read the label promptly, retry with ZXing on both iPhone and Android.
+    // In label mode, allow the fallback even if only one of the two barcodes has been read.
+    if(now-nativeStartedAt>3000&&(scanTarget!=='formLabel'||!$('serialNumber').value.trim()||!$('productNumber').value.trim())){
+     forceZXing=true;stopCamera();startCamera();return;
+    }
     if(!detecting&&video.readyState>=2&&now-lastDetectAt>=100){
      lastDetectAt=now;
      detecting=true;
