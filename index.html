@@ -67,7 +67,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.6.2
+ Version 1.6.3
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -117,6 +117,18 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
   <div class="field" style="margin-top:16px"><label for="reportTitle">Report title</label><input id="reportTitle" value="Printer Inventory Report"></div><div class="field" style="margin-top:12px"><label for="reportFormat">Report format</label><select id="reportFormat"><option value="pdf">PDF</option><option value="csv">CSV</option><option value="doc">Word document (DOC)</option></select></div>
  </div>
  <div class="modal-foot"><button id="resetPrint">Reset defaults</button><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="saveReport">Save report</button><button id="printReportBtn" class="primary">Print report</button><button id="savePrint">Save report setup</button></div></div>
+</dialog>
+<dialog id="backupDialog">
+ <div class="modal-head"><h2>Backup &amp; Settings</h2><button id="closeBackupSettings" type="button" aria-label="Close">✕</button></div>
+ <div class="modal-body">
+  <p><strong>Export Backup</strong> saves a copy of the inventory records and report settings as a JSON file. Keep this file somewhere safe.</p>
+  <button id="exportBackupBtn" class="primary" type="button">Export Backup</button>
+  <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+  <p><strong>Import Backup</strong> restores records from a previous JSON backup. <strong>This replaces the inventory currently stored in this browser.</strong> Export a backup first if you need to preserve the current records.</p>
+  <button id="importBackupBtn" type="button">Import Backup</button>
+  <p class="hint" style="margin-top:14px">Current storage: this browser/device only. These records are not yet synced automatically to other users or devices.</p>
+ </div>
+ <div class="modal-foot"><button id="closeBackupSettingsBottom" type="button">Close</button></div>
 </dialog>
 <div class="toast" id="toast"></div>
 <script>
@@ -301,7 +313,11 @@ $('printSetupBtn').onclick=()=>{$('reportTitle').value=$('reportTitle').value||'
 $('closePrintSetup').onclick=()=>closeDialog($('printDialog'));
 $('savePrint').onclick=()=>{document.querySelectorAll('[data-print]').forEach(c=>printPrefs[c.dataset.print]=c.checked);safeSet(PRINT,JSON.stringify(printPrefs));closeDialog($('printDialog'));toast('Print setup saved')};
 $('resetPrint').onclick=()=>{printPrefs={...defaults};buildPrintOptions()};
-$('backupSettingsBtn').onclick=()=>{const choice=prompt('Backup settings\\n\\n1 — Export backup\\n2 — Import backup\\n\\nEnter 1 or 2:');if(choice==='1')$('exportBtnHiddenAction').click();else if(choice==='2')$('importFile').click()};
+$('backupSettingsBtn').onclick=()=>showDialog($('backupDialog'));
+$('closeBackupSettings').onclick=()=>closeDialog($('backupDialog'));
+$('closeBackupSettingsBottom').onclick=()=>closeDialog($('backupDialog'));
+$('exportBackupBtn').onclick=()=>$('exportBtnHiddenAction').click();
+$('importBackupBtn').onclick=()=>{closeDialog($('backupDialog'));$('importFile').click()};
 $('exportBtnHiddenAction').onclick=()=>{const data={app:'Printer Inventory',version:1,exportedAt:new Date().toISOString(),devices,printPrefs};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='printer-inventory-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);toast('Backup exported')};
 
 $('importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());const incoming=Array.isArray(data)?data:data.devices;if(!Array.isArray(incoming))throw Error('Invalid backup');if(!confirm(`Import ${incoming.length} printer records? This replaces the inventory currently saved in this browser.`))return;devices=incoming;printPrefs={...defaults,...(data.printPrefs||{})};persist();safeSet(PRINT,JSON.stringify(printPrefs));toast('Backup imported')}catch(err){alert('Could not import that file. Choose a valid Printer Inventory JSON backup.')}finally{e.target.value=''}};
