@@ -349,3 +349,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Removed automatic focus on Barcode when opening Add/Edit; the iPhone keyboard now stays hidden until the user taps a field.
 - Added scroll/touch-move handling inside the Add/Edit form to blur a focused text field and dismiss the software keyboard when scrolling begins. Tapping another field brings it back.
 - Validation: both inline JavaScript blocks passed syntax compilation. This is not a live iPhone Safari test; verify keyboard dismissal and field selection on-device.
+
+
+## Version 1.8.9 — Less-sensitive keyboard dismissal (2026-10-22)
+- Fixed the keyboard dismissing while the user was typing in Add/Edit Printer. Removed the generic scroll listener, which could react to Safari's automatic input/caret scrolling.
+- The keyboard now dismisses only after a deliberate touch movement of at least 14 pixels inside the form. Normal typing and small finger movements should leave it open; tapping a field brings it back after scrolling.
+- Version bumped to 1.8.9.
+- Validation: source change committed to main. Live iPhone Safari behavior has not been physically tested.
