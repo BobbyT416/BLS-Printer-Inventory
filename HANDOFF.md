@@ -211,3 +211,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.6.5 — iPhone PDF save/share flow (2026-10-22)
 - Updated PDF Save report behavior to generate a PDF Blob and, when supported by the browser, invoke the native share sheet with the PDF file so iPhone users can choose **Save to Files** or another destination. Browsers without file sharing fall back to a file download.
 - Validation: JavaScript syntax check passed. No live iPhone test performed; verify that the deployed version opens the share sheet on iOS.
+
+
+## v1.6.6 — Hide barcode from reports (2026-10-22)
+- Removed Barcode from the configurable report-field list and default report selections. Barcode remains available for input/scanning and internal matching, but is no longer offered as a report column.
+- Validation: JavaScript syntax check passed. No live browser/iPhone test performed.
