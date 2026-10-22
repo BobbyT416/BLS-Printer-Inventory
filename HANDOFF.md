@@ -282,3 +282,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Removed Barcode from the read-only Printer Details list. Barcode remains in the Add/Edit Printer form for scan/input and internal matching.
 - Added **Acquired from** to the Add/Edit Printer form and read-only details. The value is stored on the device record and carried through the existing field save/load loop.
 - Validation: JavaScript syntax check passed. No live browser/iPhone test performed.
+
+
+## v1.7.9 — Details order and date-received removal (2026-10-22)
+- Reordered the Printer Details field sequence so **Acquired from** appears immediately after **Disposition**.
+- Removed **Date received** from the Add/Edit Printer form and the standard field/report configuration list. Any dateReceived values in older saved records are left in stored data for compatibility, but the field is no longer presented.
+- Validation: JavaScript syntax check passed. No live browser/iPhone test performed.
