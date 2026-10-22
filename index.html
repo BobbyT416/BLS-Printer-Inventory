@@ -98,7 +98,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.4
+ Version 1.8.5
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -128,7 +128,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
     <div class="field span3"><label for="notes">Refurbishment notes / work log</label><textarea id="notes" placeholder="What is needed, what was done, parts installed (include part numbers), and time spent. Add dated entries as work progresses."></textarea><div class="hint">Recommended: enter each update on a new line with date, technician, work/parts, and time spent.</div></div>
    </div>
   </div>
-  <div class="modal-foot"><button type="button" class="danger" id="deleteBtn" style="display:none">Delete machine</button><div style="display:flex;gap:8px;margin-left:auto"><button type="button" id="cancelDevice">Cancel</button><button type="submit" class="primary">Save printer</button></div></div>
+  <div class="modal-foot"><button type="button" class="danger" id="deleteBtn" style="display:none">Delete machine</button><div style="display:flex;gap:8px;margin-left:auto"><button type="button" id="cancelDevice">Cancel</button><button type="submit" class="primary">Save</button></div></div>
  </form>
 </dialog>
 <dialog id="scanDialog">
@@ -248,7 +248,8 @@ $('deviceForm').addEventListener('submit',e=>{
  archiveMode=false;listView=false;
  ['search','filterType'].forEach(id=>$(id).value='');document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=true);$('filterArchived').checked=false;
  render();window.scrollTo({top:0,behavior:'smooth'});
- toast(editingId?'Printer updated':'Printer added to inventory');
+ toast('Printer saved');
+ setTimeout(()=>{closeDialog($('detailDialog'));closeDialog($('deviceDialog'));window.scrollTo({top:0,behavior:'smooth'});},2000);
 });
 $('deleteBtn').onclick=()=>{if(!editingId)return;const d=devices.find(x=>x.id===editingId);if(confirm(`Delete ${d?.model||'this printer'} (${d?.barcode}) from inventory? This cannot be undone unless you have a backup.`)){devices=devices.filter(x=>x.id!==editingId);persist();closeDevice();toast('Printer deleted')}};
 
