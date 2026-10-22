@@ -121,3 +121,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Added report format selector (PDF, CSV, Word DOC), Save report and Print report actions inside Report setup. CSV exports the report rows. DOC exports a Word-compatible HTML document. PDF uses the browser print dialog so the user can choose Save as PDF/Files; Print report opens the print dialog.
 - Existing report field preferences and current inventory filters are retained. The report uses the nine approved columns.
 - Validation: inline JavaScript syntax check passed. PDF save behavior and download handling have not been physically tested on iPhone.
+
+
+## Update — 2026-10-22 (v1.5.1)
+- Removed the Inventory heading from the home-page inventory panel.
+- Left the Add printer button aligned to the left side of the panel header.
+- Validation: inline JavaScript syntax check passed; no live iPhone visual test was performed.
