@@ -361,3 +361,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## Version 1.8.9 — 2026-10-22
 - Reordered the Add/Edit Printer form so Model number appears immediately below Serial number in the single-column layout.
 - Validation: both inline JavaScript blocks passed syntax compilation. No live iPhone test performed.
+
+
+## Version 1.8.10 — 2026-10-22
+- Corrected Add/Edit Printer field order: Serial number, Model number, then Asset tag.
+- Validation: both inline JavaScript blocks passed syntax compilation. No live iPhone test performed.
