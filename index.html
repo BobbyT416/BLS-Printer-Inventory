@@ -112,7 +112,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.15
+ Version 1.8.16
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -296,7 +296,7 @@ $('homeLogoLink').onclick=e=>{e.preventDefault();['search','filterType'].forEach
 $('addBtn').onclick=()=>openDevice();$('closeDevice').onclick=closeDevice;$('cancelDevice').onclick=closeDevice;
 ['search','filterType'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));document.querySelectorAll('.disposition-choice').forEach(el=>el.addEventListener('change',render));$('filterArchived').addEventListener('change',render);$('closeDispositionFilter').onclick=()=>{$('dispositionFilter').open=false};const positionDispositionMenu=()=>{const f=$('dispositionFilter'),menu=f.querySelector('.disposition-options'),summary=$('dispositionSummary'),header=document.querySelector('header');if(!f.open)return;const r=summary.getBoundingClientRect(),headerBottom=header?header.getBoundingClientRect().bottom:0,gap=8,bottomGap=12,viewportH=window.visualViewport?window.visualViewport.height:window.innerHeight;const top=Math.max(r.bottom+gap,headerBottom+gap);const available=Math.max(100,viewportH-top-bottomGap);const maxH=Math.min(viewportH*.62,560,available);menu.style.setProperty('--filter-top',Math.round(top)+'px');menu.style.setProperty('--filter-left',Math.max(12,Math.min(r.left,window.innerWidth-240))+'px');menu.style.setProperty('--filter-width',Math.min(Math.max(r.width,240),window.innerWidth-24)+'px');menu.style.setProperty('--filter-max-height',Math.max(100,maxH)+'px')};$('dispositionFilter').addEventListener('toggle',positionDispositionMenu);window.addEventListener('resize',positionDispositionMenu);window.addEventListener('scroll',positionDispositionMenu,true);document.addEventListener('click',e=>{const f=$('dispositionFilter');if(f.open&&!f.contains(e.target)){f.open=false}});$('selectAllDispositions').onclick=()=>{document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=true);render()};$('clearDispositions').onclick=()=>{document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=false);$('filterArchived').checked=false;render()};
 function openScanner(target='inventory'){scanTarget=target;$('manualBarcode').value='';$('scanStatus').textContent='Camera has not started.';showDialog($('scanDialog'));setTimeout(()=>$('manualBarcode').focus(),100)}
-$('scanSearchBtn').onclick=()=>openScanner('search');$('scanFromForm').onclick=()=>openScanner('form');
+$('scanSearchBtn').onclick=()=>openScanner('search');$('scanFromForm').onclick=()=>openScanner('formLabel');
 async function startCamera(){
  $('scanStatus').textContent='Requesting camera access…';
  if(!window.isSecureContext){$('scanStatus').textContent='Camera access requires a secure HTTPS page. Open the published GitHub Pages address in Safari.';return}
@@ -320,7 +320,7 @@ async function startCamera(){
      detecting=true;
      try{
       const codes=await detector.detect(video);
-      if(codes.length&&codes[0].rawValue){const value=codes[0].rawValue;stopCamera();useScanned(value);return}
+      if(codes.length){for(const item of codes){if(!item.rawValue)continue;if(scanTarget==='formLabel'){acceptLabelCode(item.rawValue);if(!stream)return}else{const value=item.rawValue;stopCamera();useScanned(value);return}}}
      }catch(e){}
      detecting=false;
     }
@@ -367,7 +367,7 @@ async function startCamera(){
      video,
      (result,error,controls)=>{
       if(controls)zxingControls=controls;
-      if(result?.getText){const value=result.getText();stopCamera();useScanned(value)}
+      if(result?.getText){const value=result.getText();if(scanTarget==='formLabel'){acceptLabelCode(value)}else{stopCamera();useScanned(value)}}
      }
     );
    } catch(readerError) {
@@ -377,6 +377,20 @@ async function startCamera(){
  }catch(e){stopCamera();let reason='';if(e?.name==='NotAllowedError'||e?.name==='PermissionDeniedError')reason=' Camera permission was denied or blocked. In iPhone Settings, open Safari → Camera and allow access, then reload this website.';else if(e?.name==='NotFoundError')reason=' No camera was found on this device.';else if(e?.name==='NotReadableError')reason=' The camera may already be in use by another app.';else reason=' '+(e?.message||'');$('scanStatus').textContent='Could not start camera scanner. '+reason+' You can still enter the barcode manually.'}
 }
 function stopCamera(){if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
+function acceptLabelCode(value){
+ const code=String(value||'').trim().toUpperCase();if(!code)return;
+ if(/^[A-Z0-9]{10}$/.test(code)){
+  if($('serialNumber').value!==code){$('serialNumber').value=code;toast('Serial number captured')}
+ }else if(/^[A-Z0-9]{6}$/.test(code)){
+  if($('productNumber').value!==code){$('productNumber').value=code;toast('Product number captured')}
+ }else{
+  $('scanStatus').textContent='Barcode read: '+code+'. Keep the full label in view; waiting for a 10-character serial and 6-character product number.';
+  return;
+ }
+ if($('serialNumber').value.trim()&&$('productNumber').value.trim()){
+  stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Serial and product numbers captured');
+ }else $('scanStatus').textContent='Captured one value. Keep both barcodes in view so the other can be read.';
+}
 function useScanned(value){const code=String(value||'').trim();if(!code)return;if(scanTarget==='form'){$('barcode').value=code;closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Barcode entered')}else if(scanTarget==='search'){closeDialog($('scanDialog'));$('search').value=code;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory searched by barcode')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>String(d.serialNumber||'').toLowerCase()===code.toLowerCase()||String(d.barcode||'').toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);$('barcode').value=code;toast('Existing printer found')}else{openDevice(null,code);toast('Scanned barcode entered')}}}
 $('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{stopCamera();$('scanStatus').textContent='Camera stopped.'};
 $('useBarcode').onclick=()=>useScanned($('manualBarcode').value);
