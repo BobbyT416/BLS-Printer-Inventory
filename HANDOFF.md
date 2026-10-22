@@ -411,3 +411,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Fixed the dual-label scanner path: assigning the captured product number directly to the field did not trigger its `input`/`change` listeners, so the model lookup never ran. The scanner now explicitly calls `updateModelFromProductNumber()` immediately after capturing the product number.
 - Verified mapping remains HP product number F2A80A → HP LaserJet Enterprise Flow MFP M527cm. Unknown product numbers still require manual model entry.
 - Validation: both inline JavaScript blocks passed syntax compilation. Code-path fix committed; no physical iPhone test performed.
+
+
+## Version 1.8.19 — faster label barcode recognition (2026-10-22)
+- Optimized the primary HP label scanning flow for Code 128, which is the barcode format confirmed on the user's printer label.
+- Requests 1920×1080 video and continuous-focus preference at camera startup.
+- In label mode, both native BarcodeDetector and ZXing prioritize Code 128 rather than trying multiple barcode formats. ZXing polling interval reduced from 150 ms to 80 ms for label scanning (100 ms for general scanning), and the slower TRY_HARDER hint was removed.
+- JavaScript syntax checks passed for both inline script blocks. Not physically tested on the user's iPhone; validate scan speed on the same clear label. Camera hardware/browser support may limit the effect of requested resolution and focus.
