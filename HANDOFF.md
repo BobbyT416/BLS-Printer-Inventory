@@ -372,3 +372,11 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Adjusted Add/Edit form touch handling so a scroll gesture starting on an input, select, button, label, or Notes textarea does not immediately dismiss the keyboard. Gestures starting in non-control form space can still dismiss it.
 - Added extra scroll clearance after the Notes textarea to help keep the final field usable near the bottom of the form.
 - Validation: both inline JavaScript blocks passed syntax compilation. No live iPhone test performed.
+
+
+## Version 1.8.12 — 2026-10-22
+- Barcode field remains blank unless the user manually enters a value or scans a barcode.
+- Removed automatic barcode-to-serial-number copying and removed generated AUTO-* barcode IDs on save. Serial number is only uppercased; it is not filled from barcode.
+- Blank barcodes are allowed on multiple devices; duplicate checks run only when a barcode was provided.
+- Updated the barcode hint text to clarify this behavior.
+- Validation: both inline JavaScript blocks passed syntax compilation. No live iPhone test performed.
