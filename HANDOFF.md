@@ -169,3 +169,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Moved Report and gear/settings controls next to Add Printer below the header, with the search field and barcode-search button alongside them. Responsive CSS wraps the controls on narrow screens.
 - Logo asset replacement remains outstanding: the HTML still embeds the prior logo image; its white tile is removed by styling, but the exact newly supplied transparent logo has not yet been uploaded/embedded. Do not treat the exact-logo replacement as complete.
 - Validation: JavaScript syntax check passed. No live browser/iPhone visual test performed.
+
+
+## v1.5.9 — Header color (2026-10-22)
+- Changed the header background to the cyan-blue sampled from the supplied HP logo image (`#42C0FB`).
+- Validation: JavaScript syntax check passed. No live visual browser/iPhone test performed.
