@@ -392,3 +392,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Fixed the native BarcodeDetector branch being hard-disabled; it is now used only when the browser reports Code 128 support, otherwise the ZXing fallback is used.
 - Raised requested camera resolution to 2560×1440 and reduced ZXing scan interval to 150 ms to improve chances of reading dense linear barcodes.
 - Validation: both inline JavaScript blocks passed syntax compilation. Still requires on-device testing against the user's physical label; no live iPhone test performed.
+
+
+## Version 1.8.16 — 2026-10-22
+- Added Product number field directly below Model number and included it in saved printer fields and report preferences.
+- The Add/Edit screen's Scan button now starts a multi-label scan mode. It tries to capture both barcodes from the same HP label: a 10-character alphanumeric value is assigned to Serial number and a 6-character alphanumeric value to Product number. Camera detection handles multiple results in one frame where supported; the ZXing callback keeps scanning until both fields are populated.
+- The scanner does not put these label values into the inventory Barcode field.
+- Validation: both inline JavaScript blocks passed syntax compilation. Real-world multi-barcode detection on iPhone remains unverified; formats are classified by expected length/pattern, so confirm both values before saving.
