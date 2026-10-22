@@ -288,3 +288,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Reordered the Printer Details field sequence so **Acquired from** appears immediately after **Disposition**.
 - Removed **Date received** from the Add/Edit Printer form and the standard field/report configuration list. Any dateReceived values in older saved records are left in stored data for compatibility, but the field is no longer presented.
 - Validation: JavaScript syntax check passed. No live browser/iPhone test performed.
+
+
+## v1.8.0 — Compact printer details layout (2026-10-22)
+- Tightened read-only details spacing on mobile: reduced modal body padding, reduced the gap between each field label and its value, and compacted the vertical gap between fields.
+- Moved **Acquired from** to immediately follow **Disposition** in Printer Details.
+- Removed **Date received** from the read-only Printer Details list as well as the Add/Edit form.
+- Validation: JavaScript syntax check passed. No live iPhone/browser test performed.
