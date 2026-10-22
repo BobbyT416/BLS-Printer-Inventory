@@ -96,3 +96,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Removed the Archived machines button from the home-page header.
 - Print list now follows the disposition checkbox selection and archive checkbox.
 - Validation: inline JavaScript syntax check passed. Visual/browser testing was not performed.
+
+
+## Update — 2026-10-22 (v1.4.7)
+- Fixed the Home navigation/reset handler to use the new disposition checkboxes and archived checkbox instead of the removed filterDisposition element. The old reference could cause a JavaScript error when returning home.
+- Preserved the existing browser storage key `printerInventoryPrototype.v1`; this change does not clear or replace stored inventory records.
+- Validation: inline JavaScript syntax check passed. Actual records in the user's browser cannot be inspected remotely; visual/runtime testing remains necessary.
