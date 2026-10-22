@@ -335,3 +335,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Added explicit, visible checks for required printer type and model before saving, with focus moved to the missing field.
 - Local storage write failures remain explicit and abort success navigation; successful saves still show the two-second confirmation and return home.
 - Validation: JavaScript syntax checks passed. No live iPhone save/reload test performed.
+
+
+## v1.8.7 — Roomier mobile Add/Edit Printer form (2026-10-22)
+- Reworked Add/Edit dialog spacing to show more of the form at once on phones: reduced header/note/panel padding, moved most fields into a two-column grid, and tightened labels and hints.
+- Kept the longer refurbishment notes field full width and preserved a scrollable form body plus fixed footer actions. Dialog sizing uses the current visible viewport height.
+- Inputs retain a 16px font size on mobile to avoid iOS Safari auto-zoom while typing.
+- Validation: JavaScript syntax checks passed. No live iPhone layout test performed.
