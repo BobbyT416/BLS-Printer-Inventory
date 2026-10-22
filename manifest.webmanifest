@@ -1,0 +1,16 @@
+{
+  "name": "BLS Used Printer Inventory",
+  "short_name": "BLS Inventory",
+  "start_url": "./?homescreen=1",
+  "display": "standalone",
+  "background_color": "#f4f7fa",
+  "theme_color": "#024ad8",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
