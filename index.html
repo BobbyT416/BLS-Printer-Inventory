@@ -112,7 +112,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.8
+ Version 1.8.9
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -239,14 +239,23 @@ function closeDevice(){closeDialog($('deviceDialog'))}
  // Dismiss the software keyboard when the Add/Edit form starts scrolling on mobile.
  // Opening the dialog no longer auto-focuses Barcode; users tap a field when ready.
  const deviceFormBody=$('deviceDialog').querySelector('.modal-body');
- deviceFormBody.addEventListener('scroll',()=>{
-  const active=document.activeElement;
-  if(active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox')active.blur();
- },{passive:true});
- deviceFormBody.addEventListener('touchmove',()=>{
-  const active=document.activeElement;
-  if(active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA)$/.test(active.tagName))active.blur();
- },{passive:true});
+// Dismiss the keyboard only after a deliberate finger scroll, not when Safari
+// scrolls the focused input/caret into view while the user is typing.
+let formTouchStartY=null,formTouchScrolled=false;
+deviceFormBody.addEventListener('touchstart',e=>{
+ formTouchStartY=e.touches?.[0]?.clientY??null;
+ formTouchScrolled=false;
+},{passive:true});
+deviceFormBody.addEventListener('touchmove',e=>{
+ if(formTouchStartY===null||formTouchScrolled)return;
+ const y=e.touches?.[0]?.clientY;
+ if(typeof y!=='number'||Math.abs(y-formTouchStartY)<14)return;
+ formTouchScrolled=true;
+ const active=document.activeElement;
+ if(active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox')active.blur();
+},{passive:true});
+deviceFormBody.addEventListener('touchend',()=>{formTouchStartY=null;},{passive:true});
+deviceFormBody.addEventListener('touchcancel',()=>{formTouchStartY=null;},{passive:true});
 const barcodeInput=$('barcode'),serialInput=$('serialNumber');
 barcodeInput.addEventListener('input',()=>{if(!editingId||!serialInput.value.trim())serialInput.value=barcodeInput.value.trim().toUpperCase()});
 barcodeInput.addEventListener('change',()=>{barcodeInput.value=barcodeInput.value.trim();if(!serialInput.value.trim())serialInput.value=barcodeInput.value.toUpperCase()});
