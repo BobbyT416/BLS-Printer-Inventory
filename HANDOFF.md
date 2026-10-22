@@ -380,3 +380,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Blank barcodes are allowed on multiple devices; duplicate checks run only when a barcode was provided.
 - Updated the barcode hint text to clarify this behavior.
 - Validation: both inline JavaScript blocks passed syntax compilation. No live iPhone test performed.
+
+
+## Version 1.8.13 — 2026-10-22
+- Configured the ZXing fallback scanner with explicit common barcode formats including Code 128, plus TRY_HARDER when the library exposes the corresponding hints. The native BarcodeDetector branch remains disabled because the implementation uses the ZXing fallback.
+- Scanning now fills only the Barcode field; it no longer copies scanned values into Serial number.
+- Validation: both inline JavaScript blocks passed syntax compilation. Scanner behavior still needs an on-device test with the supplied label; no physical iPhone test performed.
