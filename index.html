@@ -112,7 +112,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.9
+ Version 1.8.10
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -127,12 +127,13 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
    <div class="form-grid">
     <div class="field"><label for="barcode">Barcode</label><div style="display:flex;gap:7px"><input id="barcode" autocomplete="off" placeholder="Optional — enter or scan barcode"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Optional. If left blank, a temporary unique ID is assigned.</div></div>
     <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"></div>
+     <div class="field"><label for="model">Model number *</label><input id="model" required placeholder="e.g. M607"></div>
     <div class="field"><label for="assetTag">Asset tag</label><input id="assetTag" autocomplete="off" placeholder="Enter company asset tag"></div>
     <div class="field"><label for="acquiredFrom">Acquired from</label><input id="acquiredFrom" autocomplete="off" placeholder="Company, person, auction, etc."></div>
     
     <div class="field"><label for="pageCount">Page count</label><input id="pageCount" type="number" min="0" step="1" placeholder="e.g. 128450"></div>
     <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="">Select type</option><option value="Single function printer">Single function printer</option><option value="MFP">MFP</option></select></div>
-    <div class="field"><label for="model">Model number *</label><input id="model" required placeholder="e.g. M607"></div>
+    
     <div class="field"><label for="disposition">Disposition / readiness</label><select id="disposition"><option>Not evaluated</option><option>Needs major work</option><option>Needs minor work</option><option>Waiting for parts</option><option>Ready for sale</option><option>Parts only / scrap</option><option>Sold</option></select></div>
     <div class="field"><label for="refurbishedBy">Refurbished by (optional)</label><input id="refurbishedBy" autocomplete="name" placeholder="Name of technician"></div>
     <div class="field"><label for="cost">Cost ($)</label><input id="cost" type="number" min="0" step="0.01" placeholder="0.00"></div>
