@@ -155,3 +155,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Reordered printed inventory report columns to: Serial Number, Model, Asset Tag, Type, Page Count, Disposition, Cost, Price, Status.
 - Reordered CSV export headers and row values to match the same requested order. Word document output inherits the report table order.
 - Validation: JavaScript syntax check passed. Live print preview and downloaded-file output were not tested on-device.
+
+
+## v1.5.7 — Home search barcode scanner (2026-10-22)
+- Removed the standalone **Scan barcode** button from the home-page header; the scanner remains available from the Add Printer form.
+- Added a compact barcode icon button at the right edge of the home search field. Tapping it opens the scanner in inventory-search mode; a scanned value fills the search field and filters the inventory rather than opening or creating a printer record.
+- Bumped the visible app version to 1.5.7.
+- Validation: JavaScript syntax check passed. No live browser or iPhone camera test performed.
