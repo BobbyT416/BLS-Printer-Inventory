@@ -57,7 +57,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
 </header>
 <main>
  <section class="panel">
-  <div class="panel-head"><div class="home-toolbar no-print"><button id="addBtn" class="primary">＋ Add printer</button><button id="printSetupBtn" type="button">Report</button><button id="backupSettingsBtn" type="button" aria-label="Backup settings" title="Backup settings">⚙</button><div class="search-with-scan"><input id="search" placeholder="Search barcode, model, family, notes…" aria-label="Search inventory"><button type="button" id="scanSearchBtn" class="barcode-search-btn" aria-label="Scan barcode to search inventory" title="Scan barcode to search inventory">▥</button></div></div></div>
+  <div class="panel-head"><div class="home-toolbar no-print"><button id="addBtn" class="primary">＋ Add printer</button><button id="printSetupBtn" type="button">Report</button><button id="backupSettingsBtn" type="button" aria-label="Backup settings" title="Backup settings">⚙</button><div class="search-with-scan"><input id="search" placeholder="Search inventory items" aria-label="Search inventory items"><button type="button" id="scanSearchBtn" class="barcode-search-btn" aria-label="Scan barcode to search inventory" title="Scan barcode to search inventory">▥</button></div></div></div>
   <div class="filters no-print">
    <select id="filterType"><option value="">All types</option><option value="Printer">Printer</option><option value="MFP">MFP</option></select>
    <details id="dispositionFilter" class="disposition-filter"><summary id="dispositionSummary">All dispositions</summary><div class="disposition-options"><div class="disposition-actions"><button type="button" id="selectAllDispositions">Select all</button><button type="button" id="clearDispositions">Deselect all</button><button type="button" id="closeDispositionFilter">Close</button></div><label><input type="checkbox" class="disposition-choice" value="Ready for sale" checked> Ready for sale</label><label><input type="checkbox" class="disposition-choice" value="Needs minor work" checked> Needs minor work</label><label><input type="checkbox" class="disposition-choice" value="Needs major work" checked> Needs major work</label><label><input type="checkbox" class="disposition-choice" value="Waiting for parts" checked> Waiting for parts</label><label><input type="checkbox" class="disposition-choice" value="Parts only / scrap" checked> Parts only / scrap</label><label><input type="checkbox" class="disposition-choice" value="Not evaluated" checked> Not evaluated</label><label><input type="checkbox" class="disposition-choice" value="Sold" checked> Sold</label><hr><label><input type="checkbox" id="filterArchived"> Archived machines</label></div></details>
@@ -68,7 +68,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.6.6
+ Version 1.6.7
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
