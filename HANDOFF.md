@@ -197,3 +197,12 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Dialog explicitly explains that current storage is browser/device-local and does not automatically sync between users/devices.
 - Important architecture note: multi-user sync requires a shared backend database/API and security rules. No shared backend is configured in this app currently; this change does not create cloud sync.
 - Validation: JavaScript syntax check passed. No live browser/iPhone interaction test performed.
+
+
+## v1.6.4 — Report download fixes (2026-10-22)
+- Removed the **Save report setup** button from the Report setup dialog; the user no longer sees a separate setup-save action.
+- **Save report** now downloads the selected format instead of sending PDF users to the print dialog. CSV downloads as .csv, Word-compatible report downloads as .doc, and PDF is generated and downloaded as .pdf using jsPDF.
+- The report-format dropdown remains the choice between PDF, CSV, and DOC. The explicit **Print report** button still opens the browser print flow.
+- Saving a report also persists the current report-column selections.
+- PDF generation uses the jsPDF CDN library and therefore requires that library to load; if unavailable, the app displays an error instead of silently opening print.
+- Validation: JavaScript syntax check passed. No live browser/iPhone download test performed.
