@@ -276,3 +276,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.7.7 — Apply Filter button label (2026-10-22)
 - Changed the disposition menu's **Close** button label to **Apply Filter**. Its existing behavior remains closing the menu with the current checkbox selections applied.
 - Validation: JavaScript syntax check passed. No live browser/iPhone test performed.
+
+
+## v1.7.8 — Acquired-from field and detail cleanup (2026-10-22)
+- Removed Barcode from the read-only Printer Details list. Barcode remains in the Add/Edit Printer form for scan/input and internal matching.
+- Added **Acquired from** to the Add/Edit Printer form and read-only details. The value is stored on the device record and carried through the existing field save/load loop.
+- Validation: JavaScript syntax check passed. No live browser/iPhone test performed.
