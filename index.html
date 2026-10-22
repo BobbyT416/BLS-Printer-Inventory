@@ -112,7 +112,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.16
+ Version 1.8.17
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -266,7 +266,25 @@ barcodeInput.addEventListener('input',()=>{});
 barcodeInput.addEventListener('change',()=>{barcodeInput.value=barcodeInput.value.trim()});
 barcodeInput.addEventListener('blur',()=>{barcodeInput.value=barcodeInput.value.trim()});
 serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.trim().toUpperCase()});
-$('disposition').addEventListener('change',()=>{$('disposition').dataset.userChanged='true'});
+// Map recognized HP product numbers to verified model names. Extend this lookup as products are confirmed.
+ const PRODUCT_MODEL_MAP={
+  'F2A80A':'HP LaserJet Enterprise Flow MFP M527cm'
+ };
+ function updateModelFromProductNumber(){
+  const product=String($('productNumber').value||'').trim().toUpperCase();
+  const matched=PRODUCT_MODEL_MAP[product];
+  if(matched){
+   $('model').value=matched;
+   $('model').dataset.autoFromProduct='true';
+   $('scanStatus').textContent='Model identified: '+matched;
+  }else if($('model').dataset.autoFromProduct==='true'){
+   $('model').value='';
+   delete $('model').dataset.autoFromProduct;
+  }
+ }
+ $('productNumber').addEventListener('input',updateModelFromProductNumber);
+ $('productNumber').addEventListener('change',updateModelFromProductNumber);
+ $('disposition').addEventListener('change',()=>{$('disposition').dataset.userChanged='true'});
 $('deviceForm').addEventListener('invalid',e=>{const el=e.target;toast((el.labels?.[0]?.textContent||el.id||'A required field')+' is required. Please complete the highlighted field.');},{capture:true});
 $('deviceForm').addEventListener('submit',e=>{
  e.preventDefault();const barcode=$('barcode').value.trim();if(!$('deviceType').value){toast('Select a printer type before saving.');$('deviceType').focus();return}if(!$('model').value.trim()){toast('Enter the model number before saving.');$('model').focus();return}$('serialNumber').value=$('serialNumber').value.trim().toUpperCase();
