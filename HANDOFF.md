@@ -237,3 +237,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.7.0 — Logo size increase (2026-10-22)
 - Increased logo width and maximum-height limits by approximately 15% across desktop and mobile styles while retaining object-fit containment and the compact fixed-header layout.
 - Validation: JavaScript syntax check passed. No live browser/iPhone visual test performed.
+
+
+## v1.7.1 — iPhone scrolling correction (2026-10-22)
+- Corrected the viewport flex layout so the main content is explicitly a zero-basis, zero-height flex child with its own vertical scrolling area. Added touch-action/overscroll containment and kept the version footer from consuming the content area's scroll height.
+- Preserved fixed-height header and print overrides.
+- Validation: JavaScript syntax check passed. This is a CSS/runtime issue; no live iPhone test performed. User reported scrolling failure in v1.7.0 and should retest this build.
