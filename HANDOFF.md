@@ -102,3 +102,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Fixed the Home navigation/reset handler to use the new disposition checkboxes and archived checkbox instead of the removed filterDisposition element. The old reference could cause a JavaScript error when returning home.
 - Preserved the existing browser storage key `printerInventoryPrototype.v1`; this change does not clear or replace stored inventory records.
 - Validation: inline JavaScript syntax check passed. Actual records in the user's browser cannot be inspected remotely; visual/runtime testing remains necessary.
+
+
+## Update — 2026-10-22 (v1.4.8)
+- Added a visible Close button to the disposition multi-select menu and close-on-outside-tap behavior to improve usability on iPhone Safari.
+- Validation: inline JavaScript syntax check passed. No live iPhone interaction test was available.
