@@ -144,3 +144,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## Update — 2026-10-22 (v1.5.4)
 - Removed the homepage subtitle “Receiving, refurbishment tracking, and resale readiness.”
 - Validation: inline JavaScript syntax check passed.
+
+
+## v1.5.5 — Print report dialog fix (2026-10-22)
+- Fixed the Report setup dialog remaining open when **Print report** was clicked. The handler now prepares the inventory report, closes the setup dialog, then invokes the browser print UI after a short delay so the print stylesheet targets the inventory report rather than the setup screen.
+- Validation: JavaScript syntax check passed. Not visually tested in a live browser or on iPhone; verify the printed preview on-device.
