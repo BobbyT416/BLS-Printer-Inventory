@@ -321,3 +321,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - `safeSet()` now returns true only after a successful `localStorage` write; `persist()` aborts the save flow and shows an explicit **Printer was NOT saved** message if the write fails. This prevents false-success navigation.
 - Barcode remains a required field. The form's submit button and successful-save navigation were inspected; successful persistence should close the form/details and reset the home inventory list.
 - Validation: JavaScript syntax checks passed. No live iPhone save/reload test performed.
+
+
+## v1.8.5 — Save confirmation and button label (2026-10-22)
+- Renamed the Add/Edit Printer submit button from **Save printer** to **Save**.
+- After a successful storage write, the app closes the editor/details, resets filters and returns to the home inventory, and displays **Printer saved** for approximately two seconds before dismissing the confirmation. Failed saves still show the explicit failure message and do not run the success flow.
+- Validation: JavaScript syntax checks passed. No live iPhone test performed.
