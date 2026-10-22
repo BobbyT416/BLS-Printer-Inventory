@@ -98,7 +98,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.5
+ Version 1.8.6
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -111,7 +111,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
   <div class="modal-body">
    <div class="note" style="margin-bottom:15px">The barcode sticker identifies the individual device. Scan with your camera or use a USB/Bluetooth scanner that types into the barcode field.</div>
    <div class="form-grid">
-    <div class="field"><label for="barcode">Barcode</label><div style="display:flex;gap:7px"><input id="barcode" required autocomplete="off" placeholder="Enter barcode manually"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Must be unique for each printer.</div></div>
+    <div class="field"><label for="barcode">Barcode</label><div style="display:flex;gap:7px"><input id="barcode" autocomplete="off" placeholder="Optional — enter or scan barcode"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Optional. If left blank, a temporary unique ID is assigned.</div></div>
     <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"></div>
     <div class="field"><label for="assetTag">Asset tag</label><input id="assetTag" autocomplete="off" placeholder="Enter company asset tag"></div>
     <div class="field"><label for="acquiredFrom">Acquired from</label><input id="acquiredFrom" autocomplete="off" placeholder="Company, person, auction, etc."></div>
@@ -230,7 +230,7 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
 $('disposition').addEventListener('change',()=>{$('disposition').dataset.userChanged='true'});
 $('deviceForm').addEventListener('invalid',e=>{const el=e.target;toast((el.labels?.[0]?.textContent||el.id||'A required field')+' is required. Please complete the highlighted field.');},{capture:true});
 $('deviceForm').addEventListener('submit',e=>{
- e.preventDefault();const barcode=$('barcode').value.trim();$('barcode').value=barcode;$('serialNumber').value=($('serialNumber').value.trim()||barcode).toUpperCase();if(!barcode){$('barcode').focus();toast('Enter a barcode before saving.');return}
+ e.preventDefault();let barcode=$('barcode').value.trim();const serialEntered=$('serialNumber').value.trim();if(!$('deviceType').value){toast('Select a printer type before saving.');$('deviceType').focus();return}if(!$('model').value.trim()){toast('Enter the model number before saving.');$('model').focus();return}if(!barcode){barcode='AUTO-'+Date.now().toString(36).toUpperCase();$('barcode').value=barcode} $('serialNumber').value=(serialEntered||barcode).toUpperCase();
  if(devices.some(d=>String(d.barcode||'').toLowerCase()===barcode.toLowerCase()&&d.id!==editingId)){toast('That barcode is already in inventory. Open the existing device instead.');return}
  const old=devices.find(d=>d.id===editingId)||{};
  const d={...old,id:editingId||('dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,7))};
