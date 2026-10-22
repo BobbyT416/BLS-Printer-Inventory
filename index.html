@@ -68,7 +68,7 @@ body.modal-open{overflow:hidden;position:fixed;width:100%;overscroll-behavior:no
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.4.6
+ Version 1.4.7
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -205,7 +205,7 @@ $('deviceForm').addEventListener('submit',e=>{
 });
 $('deleteBtn').onclick=()=>{if(!editingId)return;const d=devices.find(x=>x.id===editingId);if(confirm(`Delete ${d?.model||'this printer'} (${d?.barcode}) from inventory? This cannot be undone unless you have a backup.`)){devices=devices.filter(x=>x.id!==editingId);persist();closeDevice();toast('Printer deleted')}};
 
-$('homeBtn').onclick=()=>{archiveMode=false;['search','filterType','filterDisposition'].forEach(id=>$(id).value='');listView=false;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory home')};
+$('homeBtn').onclick=()=>{['search','filterType'].forEach(id=>$(id).value='');document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=true);$('filterArchived').checked=false;listView=false;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory home')};
 $('addBtn').onclick=()=>openDevice();$('closeDevice').onclick=closeDevice;$('cancelDevice').onclick=closeDevice;
 ['search','filterType'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));document.querySelectorAll('.disposition-choice').forEach(el=>el.addEventListener('change',render));$('filterArchived').addEventListener('change',render);$('selectAllDispositions').onclick=()=>{document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=true);render()};$('clearDispositions').onclick=()=>{document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=false);$('filterArchived').checked=false;render()};
 function openScanner(target='inventory'){scanTarget=target;$('manualBarcode').value='';$('scanStatus').textContent='Camera has not started.';showDialog($('scanDialog'));setTimeout(()=>$('manualBarcode').focus(),100)}
