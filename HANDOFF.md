@@ -107,3 +107,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## Update — 2026-10-22 (v1.4.8)
 - Added a visible Close button to the disposition multi-select menu and close-on-outside-tap behavior to improve usability on iPhone Safari.
 - Validation: inline JavaScript syntax check passed. No live iPhone interaction test was available.
+
+
+## Update — 2026-10-22 (v1.4.9)
+- Reworked the disposition filter popup to use fixed positioning and calculate its position/maximum height against the current viewport. It opens below the filter when possible, otherwise above, and keeps its own options scrollable on small screens.
+- Repositions on window resize and scrolling so it should not be clipped by the inventory panel or cover controls outside the viewport.
+- Validation: inline JavaScript syntax check passed. Physical iPhone Safari testing was not available.
