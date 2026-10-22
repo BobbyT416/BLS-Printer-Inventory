@@ -133,3 +133,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Removed the Home button from the top navigation.
 - Made the Brothers Lazer Service logo a keyboard-accessible link that resets search/type/disposition/archive filters and returns to the top of the inventory.
 - Validation: inline JavaScript syntax check passed; no live iPhone visual test was performed.
+
+
+## Update — 2026-10-22 (v1.5.3)
+- Replaced the separate Export backup and Import backup header buttons with one gear icon.
+- Gear opens a compact choice prompt for Export backup or Import backup; both existing backup flows are retained. Report and Scan barcode remain visible.
+- Validation: inline JavaScript syntax check passed; iPhone interaction has not been live-tested.
