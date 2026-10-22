@@ -399,3 +399,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - The Add/Edit screen's Scan button now starts a multi-label scan mode. It tries to capture both barcodes from the same HP label: a 10-character alphanumeric value is assigned to Serial number and a 6-character alphanumeric value to Product number. Camera detection handles multiple results in one frame where supported; the ZXing callback keeps scanning until both fields are populated.
 - The scanner does not put these label values into the inventory Barcode field.
 - Validation: both inline JavaScript blocks passed syntax compilation. Real-world multi-barcode detection on iPhone remains unverified; formats are classified by expected length/pattern, so confirm both values before saving.
+
+
+## Version 1.8.17 — 2026-10-22
+- Added product-number-to-model auto-fill in Add/Edit Printer. Verified mapping: HP product number F2A80A → HP LaserJet Enterprise Flow MFP M527cm.
+- When a mapped product number is entered or captured by the dual-barcode scanner, Model number is populated automatically. If a previously auto-filled product number is changed to an unknown value, the app clears only the model value it had auto-filled; manually entered model values are preserved.
+- Validation: both inline JavaScript blocks passed syntax compilation. Mapping is intentionally conservative; additional product numbers should be added only after verification.
