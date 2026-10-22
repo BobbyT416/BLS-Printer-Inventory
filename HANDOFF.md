@@ -243,3 +243,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Corrected the viewport flex layout so the main content is explicitly a zero-basis, zero-height flex child with its own vertical scrolling area. Added touch-action/overscroll containment and kept the version footer from consuming the content area's scroll height.
 - Preserved fixed-height header and print overrides.
 - Validation: JavaScript syntax check passed. This is a CSS/runtime issue; no live iPhone test performed. User reported scrolling failure in v1.7.0 and should retest this build.
+
+
+## v1.7.2 — Fixed viewport scroll region (2026-10-22)
+- Replaced the flex-child scrolling approach after the user confirmed v1.7.1 still would not scroll on iPhone. The header is now fixed to the viewport top, the main inventory region is explicitly fixed between the measured header bottom and footer top, and the footer stays fixed at the bottom.
+- Added viewport measurement on initial render, resize, orientation change, and iOS visual viewport resize to keep the scroll region sized to the visible screen.
+- Validation: JavaScript syntax check passed. No physical iPhone test performed; user should test this build directly.
