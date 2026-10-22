@@ -189,3 +189,11 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.6.2 — App title (2026-10-22)
 - Updated the visible header title and browser document title to **BLS Used Printer Inventory**.
 - Validation: JavaScript syntax check passed. No live browser/iPhone visual test performed.
+
+
+## v1.6.3 — Backup settings dialog (2026-10-22)
+- Replaced the gear icon's numeric prompt with a proper Backup & Settings dialog containing visible **Export Backup** and **Import Backup** buttons.
+- Export continues to download a JSON backup of printer records and report settings. Import opens the JSON file picker and retains the confirmation that importing replaces records in this browser.
+- Dialog explicitly explains that current storage is browser/device-local and does not automatically sync between users/devices.
+- Important architecture note: multi-user sync requires a shared backend database/API and security rules. No shared backend is configured in this app currently; this change does not create cloud sync.
+- Validation: JavaScript syntax check passed. No live browser/iPhone interaction test performed.
