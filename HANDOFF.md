@@ -438,3 +438,10 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Added `shortModelName()` to simplify model labels on the inventory home list and generated reports (print/PDF/Word/CSV) while retaining full model name in Add/Edit and printer details. Example: `HP LaserJet Enterprise Flow MFP M527cm` displays as `M527cm` in list/reports.
 - Scanner glare itself cannot be removed by software; guidance is to keep the label flat, avoid direct reflections, and try a slight angle or diffuse lighting. Avoid aggressive image processing until scanner behavior is diagnosed.
 - JavaScript syntax checks passed for both inline script blocks. Not physically tested on the user's device.
+
+## Version 1.8.23 — scanner fallback improvement (2026-10-22)
+- Kept the native browser BarcodeDetector as the first reader when it supports Code 128, but added a 3-second timeout fallback to ZXing if the native reader does not complete the scan. In dual-label mode, fallback continues if either the serial number or product number is still missing.
+- Added a per-scan override so the fallback attempt skips the native reader and reaches ZXing instead of repeating the same failed path. The override resets when opening a new scan session.
+- Updated visible app version to 1.8.23.
+- This is a software fallback improvement, not a guarantee of camera focus or barcode readability. No physical iPhone or Android test has been performed yet.
+- Model/type identification remains limited to verified entries in PRODUCT_MODEL_MAP. At this version, F2A80A is the only verified product-number mapping; additional models require a verified lookup catalog or data source.
