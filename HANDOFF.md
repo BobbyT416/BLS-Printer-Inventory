@@ -255,3 +255,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Reworked layout again after user reported content was hidden under the header and footer did not need to remain fixed. Only the header is fixed. The main inventory and version footer now participate in normal document scrolling; main content starts below the measured header height.
 - Header height is recalculated on load, resize, orientation/visual viewport changes, and with ResizeObserver to prevent the first content from starting beneath the header after logo/layout sizing settles.
 - Validation: JavaScript syntax check passed. No live iPhone test performed.
+
+
+## v1.7.4 — Disposition menu stays below header (2026-10-22)
+- Fixed the disposition filter dropdown placement so its top edge is clamped below the fixed header, even when the filter summary is partially obscured or the menu is taller than the available space. The menu now uses the remaining visible viewport height instead of flipping above the trigger into the header area.
+- Validation: JavaScript syntax check passed. No live iPhone test performed.
