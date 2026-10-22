@@ -179,3 +179,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.6.0 — Gradient header colors (2026-10-22)
 - Changed the header from a flat HP blue to a left-to-right gradient: HP cyan-blue `#42C0FB` on the left transitioning to the vivid blue sampled from the supplied Brothers Lazer bolt image (`#024AD8`) on the right.
 - Validation: JavaScript syntax check passed. No live visual browser/iPhone test performed.
+
+
+## v1.6.1 — Logo vignette (2026-10-22)
+- Added a subtle, broad radial light-blue/white vignette behind the logo to lift it from the blue gradient without creating a hard box or sticker effect. It is a CSS-only effect and does not modify inventory data or the logo image.
+- Validation: JavaScript syntax check passed. No live browser/iPhone visual test performed.
