@@ -1,6 +1,5 @@
 name: Deploy Supabase test app
-# Test deployment workflow; publishes only the supabase-sync-test branch.
-
+# Diagnostic runner job added to isolate why the Pages deployment job fails before steps start.
 on:
   push:
     branches:
@@ -17,7 +16,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  runner-diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm GitHub Actions runner starts
+        run: |
+          echo "Diagnostic runner started successfully."
+          echo "Branch: $GITHUB_REF"
+          echo "Commit: $GITHUB_SHA"
+
   deploy:
+    needs: runner-diagnostic
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
