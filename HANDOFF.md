@@ -327,3 +327,11 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Renamed the Add/Edit Printer submit button from **Save printer** to **Save**.
 - After a successful storage write, the app closes the editor/details, resets filters and returns to the home inventory, and displays **Printer saved** for approximately two seconds before dismissing the confirmation. Failed saves still show the explicit failure message and do not run the success flow.
 - Validation: JavaScript syntax checks passed. No live iPhone test performed.
+
+
+## v1.8.6 — Save-form self-audit follow-up (2026-10-22)
+- Audited the Add/Edit form's native required fields. Barcode was marked required, so the browser could block submission before the save handler ran when the user did not have a sticker barcode ready.
+- Made barcode optional. When blank, the save handler creates a unique temporary `AUTO-...` barcode; serial number defaults to that value only if serial number was also left blank. Users can enter or scan a real barcode later.
+- Added explicit, visible checks for required printer type and model before saving, with focus moved to the missing field.
+- Local storage write failures remain explicit and abort success navigation; successful saves still show the two-second confirmation and return home.
+- Validation: JavaScript syntax checks passed. No live iPhone save/reload test performed.
