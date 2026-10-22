@@ -1,8 +1,5 @@
-name: Deploy Supabase test app
+name: Restore production Pages deployment
 on:
-  push:
-    branches:
-      - supabase-sync-test
   workflow_dispatch:
 
 permissions:
@@ -18,17 +15,19 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: supabase-sync-test
+      name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Check out test branch
+      - name: Check out production main branch
         uses: actions/checkout@v4
+        with:
+          ref: main
       - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Upload test app
+      - name: Upload production app
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
-      - name: Deploy test app
+      - name: Deploy production app
         id: deployment
         uses: actions/deploy-pages@v4
