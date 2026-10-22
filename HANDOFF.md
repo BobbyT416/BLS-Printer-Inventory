@@ -206,3 +206,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Saving a report also persists the current report-column selections.
 - PDF generation uses the jsPDF CDN library and therefore requires that library to load; if unavailable, the app displays an error instead of silently opening print.
 - Validation: JavaScript syntax check passed. No live browser/iPhone download test performed.
+
+
+## v1.6.5 — iPhone PDF save/share flow (2026-10-22)
+- Updated PDF Save report behavior to generate a PDF Blob and, when supported by the browser, invoke the native share sheet with the PDF file so iPhone users can choose **Save to Files** or another destination. Browsers without file sharing fall back to a file download.
+- Validation: JavaScript syntax check passed. No live iPhone test performed; verify that the deployed version opens the share sheet on iOS.
