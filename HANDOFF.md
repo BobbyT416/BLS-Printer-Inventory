@@ -405,3 +405,9 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Added product-number-to-model auto-fill in Add/Edit Printer. Verified mapping: HP product number F2A80A → HP LaserJet Enterprise Flow MFP M527cm.
 - When a mapped product number is entered or captured by the dual-barcode scanner, Model number is populated automatically. If a previously auto-filled product number is changed to an unknown value, the app clears only the model value it had auto-filled; manually entered model values are preserved.
 - Validation: both inline JavaScript blocks passed syntax compilation. Mapping is intentionally conservative; additional product numbers should be added only after verification.
+
+
+## Version 1.8.18 — 2026-10-22
+- Fixed the dual-label scanner path: assigning the captured product number directly to the field did not trigger its `input`/`change` listeners, so the model lookup never ran. The scanner now explicitly calls `updateModelFromProductNumber()` immediately after capturing the product number.
+- Verified mapping remains HP product number F2A80A → HP LaserJet Enterprise Flow MFP M527cm. Unknown product numbers still require manual model entry.
+- Validation: both inline JavaScript blocks passed syntax compilation. Code-path fix committed; no physical iPhone test performed.
