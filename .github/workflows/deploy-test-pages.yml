@@ -1,4 +1,5 @@
 name: Deploy Supabase test app
+# Test deployment workflow; publishes only the supabase-sync-test branch.
 
 on:
   push:
