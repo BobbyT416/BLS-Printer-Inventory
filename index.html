@@ -98,7 +98,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.3
+ Version 1.8.4
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -174,7 +174,7 @@ function closeDialog(el){if(!el)return;if(typeof el.close==='function')el.close(
 const STORE='printerInventoryPrototype.v1', PRINT='printerInventoryPrintSettings.v1';
 const memoryStore={};
 function safeGet(key){try{return window.localStorage.getItem(key)}catch(e){return Object.prototype.hasOwnProperty.call(memoryStore,key)?memoryStore[key]:null}}
-function safeSet(key,value){memoryStore[key]=String(value);try{window.localStorage.setItem(key,String(value))}catch(e){/* Continue with in-memory session if browser storage is blocked. */}}
+function safeSet(key,value){try{window.localStorage.setItem(key,String(value));memoryStore[key]=String(value);return true}catch(e){console.error('Storage write failed for '+key,e);return false}}
 const fields=[
 ['serialNumber','Serial number'],['assetTag','Asset tag'],['deviceType','Type'],['model','Model'],['pageCount','Page count'],['disposition','Disposition'],['acquiredFrom','Acquired from'],['refurbishedBy','Refurbished by'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
 ];
@@ -187,7 +187,7 @@ let archiveMode=false;
 const money=n=>Number(n||0).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(msg){$('toast').textContent=msg;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2600)}
-function persist(){try{safeSet(STORE,JSON.stringify(devices));render();return true}catch(e){console.error('Inventory save failed',e);toast('Could not update the inventory display. Your changes may not have been saved.');return false}}
+function persist(){try{const payload=JSON.stringify(devices);if(!safeSet(STORE,payload)){toast('Printer was NOT saved. This browser could not write to local storage. Check Safari website data/storage settings and try again.');return false}render();return true}catch(e){console.error('Inventory save failed',e);toast('Printer was NOT saved. '+(e&&e.message?e.message:'An unexpected storage error occurred.'));return false}}
 function badge(d){let c=d.disposition==='Ready for sale'?'ready':(['Needs minor work','Waiting for parts'].includes(d.disposition)?'partial':(['Needs major work','Parts only / scrap','Sold'].includes(d.disposition)?'hold':''));return `<span class="badge ${c}">${esc(d.disposition||'Not evaluated')}</span>`}
 function render(){
  const q=$('search').value.toLowerCase(),type=$('filterType').value,selectedDispositions=[...document.querySelectorAll('.disposition-choice:checked')].map(el=>el.value),showArchived=$('filterArchived').checked;
