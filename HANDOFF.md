@@ -216,3 +216,8 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 ## v1.6.6 — Hide barcode from reports (2026-10-22)
 - Removed Barcode from the configurable report-field list and default report selections. Barcode remains available for input/scanning and internal matching, but is no longer offered as a report column.
 - Validation: JavaScript syntax check passed. No live browser/iPhone test performed.
+
+
+## v1.6.7 — Search placeholder (2026-10-22)
+- Changed the inventory search-field placeholder to **Search inventory items** and updated its accessible label to match.
+- Validation: JavaScript syntax check passed. No live browser/iPhone test performed.
