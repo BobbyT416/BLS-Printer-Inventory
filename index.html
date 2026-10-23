@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.34
+ Version 1.8.35
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -589,7 +589,7 @@ $('labelPhotoInput').addEventListener('change',async e=>{
   const textOut=String(result?.data?.text||'').toUpperCase();
   const normalized=textOut.replace(/[^A-Z0-9\n]/g,' ');
   // Prefer values next to explicit labels, then validate by expected lengths.
-  const serialMatch=textOut.match(/(?:SN|S/N|SERIAL(?:\s+NUMBER)?)\s*[:#-]?\s*([A-Z0-9]{10})/i);
+  const serialMatch=textOut.match(/(?:SN|S\/N|SERIAL(?:\s+NUMBER)?)\s*[:#-]?\s*([A-Z0-9]{10})/i);
   const productMatch=textOut.match(/(?:PRODUCT(?:\s+NUMBER)?|PROD(?:UCT)?\s*(?:NO|NUM|#))\s*[:#-]?\s*([A-Z0-9]{6})/i);
   const candidates=normalized.split(/\s+/).map(v=>v.replace(/[^A-Z0-9]/g,'')).filter(Boolean);
   const serial=serialMatch?.[1]||candidates.find(v=>/^[A-Z0-9]{10}$/.test(v));
