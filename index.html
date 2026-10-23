@@ -92,6 +92,24 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  h1{font-size:22px;line-height:1.2}
  main{padding-top:10px}
 }
+
+/* v1.6.10: show more of the printer form while the iPhone keyboard is open */
+#deviceDialog .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+#deviceDialog .field.span2,#deviceDialog .field.span3{grid-column:1/-1}
+#deviceDialog .field label{font-size:12px;line-height:1.15;margin-bottom:2px}
+#deviceDialog input:not([type=checkbox]),#deviceDialog select,#deviceDialog textarea{padding:7px 8px;min-height:35px}
+#deviceDialog .hint{font-size:10px;line-height:1.15;margin-top:2px}
+#deviceDialog textarea{min-height:58px}
+@media(max-width:520px){
+ #deviceDialog .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ #deviceDialog .field.span2,#deviceDialog .field.span3{grid-column:1/-1}
+ #deviceDialog .modal-head{padding:8px 12px}
+ #deviceDialog .modal-head h2{font-size:17px}
+ #deviceDialog .modal-body{padding:8px}
+ #deviceDialog .modal-foot{padding:7px 9px max(7px,env(safe-area-inset-bottom));gap:6px}
+ #deviceDialog .modal-foot button{padding:8px 10px;font-size:13px}
+}
+
 @media print{html,body{height:auto;overflow:visible;display:block}header,main,#appVersion{position:static;margin-top:0}main{height:auto;overflow:visible}#appVersion{display:none}}
 </style>
 </head>
