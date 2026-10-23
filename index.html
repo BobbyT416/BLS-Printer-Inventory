@@ -260,6 +260,7 @@ function closeDevice(){closeDialog($('deviceDialog'))}
 let formTouchStartY=null,formTouchStartScroll=0,formTouchStartTarget=null,formTouchEndTimer=null;
 deviceFormBody.addEventListener('touchstart',e=>{
   formTouchStartY=e.touches?.[0]?.clientY??null;
+  window.__formTouchLastY=formTouchStartY;
   formTouchStartScroll=deviceFormBody.scrollTop;
   formTouchStartTarget=e.target;
   if(formTouchEndTimer){clearTimeout(formTouchEndTimer);formTouchEndTimer=null;}
