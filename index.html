@@ -253,26 +253,35 @@ function closeDevice(){closeDialog($('deviceDialog'))}
  // Dismiss the software keyboard when the Add/Edit form starts scrolling on mobile.
  // Opening the dialog no longer auto-focuses Barcode; users tap a field when ready.
  const deviceFormBody=$('deviceDialog').querySelector('.modal-body');
-// Dismiss the keyboard only after a deliberate finger scroll, not when Safari
-// scrolls the focused input/caret into view while the user is typing.
-let formTouchStartY=null,formTouchScrolled=false;
+// Hide the keyboard only when a real scroll happens inside the form.
+// This allows swipes that begin on an input, but avoids dismissing the keyboard
+// from small finger movements while typing.
+let formTouchStartY=null,formTouchStartScroll=0,formTouchStartTarget=null,formTouchDismissScheduled=false;
 deviceFormBody.addEventListener('touchstart',e=>{
  formTouchStartY=e.touches?.[0]?.clientY??null;
- formTouchScrolled=false;
+ formTouchStartScroll=deviceFormBody.scrollTop;
+ formTouchStartTarget=e.target;
+ formTouchDismissScheduled=false;
 },{passive:true});
 deviceFormBody.addEventListener('touchmove',e=>{
- if(formTouchStartY===null||formTouchScrolled)return;
+ if(formTouchStartY===null||formTouchDismissScheduled)return;
  const y=e.touches?.[0]?.clientY;
- if(typeof y!=='number'||Math.abs(y-formTouchStartY)<14)return;
- formTouchScrolled=true;
- // A gesture starting on a field, especially Notes, should not dismiss the keyboard.
- const startTarget=e.target;
- if(startTarget&&startTarget.closest&&startTarget.closest('input,textarea,select,button,label'))return;
+ if(typeof y!=='number'||Math.abs(y-formTouchStartY)<28)return;
  const active=document.activeElement;
- if(active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox')active.blur();
+ if(!(active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox'))return;
+ // Wait briefly for the browser to actually scroll; caret/viewport movement alone is not enough.
+ formTouchDismissScheduled=true;
+ setTimeout(()=>{
+  const scrolled=Math.abs(deviceFormBody.scrollTop-formTouchStartScroll)>5;
+  const startY=formTouchStartY;
+  const currentY=window.__blsLastFormTouchY;
+  if(scrolled&&active===document.activeElement)active.blur();
+  formTouchDismissScheduled=false;
+ },120);
+ window.__blsLastFormTouchY=y;
 },{passive:true});
-deviceFormBody.addEventListener('touchend',()=>{formTouchStartY=null;},{passive:true});
-deviceFormBody.addEventListener('touchcancel',()=>{formTouchStartY=null;},{passive:true});
+deviceFormBody.addEventListener('touchend',()=>{formTouchStartY=null;formTouchStartTarget=null;},{passive:true});
+deviceFormBody.addEventListener('touchcancel',()=>{formTouchStartY=null;formTouchStartTarget=null;},{passive:true});
 const barcodeInput=$('barcode'),serialInput=$('serialNumber');
 barcodeInput.addEventListener('input',()=>{});
 barcodeInput.addEventListener('change',()=>{barcodeInput.value=barcodeInput.value.trim()});
