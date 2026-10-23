@@ -278,10 +278,29 @@ barcodeInput.addEventListener('input',()=>{});
 barcodeInput.addEventListener('change',()=>{barcodeInput.value=barcodeInput.value.trim()});
 barcodeInput.addEventListener('blur',()=>{barcodeInput.value=barcodeInput.value.trim()});
 serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.trim().toUpperCase()});
-// Map recognized HP product numbers to verified model names. Extend this lookup as products are confirmed.
+// Verified HP product-number mappings. Expand this catalogue from official HP product guides over time.
+// Type is based on the device's functions: print-only = Single Function; print/copy/scan = MFP.
  const PRODUCT_MODEL_MAP={
-  'F2A80A':{model:'HP LaserJet Enterprise Flow MFP M527cm',type:'MFP'}
+  'F2A80A':{model:'HP LaserJet Enterprise Flow MFP M527cm',type:'MFP',source:'HP product information'},
+  'K0Q14A':{model:'HP LaserJet Enterprise M607n',type:'Single Function',source:'HP M607/M608/M609 user guide'},
+  'K0Q15A':{model:'HP LaserJet Enterprise M607dn',type:'Single Function',source:'HP M607/M608/M609 user guide'},
+  'K0Q17A':{model:'HP LaserJet Enterprise M608n',type:'Single Function',source:'HP M607/M608/M609 user guide'},
+  'K0Q18A':{model:'HP LaserJet Enterprise M608dn',type:'Single Function',source:'HP M607/M608/M609 user guide'},
+  'K0Q19A':{model:'HP LaserJet Enterprise M608x',type:'Single Function',source:'HP M607/M608/M609 user guide'},
+  'M0P32A':{model:'HP LaserJet Enterprise M609dn',type:'Single Function',source:'HP M607/M608/M609 user guide'},
+  'K0Q21A':{model:'HP LaserJet Enterprise M609dn',type:'Single Function',source:'HP M607/M608/M609 user guide'},
+  'K0Q22A':{model:'HP LaserJet Enterprise M609x',type:'Single Function',source:'HP M607/M608/M609 user guide'},
+  'J8J63A':{model:'HP LaserJet Enterprise MFP M631dn',type:'MFP',source:'HP M631/M632/M633 user guide'},
+  'J8J64A':{model:'HP LaserJet Enterprise MFP M631h',type:'MFP',source:'HP M631/M632/M633 user guide'}
  };
+ // Keep a one-tap official HP search available for product numbers not yet in the local catalogue.
+ function addHpProductLookup(){
+  const input=$('productNumber');if(!input||$('lookupHpProductBtn'))return;
+  const button=document.createElement('button');button.type='button';button.id='lookupHpProductBtn';button.textContent='Look up on HP';button.style.marginTop='6px';button.style.padding='7px 10px';
+  button.addEventListener('click',()=>{const code=String(input.value||'').trim().toUpperCase();if(!code){toast('Enter a product number first.');input.focus();return}window.open('https://www.google.com/search?q='+encodeURIComponent('site:hp.com '+code+' HP printer model product number'),'_blank','noopener')});
+  input.insertAdjacentElement('afterend',button);
+ }
+ addHpProductLookup();
  function shortModelName(model){
   const value=String(model||'').trim();
   const match=value.match(/\b([A-Z]\d{3,5}[A-Za-z]{0,3})\s*$/);
