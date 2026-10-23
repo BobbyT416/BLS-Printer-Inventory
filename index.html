@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.39
+ Version 1.8.40
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -337,7 +337,8 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
    $('model').dataset.autoFromProduct='true';
    $('deviceType').value=matched.type;
    $('deviceType').dataset.autoFromProduct='true';
-   $('scanStatus').textContent='Model identified: '+matched.model+' ('+matched.type+')';
+   // Do not overwrite the live OCR progress message while the camera scanner is running.
+   if(!stream)$('scanStatus').textContent='Model identified: '+matched.model+' ('+matched.type+')';
   }else if($('model').dataset.autoFromProduct==='true'){
    $('model').value='';
    delete $('model').dataset.autoFromProduct;
