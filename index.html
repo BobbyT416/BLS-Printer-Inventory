@@ -254,13 +254,39 @@ function closeDevice(){closeDialog($('deviceDialog'))}
  // Dismiss the software keyboard when the Add/Edit form starts scrolling on mobile.
  // Opening the dialog no longer auto-focuses Barcode; users tap a field when ready.
  const deviceFormBody=$('deviceDialog').querySelector('.modal-body');
-// Dismiss the keyboard only after a deliberate scroll, then preserve the
-// focused field's position with a short, smooth adjustment after iOS resizes.
-let formTouchStartY=null,formTouchStartScroll=0,formTouchDismissScheduled=false;
-deviceFormBody.addEventListener('touchstart',e=>{formTouchStartY=e.touches?.[0]?.clientY??null;formTouchStartScroll=deviceFormBody.scrollTop;formTouchDismissScheduled=false;},{passive:true});
-deviceFormBody.addEventListener('touchmove',e=>{if(formTouchStartY===null||formTouchDismissScheduled)return;const y=e.touches?.[0]?.clientY;if(typeof y!=='number'||Math.abs(y-formTouchStartY)<28)return;const active=document.activeElement;if(!(active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox'))return;formTouchDismissScheduled=true;setTimeout(()=>{const didScroll=Math.abs(deviceFormBody.scrollTop-formTouchStartScroll)>5;if(didScroll&&active===document.activeElement){active.blur();setTimeout(()=>{const body=$('deviceDialog').querySelector('.modal-body');if(!body||!$('deviceDialog').open)return;const br=body.getBoundingClientRect(),ar=active.getBoundingClientRect();let delta=0;if(ar.bottom>br.bottom-12)delta=ar.bottom-(br.bottom-12);else if(ar.top<br.top+8)delta=ar.top-(br.top+8);if(Math.abs(delta)>2)body.scrollTo({top:Math.max(0,body.scrollTop+delta),behavior:'smooth'});},180);}formTouchDismissScheduled=false;},140);},{passive:true});
-deviceFormBody.addEventListener('touchend',()=>{formTouchStartY=null;formTouchStartTarget=null;},{passive:true});
-deviceFormBody.addEventListener('touchcancel',()=>{formTouchStartY=null;formTouchStartTarget=null;},{passive:true});
+// Keep the keyboard open during finger movement. Only dismiss it after a
+// deliberate form scroll has ended and settled, so small movements while typing
+// don't immediately hide the keyboard.
+let formTouchStartY=null,formTouchStartScroll=0,formTouchStartTarget=null,formTouchEndTimer=null;
+deviceFormBody.addEventListener('touchstart',e=>{
+  formTouchStartY=e.touches?.[0]?.clientY??null;
+  formTouchStartScroll=deviceFormBody.scrollTop;
+  formTouchStartTarget=e.target;
+  if(formTouchEndTimer){clearTimeout(formTouchEndTimer);formTouchEndTimer=null;}
+},{passive:true});
+deviceFormBody.addEventListener('touchend',()=>{
+  const startY=formTouchStartY,startScroll=formTouchStartScroll,startTarget=formTouchStartTarget;
+  formTouchStartY=null;formTouchStartTarget=null;
+  if(startY===null)return;
+  formTouchEndTimer=setTimeout(()=>{
+    formTouchEndTimer=null;
+    const active=document.activeElement;
+    const didScroll=Math.abs(deviceFormBody.scrollTop-startScroll)>18;
+    const movedFarEnough=Math.abs((window.__formTouchLastY??startY)-startY)>32;
+    if(didScroll&&movedFarEnough&&active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox'){
+      active.blur();
+    }
+  },320);
+},{passive:true});
+deviceFormBody.addEventListener('touchmove',e=>{
+  if(formTouchStartY===null)return;
+  const y=e.touches?.[0]?.clientY;
+  if(typeof y==='number')window.__formTouchLastY=y;
+},{passive:true});
+deviceFormBody.addEventListener('touchcancel',()=>{
+  formTouchStartY=null;formTouchStartTarget=null;
+  if(formTouchEndTimer){clearTimeout(formTouchEndTimer);formTouchEndTimer=null;}
+},{passive:true});
 const barcodeInput=$('barcode'),serialInput=$('serialNumber');
 barcodeInput.addEventListener('input',()=>{});
 barcodeInput.addEventListener('change',()=>{barcodeInput.value=barcodeInput.value.trim()});
