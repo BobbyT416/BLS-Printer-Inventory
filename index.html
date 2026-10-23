@@ -79,7 +79,7 @@ dialog{max-height:calc(var(--visible-vh, 100dvh) - 12px);margin:auto}dialog[open
 
 /* v1.8.26: clean borderless printer report cards, landscape */
 @media print{
- @page{size:letter landscape;margin:0.3in}
+ @page{size:11in 8.5in;margin:0.3in}
  #printReportTable{display:block!important;width:100%;table-layout:auto;border:0!important;border-collapse:separate!important;border-spacing:0 5px!important;font-size:9pt}
  #printReportTable thead{display:none!important}
  #printReportTable tbody{display:block!important;width:100%}
@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.27
+ Version 1.8.28
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
