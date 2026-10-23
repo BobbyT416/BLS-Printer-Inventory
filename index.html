@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.44
+ Version 1.8.45
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -422,6 +422,9 @@ async function startCamera(){
   }
   $('scanStatus').textContent='Preparing fast OCR…';
   let busy=false,lastRun=0,ocrWorker=null;
+  // Require repeated agreement across camera frames before accepting OCR candidates.
+  const serialVotes=new Map(),productVotes=new Map();
+  const voteCandidate=(votes,value)=>{if(!value)return '';const n=(votes.get(value)||0)+1;votes.set(value,n);return n>=2?value:''};
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
   // Reuse one worker instead of reinitializing OCR on every camera frame.
   ocrWorker=await Tesseract.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='Reading label… '+Math.round((m.progress||0)*100)+'%'}});
@@ -450,21 +453,21 @@ async function startCamera(){
       let serial=compact(serialLabel?.[1]),product=compact(productLabel?.[1]);
       if(!/^[A-Z0-9]{10}$/.test(serial))serial=tokens.find(v=>/^[A-Z0-9]{10}$/.test(v))||'';
       if(!/^[A-Z0-9]{6}$/.test(product))product=tokens.find(v=>/^[A-Z0-9]{6}$/.test(v))||'';
-      // O/0 and V/Y are both possible characters; do not silently guess.
+      // Keep O-to-zero normalization scoped to serials, then require the same candidate twice.
+      if(serial)serial=serial.replace(/O/g,'0');
+      serial=voteCandidate(serialVotes,serial);
+      product=voteCandidate(productVotes,product);
       if(scanTarget==='formLabel'){
        if(serial){
-        // User-requested rule: normalize letter O to digit zero in serial numbers only.
-        // Do not apply this transformation to product numbers or other fields.
-        serial=serial.replace(/O/g,'0');
         $('serialNumber').value=serial;
         $('serialNumber').dataset.ocrNeedsReview=/[VY]/.test(serial)?'true':'false';
        }
        if(product){$('productNumber').value=product;updateModelFromProductNumber()}
        if(serial||product){
-        const serialNeedsReview=serial&&/[O0VY]/.test(serial);
-        $('scanStatus').textContent='OCR found '+(serial?'serial number':'')+(serial&&product?' and ':'')+(product?'product number':'')+'. '+(serialNeedsReview?'Please verify O/0 and V/Y in the serial number.':'Verify the values before saving.');
-        if(serial&&product){stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('OCR captured both numbers — verify O/0 and V/Y')}
-       }else{$('scanStatus').textContent='Fast OCR is running. Looking for the 10-character serial and 6-character product number…'}
+        const serialNeedsReview=serial&&/[VY]/.test(serial);
+        $('scanStatus').textContent='Repeated OCR reading confirmed '+(serial?'serial number':'')+(serial&&product?' and ':'')+(product?'product number':'')+'. '+(serialNeedsReview?'Please verify V/Y in the serial number.':'Verify the values before saving.');
+        if(serial&&product){stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Repeated OCR readings confirmed both numbers — verify the serial')}
+       }else{$('scanStatus').textContent='Comparing repeated readings to reduce character errors…'}
       }else{
        const candidate=serial||product;
        if(candidate){stopCamera();useScanned(candidate);toast('OCR found a possible label number. Please verify it.');return}
