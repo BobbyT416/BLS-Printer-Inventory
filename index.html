@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.45
+ Version 1.8.46
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -407,9 +407,16 @@ async function startCamera(){
  if(!navigator.mediaDevices?.getUserMedia){$('scanStatus').textContent='Camera access is unavailable here. Open the app directly in Safari.';return}
  $('scanBox').innerHTML='<video id="scanVideo" autoplay muted playsinline></video>';
  try{
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
-  const video=$('scanVideo');video.srcObject=stream;video.setAttribute('playsinline','');video.muted=true;
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},advanced:[{focusMode:'continuous'}]},audio:false});
+  const video=$('scanVideo');video.srcObject=stream;video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');video.muted=true;
   await video.play();
+  // Best-effort camera tuning: apply only controls supported by this device.
+  try{
+   const track=stream.getVideoTracks()[0],caps=track.getCapabilities?.()||{},advanced=[];
+   if(caps.focusMode&&caps.focusMode.includes('continuous'))advanced.push({focusMode:'continuous'});
+   if(caps.zoom&&Number.isFinite(caps.zoom.max)&&caps.zoom.max>(caps.zoom.min||1))advanced.push({zoom:Math.min(caps.zoom.max,Math.max(caps.zoom.min||1,(caps.zoom.min||1)*1.25)});
+   if(advanced.length)await track.applyConstraints({advanced});
+  }catch(_){}
   $('scanStatus').textContent='Camera ready. Loading free text recognition…';
   if(!window.Tesseract){
    await new Promise((resolve,reject)=>{
@@ -537,8 +544,9 @@ function applyScannedPrinterIdentity(value){
  return false;
 }
 function acceptLabelCode(value){
- const code=String(value||'').trim().toUpperCase();if(!code)return;
+ let code=String(value||'').trim().toUpperCase();if(!code)return;
  if(/^[A-Z0-9]{10}$/.test(code)){
+  code=code.replace(/O/g,'0');
   if($('serialNumber').value!==code){$('serialNumber').value=code;toast('Serial number captured')}
   applyScannedPrinterIdentity(code);
  }else if(/^[A-Z0-9]{6}$/.test(code)){
@@ -552,7 +560,7 @@ function acceptLabelCode(value){
   stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Serial and product numbers captured');
  }else $('scanStatus').textContent='Captured one value. Keep both barcodes in view so the other can be read.';
 }
-function useScanned(value){const code=String(value||'').trim().toUpperCase();if(!code)return;if(scanTarget==='form'){$('barcode').value=code;applyScannedPrinterIdentity(code);closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Barcode entered')}else if(scanTarget==='search'){closeDialog($('scanDialog'));$('search').value=code;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory searched by barcode')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>String(d.serialNumber||'').toLowerCase()===code.toLowerCase()||String(d.barcode||'').toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);$('barcode').value=code;applyScannedPrinterIdentity(code);toast('Existing printer found')}else{openDevice(null,code);applyScannedPrinterIdentity(code);toast('Scanned barcode entered')}}}
+function useScanned(value){const code=String(value||'').trim().toUpperCase();if(!code)return;if(scanTarget==='form'||scanTarget==='formLabel'){$('barcode').value=code;applyScannedPrinterIdentity(code);closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Barcode entered')}else if(scanTarget==='search'){closeDialog($('scanDialog'));$('search').value=code;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory searched by barcode')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>String(d.serialNumber||'').toLowerCase()===code.toLowerCase()||String(d.barcode||'').toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);$('barcode').value=code;applyScannedPrinterIdentity(code);toast('Existing printer found')}else{openDevice(null,code);applyScannedPrinterIdentity(code);toast('Scanned barcode entered')}}}
 $('photoLabelBtn').onclick=()=> $('labelPhotoInput').click();
 $('labelPhotoInput').addEventListener('change',async e=>{
  const file=e.target.files?.[0];if(!file)return;
