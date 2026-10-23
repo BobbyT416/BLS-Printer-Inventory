@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.47
+ Version 1.8.48
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -373,7 +373,16 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
 $('deviceForm').addEventListener('invalid',e=>{const el=e.target;toast((el.labels?.[0]?.textContent||el.id||'A required field')+' is required. Please complete the highlighted field.');},{capture:true});
 $('deviceForm').addEventListener('submit',e=>{
  e.preventDefault();const barcode=$('barcode').value.trim();if(!$('deviceType').value){toast('Select a printer type before saving.');$('deviceType').focus();return}if(!$('model').value.trim()){toast('Enter the model number before saving.');$('model').focus();return}$('serialNumber').value=$('serialNumber').value.trim().toUpperCase();
- if(barcode&&devices.some(d=>String(d.barcode||'').toLowerCase()===barcode.toLowerCase()&&d.id!==editingId)){toast('That barcode is already in inventory. Open the existing device instead.');return}
+ const serial=$('serialNumber').value.trim().toUpperCase();
+ const duplicate=devices.find(d=>d.id!==editingId&&(
+  (barcode&&String(d.barcode||'').trim().toLowerCase()===barcode.toLowerCase())||
+  (serial&&String(d.serialNumber||'').trim().toUpperCase()===serial)
+ ));
+ if(duplicate){
+  const reason=serial&&String(duplicate.serialNumber||'').trim().toUpperCase()===serial?'serial number':'barcode';
+  toast('Duplicate '+reason+' detected. Existing printer was not added.',3000);
+  return;
+ }
  const old=devices.find(d=>d.id===editingId)||{};
  const d={...old,id:editingId||('dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,7))};
  d.barcode=barcode;
