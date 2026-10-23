@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.31
+ Version 1.8.32
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -391,7 +391,7 @@ async function startCamera(){
   $('scanStatus').textContent='Camera permission granted. Starting barcode reader…';
   const supportedBarcodeFormats=('BarcodeDetector' in window)?await BarcodeDetector.getSupportedFormats().catch(()=>[]):[];
   if(!forceZXing&&supportedBarcodeFormats.includes('code_128')){
-   const preferredFormats=scanTarget==='formLabel'?['code_128']:['code_128','code_39','ean_13','ean_8','upc_a','upc_e','qr_code','itf'];
+   const preferredFormats=scanTarget==='formLabel'?supportedBarcodeFormats:['code_128','code_39','ean_13','ean_8','upc_a','upc_e','qr_code','itf'];
    const detector=new BarcodeDetector({formats:preferredFormats.filter(f=>supportedBarcodeFormats.includes(f))});
    const cropCanvas=document.createElement('canvas');const cropCtx=cropCanvas.getContext('2d',{willReadFrequently:true});
    const video=$('scanVideo');video.srcObject=stream;
@@ -448,7 +448,7 @@ async function startCamera(){
     const ZX=window.ZXingBrowser;
     const hints=new Map();
     if(ZX.DecodeHintType&&ZX.BarcodeFormat){
-     hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,(scanTarget==='formLabel'?[ZX.BarcodeFormat.CODE_128]:[ZX.BarcodeFormat.CODE_128,ZX.BarcodeFormat.CODE_39,ZX.BarcodeFormat.EAN_13,ZX.BarcodeFormat.EAN_8,ZX.BarcodeFormat.UPC_A,ZX.BarcodeFormat.UPC_E,ZX.BarcodeFormat.QR_CODE,ZX.BarcodeFormat.ITF]).filter(Boolean));
+     hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,[ZX.BarcodeFormat.CODE_128,ZX.BarcodeFormat.CODE_39,ZX.BarcodeFormat.CODE_93,ZX.BarcodeFormat.CODABAR,ZX.BarcodeFormat.EAN_13,ZX.BarcodeFormat.EAN_8,ZX.BarcodeFormat.UPC_A,ZX.BarcodeFormat.UPC_E,ZX.BarcodeFormat.ITF,ZX.BarcodeFormat.RSS_14,ZX.BarcodeFormat.RSS_EXPANDED,ZX.BarcodeFormat.QR_CODE,ZX.BarcodeFormat.DATA_MATRIX,ZX.BarcodeFormat.PDF_417,ZX.BarcodeFormat.AZTEC].filter(Boolean));
      if(ZX.DecodeHintType.TRY_HARDER)hints.set(ZX.DecodeHintType.TRY_HARDER,true);
      if(ZX.DecodeHintType.ALSO_INVERTED)hints.set(ZX.DecodeHintType.ALSO_INVERTED,true);
     }
