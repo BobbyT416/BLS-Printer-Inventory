@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.48
+ Version 1.8.49
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -379,8 +379,12 @@ $('deviceForm').addEventListener('submit',e=>{
   (serial&&String(d.serialNumber||'').trim().toUpperCase()===serial)
  ));
  if(duplicate){
-  const reason=serial&&String(duplicate.serialNumber||'').trim().toUpperCase()===serial?'serial number':'barcode';
-  toast('Duplicate '+reason+' detected. Existing printer was not added.',3000);
+  const duplicateSerial=String(duplicate.serialNumber||'').trim().toUpperCase();
+  const isSerialDuplicate=!!serial&&duplicateSerial===serial;
+  const message=isSerialDuplicate
+   ? 'Serial number '+serial+' already exists'
+   : 'Barcode '+barcode+' already exists';
+  toast(message,3000);
   return;
  }
  const old=devices.find(d=>d.id===editingId)||{};
