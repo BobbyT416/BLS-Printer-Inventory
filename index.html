@@ -248,8 +248,8 @@ $('closeDetailBottom').onclick=()=>closeDialog($('detailDialog'));
 function openDevice(id=null,barcode=''){
  editingId=id;const d=id?devices.find(x=>x.id===id):{};
  $('deviceTitle').textContent=id?'Edit printer':'Add printer';$('deleteBtn').style.display=id?'inline-block':'none';
- for(const [k] of fields){$(k).value=d?.[k]??''}
- if(barcode)$('barcode').value=barcode;
+ for(const [k] of fields){$(k).value=d?.[k]??(k==='disposition'?'Not evaluated':'')}
+ if(barcode){$('barcode').value=barcode;applyScannedPrinterIdentity(barcode)}
  showDialog($('deviceDialog'))
 }
 function closeDevice(){closeDialog($('deviceDialog'))}
@@ -433,6 +433,14 @@ async function startCamera(){
  }catch(e){stopCamera();let reason='';if(e?.name==='NotAllowedError'||e?.name==='PermissionDeniedError')reason=' Camera permission was denied or blocked. In iPhone Settings, open Safari → Camera and allow access, then reload this website.';else if(e?.name==='NotFoundError')reason=' No camera was found on this device.';else if(e?.name==='NotReadableError')reason=' The camera may already be in use by another app.';else reason=' '+(e?.message||'');$('scanStatus').textContent='Could not start camera scanner. '+reason+' You can still enter the barcode manually.'}
 }
 function stopCamera(){if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
+function applyScannedPrinterIdentity(value){
+ const code=String(value||'').trim().toUpperCase();
+ const product=code.match(/[A-Z0-9]{6}/g)?.find(v=>PRODUCT_MODEL_MAP[v]);
+ if(product){$('productNumber').value=product;updateModelFromProductNumber();return true}
+ const known=devices.find(d=>[d.barcode,d.serialNumber,d.productNumber].some(v=>String(v||'').trim().toUpperCase()===code));
+ if(known){if(known.productNumber)$('productNumber').value=known.productNumber;if(known.model)$('model').value=known.model;if(known.deviceType)$('deviceType').value=known.deviceType;return true}
+ return false;
+}
 function acceptLabelCode(value){
  const code=String(value||'').trim().toUpperCase();if(!code)return;
  if(/^[A-Z0-9]{10}$/.test(code)){
@@ -447,7 +455,7 @@ function acceptLabelCode(value){
   stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Serial and product numbers captured');
  }else $('scanStatus').textContent='Captured one value. Keep both barcodes in view so the other can be read.';
 }
-function useScanned(value){const code=String(value||'').trim();if(!code)return;if(scanTarget==='form'){$('barcode').value=code;closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Barcode entered')}else if(scanTarget==='search'){closeDialog($('scanDialog'));$('search').value=code;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory searched by barcode')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>String(d.serialNumber||'').toLowerCase()===code.toLowerCase()||String(d.barcode||'').toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);$('barcode').value=code;toast('Existing printer found')}else{openDevice(null,code);toast('Scanned barcode entered')}}}
+function useScanned(value){const code=String(value||'').trim();if(!code)return;if(scanTarget==='form'){$('barcode').value=code;applyScannedPrinterIdentity(code);closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Barcode entered')}else if(scanTarget==='search'){closeDialog($('scanDialog'));$('search').value=code;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory searched by barcode')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>String(d.serialNumber||'').toLowerCase()===code.toLowerCase()||String(d.barcode||'').toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);$('barcode').value=code;toast('Existing printer found')}else{openDevice(null,code);toast('Scanned barcode entered')}}}
 $('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{stopCamera();$('scanStatus').textContent='Camera stopped.'};
 $('useBarcode').onclick=()=>useScanned($('manualBarcode').value);
 $('manualBarcode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();useScanned(e.target.value)}});
