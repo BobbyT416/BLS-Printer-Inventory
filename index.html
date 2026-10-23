@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.36
+ Version 1.8.37
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -376,142 +376,79 @@ $('addBtn').onclick=()=>openDevice();$('closeDevice').onclick=closeDevice;$('can
 function openScanner(target='inventory'){scanTarget=target;forceZXing=false;$('manualBarcode').value='';$('scanStatus').textContent='Camera has not started.';showDialog($('scanDialog'));setTimeout(()=>$('manualBarcode').focus(),100)}
 $('scanSearchBtn').onclick=()=>openScanner('search');$('scanFromForm').onclick=()=>openScanner('formLabel');
 async function startCamera(){
- $('scanStatus').textContent='Requesting camera access…';
- if(!window.isSecureContext){$('scanStatus').textContent='Camera access requires a secure HTTPS page. Open the published GitHub Pages address in Safari.';return}
- if(!navigator.mediaDevices?.getUserMedia){$('scanStatus').textContent='This browser does not expose camera access. Open the website directly in Safari, not inside another app.';return}
+ stopCamera();
+ $('scanStatus').textContent='Starting camera for OCR…';
+ if(!window.isSecureContext){$('scanStatus').textContent='Camera access requires HTTPS. Open this app in Safari.';return}
+ if(!navigator.mediaDevices?.getUserMedia){$('scanStatus').textContent='Camera access is unavailable here. Open the app directly in Safari.';return}
  $('scanBox').innerHTML='<video id="scanVideo" autoplay muted playsinline></video>';
  try{
-  // Request camera permission immediately, before loading any barcode library.
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:2560},height:{ideal:1440},frameRate:{ideal:30},focusMode:{ideal:'continuous'},exposureMode:{ideal:'continuous'},whiteBalanceMode:{ideal:'continuous'}},audio:false});
-  const cameraTrack=stream.getVideoTracks()[0];
-  // Prefer continuous focus/exposure and modest optical/digital zoom when this iPhone supports it.
-  try{const caps=cameraTrack.getCapabilities?.()||{},settings={};if(caps.focusMode?.includes('continuous'))settings.focusMode='continuous';if(caps.exposureMode?.includes('continuous'))settings.exposureMode='continuous';if(caps.zoom&&Number.isFinite(caps.zoom.max)&&caps.zoom.max>1)settings.zoom=Math.min(caps.zoom.max,2.0);if(Object.keys(settings).length)await cameraTrack.applyConstraints({advanced:[settings]})}catch(e){}
-  const cameraVideo=$('scanVideo');cameraVideo.srcObject=stream;
-  try{await cameraVideo.play()}catch(e){}
-  $('scanStatus').textContent='Camera permission granted. Starting barcode reader…';
-  const supportedBarcodeFormats=('BarcodeDetector' in window)?await BarcodeDetector.getSupportedFormats().catch(()=>[]):[];
-  if(!forceZXing&&supportedBarcodeFormats.includes('code_128')){
-   const preferredFormats=scanTarget==='formLabel'?supportedBarcodeFormats:['code_128','code_39','ean_13','ean_8','upc_a','upc_e','qr_code','itf'];
-   const detector=new BarcodeDetector({formats:preferredFormats.filter(f=>supportedBarcodeFormats.includes(f))});
-   const cropCanvas=document.createElement('canvas');const cropCtx=cropCanvas.getContext('2d',{willReadFrequently:true});
-   const video=$('scanVideo');video.srcObject=stream;
-   $('scanStatus').textContent='Camera running. Center one barcode, keep it steady, and allow a moment for focus.';
-   let detecting=false;
-   let lastDetectAt=0;
-   const nativeStartedAt=performance.now();
-   const loop=async()=>{
-    if(!stream||!video.isConnected)return;
-    const now=performance.now();
-    // If native decoding cannot read the label promptly, retry with ZXing on both iPhone and Android.
-    // In label mode, allow the fallback even if only one of the two barcodes has been read.
-    if(now-nativeStartedAt>3000&&(scanTarget!=='formLabel'||!$('serialNumber').value.trim()||!$('productNumber').value.trim())){
-     forceZXing=true;stopCamera();startCamera();return;
-    }
-    if(!detecting&&video.readyState>=2&&now-lastDetectAt>=100){
-     lastDetectAt=now;
-     detecting=true;
-     try{
-      let codes=await detector.detect(video);
-      // Printer-label barcodes are often narrow and dense. If a full-frame pass misses,
-      // retry a high-resolution crop around the center where the user is aiming the label.
-      if(!codes.length&&video.videoWidth&&video.videoHeight){const cw=Math.round(video.videoWidth*.82),ch=Math.round(video.videoHeight*.62),sx=Math.round((video.videoWidth-cw)/2),sy=Math.round((video.videoHeight-ch)/2);cropCanvas.width=cw;cropCanvas.height=ch;cropCtx.drawImage(video,sx,sy,cw,ch,0,0,cw,ch);try{codes=await detector.detect(cropCanvas)}catch(e){}}
-      if(codes.length){for(const item of codes){if(!item.rawValue)continue;if(scanTarget==='formLabel'){acceptLabelCode(item.rawValue);if(!stream)return}else{const value=item.rawValue;stopCamera();useScanned(value);return}}}
-     }catch(e){}
-     detecting=false;
-    }
-    requestAnimationFrame(loop);
-   };
-   // Start polling immediately; loadedmetadata may already have fired before this point.
-   requestAnimationFrame(loop);
-  } else {
-   // Safari may not provide BarcodeDetector. Try the official ZXing browser UMD build.
-   try {
-    if(!window.ZXingBrowser?.BrowserMultiFormatReader){
-     await new Promise((resolve,reject)=>{
-      const urls=[
-       './vendor/zxing-browser.min.js',
-       'https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js',
-       'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js'
-      ];
-      let i=0;
-      const tryNext=()=>{
-       if(i>=urls.length){reject(new Error('Could not load the barcode reader. Check internet access and try again.'));return}
-       const script=document.createElement('script');script.src=urls[i++];script.async=true;
-       script.onload=()=>window.ZXingBrowser?.BrowserMultiFormatReader?resolve():(script.remove(),tryNext());
-       script.onerror=()=>{script.remove();tryNext()};
-       document.head.appendChild(script);
-      };
-      tryNext();
-     });
-    }
-    if(!window.ZXingBrowser?.BrowserMultiFormatReader)throw new Error('Barcode reader did not initialize.');
-    const ZX=window.ZXingBrowser;
-    const hints=new Map();
-    if(ZX.DecodeHintType&&ZX.BarcodeFormat){
-     hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,[ZX.BarcodeFormat.CODE_128,ZX.BarcodeFormat.CODE_39,ZX.BarcodeFormat.CODE_93,ZX.BarcodeFormat.CODABAR,ZX.BarcodeFormat.EAN_13,ZX.BarcodeFormat.EAN_8,ZX.BarcodeFormat.UPC_A,ZX.BarcodeFormat.UPC_E,ZX.BarcodeFormat.ITF,ZX.BarcodeFormat.RSS_14,ZX.BarcodeFormat.RSS_EXPANDED,ZX.BarcodeFormat.QR_CODE,ZX.BarcodeFormat.DATA_MATRIX,ZX.BarcodeFormat.PDF_417,ZX.BarcodeFormat.AZTEC].filter(Boolean));
-     if(ZX.DecodeHintType.TRY_HARDER)hints.set(ZX.DecodeHintType.TRY_HARDER,true);
-     if(ZX.DecodeHintType.ALSO_INVERTED)hints.set(ZX.DecodeHintType.ALSO_INVERTED,true);
-    }
-    const reader=new ZX.BrowserMultiFormatReader(hints,scanTarget==='formLabel'?100:100);
-    $('scanStatus').textContent='Camera running. Center one barcode, keep it steady, and allow a moment for focus.';
-    // Restart the stream through ZXing with rear-camera and higher-resolution preferences.
-    if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
-    const video=$('scanVideo');
-    video.style.width='100%';video.style.height='auto';video.setAttribute('playsinline','');video.muted=true;video.setAttribute('autoplay','');
-    zxingControls=await reader.decodeFromConstraints(
-     {video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30},focusMode:{ideal:'continuous'}},audio:false},
-     video,
-     (result,error,controls)=>{
-      if(controls)zxingControls=controls;
-      if(result?.getText){const rawValue=result.getText();const value=String(rawValue||'').trim().toUpperCase();if(scanTarget==='formLabel'){acceptLabelCode(value)}else{stopCamera();useScanned(value)}}
-     }
-    );
-    // If ZXing does not decode a label within eight seconds, automatically try Quagga2.
-    // This gives a second independent open-source decoder a chance without user intervention.
-    clearTimeout(scanFallbackTimer);
-    scanFallbackTimer=setTimeout(()=>{if(stream||zxingControls)startQuaggaFallback()},8000);
-   } catch(readerError) {
-    $('scanStatus').textContent='Primary barcode reader failed. Trying alternate scanner…';
-    startQuaggaFallback();
-   }
-  }
- }catch(e){stopCamera();let reason='';if(e?.name==='NotAllowedError'||e?.name==='PermissionDeniedError')reason=' Camera permission was denied or blocked. In iPhone Settings, open Safari → Camera and allow access, then reload this website.';else if(e?.name==='NotFoundError')reason=' No camera was found on this device.';else if(e?.name==='NotReadableError')reason=' The camera may already be in use by another app.';else reason=' '+(e?.message||'');$('scanStatus').textContent='Could not start camera scanner. '+reason+' You can still enter the barcode manually.'}
-}
-async function readLiveLabelText(){
- if(!$('scanDialog').open||!quaggaActive)return;
- $('scanStatus').textContent='Barcode readers did not decode it. Trying text recognition from the camera…';
- try{
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+  const video=$('scanVideo');video.srcObject=stream;video.setAttribute('playsinline','');video.muted=true;
+  await video.play();
+  $('scanStatus').textContent='Camera ready. Loading free text recognition…';
   if(!window.Tesseract){
    await new Promise((resolve,reject)=>{
     const script=document.createElement('script');
     script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-    script.onload=()=>window.Tesseract?resolve():reject(new Error('Text recognition library could not load'));
-    script.onerror=()=>reject(new Error('Text recognition library could not load'));
+    script.onload=()=>window.Tesseract?resolve():reject(new Error('Text recognition could not load. Check internet access.'));
+    script.onerror=()=>reject(new Error('Text recognition library could not load.'));
     document.head.appendChild(script);
    });
   }
-  const video=$('scanBox').querySelector('video');
-  if(!video||video.readyState<2)throw new Error('Camera image is not ready');
+  $('scanStatus').textContent='OCR scanner active. Hold the HP label steady in the camera view.';
+  let busy=false,lastRun=0,frameCount=0;
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
-  canvas.width=video.videoWidth;canvas.height=video.videoHeight;
-  ctx.drawImage(video,0,0,canvas.width,canvas.height);
-  const result=await Tesseract.recognize(canvas,'eng',{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='Reading label text… '+Math.round((m.progress||0)*100)+'%'}});
-  const textOut=String(result?.data?.text||'').toUpperCase();
-  const cleaned=textOut.replace(/[^A-Z0-9\n]/g,' ');
-  const serialMatch=textOut.match(/(?:SN|S\/N|SERIAL(?:\s+NUMBER)?)\s*[:#-]?\s*([A-Z0-9]{10})/i);
-  const productMatch=textOut.match(/(?:PRODUCT(?:\s+NUMBER)?|PROD(?:UCT)?\s*(?:NO|NUM|#))\s*[:#-]?\s*([A-Z0-9]{6})/i);
-  const candidates=cleaned.split(/\s+/).map(v=>v.replace(/[^A-Z0-9]/g,'')).filter(Boolean);
-  const serial=serialMatch?.[1]||candidates.find(v=>/^[A-Z0-9]{10}$/.test(v));
-  const product=productMatch?.[1]||candidates.find(v=>/^[A-Z0-9]{6}$/.test(v)&&v!=='SERIAL');
-  if(scanTarget==='formLabel'&&(serial||product)){
-   if(serial)acceptLabelCode(serial);
-   if(product)acceptLabelCode(product);
-   $('scanStatus').textContent='Text recognition found a possible value. Verify both fields before saving.';
-  }else if(serial||product){
-   const value=serial||product;stopCamera();useScanned(value);
-   toast('Possible value read from label text. Please verify it.');
-  }else $('scanStatus').textContent='Still unable to read it. Move closer so the label fills most of the frame, then try again.';
- }catch(err){$('scanStatus').textContent='Automatic text recognition failed: '+(err?.message||'unknown error')+'. Try Take photo of label.'}
+  const processFrame=async()=>{
+   if(!stream||!video.isConnected)return;
+   if(!busy&&video.readyState>=2&&performance.now()-lastRun>1200){
+    busy=true;lastRun=performance.now();
+    try{
+     // Focus OCR on the central label area, excluding much of the surrounding machine.
+     const vw=video.videoWidth,vh=video.videoHeight;
+     if(vw&&vh){
+      const cropX=Math.round(vw*.08),cropY=Math.round(vh*.12),cropW=Math.round(vw*.84),cropH=Math.round(vh*.76);
+      canvas.width=cropW*2;canvas.height=cropH*2;
+      ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(video,cropX,cropY,cropW,cropH,0,0,canvas.width,canvas.height);
+      const result=await Tesseract.recognize(canvas,'eng',{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='OCR reading label… '+Math.round((m.progress||0)*100)+'%'}});
+      const raw=String(result?.data?.text||'').toUpperCase();
+      const cleaned=raw.replace(/[^A-Z0-9\n]/g,' ');
+      const tokens=cleaned.split(/\s+/).map(v=>v.replace(/[^A-Z0-9]/g,'')).filter(Boolean);
+      // Only accept a 10-character serial and a 6-character product number.
+      // Prefer values beside explicit labels; never treat arbitrary-length text as a match.
+      const serialLabel=raw.match(/(?:SERIAL(?:\s*(?:NUMBER|NO\.?))?|S\/N|SN)\s*[:#-]?\s*([A-Z0-9][A-Z0-9 -]{8,14}[A-Z0-9])/i);
+      const productLabel=raw.match(/(?:PRODUCT(?:\s*(?:NUMBER|NO\.?))?|PROD\.?\s*(?:NO\.?|#))\s*[:#-]?\s*([A-Z0-9][A-Z0-9 -]{4,10}[A-Z0-9])/i);
+      const compact=v=>String(v||'').replace(/[^A-Z0-9]/g,'');
+      let serial=compact(serialLabel?.[1]);
+      let product=compact(productLabel?.[1]);
+      if(!/^[A-Z0-9]{10}$/.test(serial))serial=tokens.find(v=>/^[A-Z0-9]{10}$/.test(v))||'';
+      if(!/^[A-Z0-9]{6}$/.test(product))product=tokens.find(v=>/^[A-Z0-9]{6}$/.test(v)&&v!=='SERIAL'&&v!=='NUMBER')||'';
+      if(scanTarget==='formLabel'){
+       if(serial){$('serialNumber').value=serial}
+       if(product){$('productNumber').value=product;updateModelFromProductNumber()}
+       if(serial||product){
+        $('scanStatus').textContent='OCR found '+(serial?'serial number':'')+(serial&&product?' and ':'')+(product?'product number':'')+'. Verify the values before saving.';
+        if(serial&&product){stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('OCR captured both label numbers — please verify')}
+       }else{
+        frameCount++;
+        $('scanStatus').textContent='OCR is running. Looking for a 10-character serial number and 6-character product number…';
+       }
+      }else{
+       const candidate=serial||product;
+       if(candidate){stopCamera();useScanned(candidate);toast('OCR found a possible label number. Please verify it.');return}
+       $('scanStatus').textContent='OCR is running. Looking for a 10-character serial or 6-character product number…';
+      }
+     }
+    }catch(err){$('scanStatus').textContent='OCR scan error: '+(err?.message||'unknown error')}
+    busy=false;
+   }
+   if(stream)requestAnimationFrame(processFrame);
+  };
+  requestAnimationFrame(processFrame);
+ }catch(e){
+  stopCamera();
+  $('scanStatus').textContent='Could not start OCR camera: '+(e?.message||e?.name||'unknown error')+'. Check Safari camera permission and try again.';
+ }
 }
 function stopCamera(){clearTimeout(scanFallbackTimer);scanFallbackTimer=null;if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if(quaggaActive&&window.Quagga){try{window.Quagga.offDetected(quaggaDetectedHandler);window.Quagga.stop()}catch(e){}quaggaActive=false}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
 function quaggaDetectedHandler(result){const raw=String(result?.codeResult?.code||'').trim().toUpperCase();if(!raw)return;if(scanTarget==='formLabel'){acceptLabelCode(raw)}else{stopCamera();useScanned(raw)}}
