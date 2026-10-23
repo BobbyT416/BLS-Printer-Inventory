@@ -183,7 +183,8 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
 <script>
 (() => {
 const $ = id => document.getElementById(id);
-function syncViewportRegions(){const header=document.querySelector('header');if(header)document.documentElement.style.setProperty('--app-header-bottom',Math.ceil(header.getBoundingClientRect().height)+'px');const vv=window.visualViewport;document.documentElement.style.setProperty('--visible-vh',Math.round(vv?vv.height:window.innerHeight)+'px');const dlg=document.getElementById('deviceDialog'),active=document.activeElement;if(dlg&&dlg.open&&active&&dlg.contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox'){requestAnimationFrame(()=>{const body=dlg.querySelector('.modal-body');if(!body||!dlg.open||document.activeElement!==active)return;const br=body.getBoundingClientRect(),ar=active.getBoundingClientRect(),keyboardInset=vv?Math.max(0,window.innerHeight-(vv.height+vv.offsetTop)):0;const visibleBottom=Math.min(br.bottom,(vv?vv.height+vv.offsetTop:window.innerHeight)-keyboardInset);if(ar.bottom>visibleBottom-18){body.scrollTop+=ar.bottom-visibleBottom+28;}else if(ar.top<br.top+8){body.scrollTop-=br.top+8-ar.top;}})}}
+let fieldVisibilityTimer=null,lastKeyboardVisibleHeight=0;
+function syncViewportRegions(){const header=document.querySelector('header');if(header)document.documentElement.style.setProperty('--app-header-bottom',Math.ceil(header.getBoundingClientRect().height)+'px');const vv=window.visualViewport;const visibleHeight=Math.round(vv?vv.height:window.innerHeight);document.documentElement.style.setProperty('--visible-vh',visibleHeight+'px');const dlg=document.getElementById('deviceDialog');if(!dlg||!dlg.open)return;const active=document.activeElement;if(!(active&&dlg.contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox'))return;if(fieldVisibilityTimer)clearTimeout(fieldVisibilityTimer);fieldVisibilityTimer=setTimeout(()=>{const body=dlg.querySelector('.modal-body'),current=document.activeElement;if(!body||!dlg.open||current!==active)return;const br=body.getBoundingClientRect(),ar=active.getBoundingClientRect(),viewportBottom=vv?vv.height+vv.offsetTop:window.innerHeight;const safeBottom=Math.min(br.bottom,viewportBottom)-16;let delta=0;if(ar.bottom>safeBottom)delta=ar.bottom-safeBottom+12;else if(ar.top<br.top+8)delta=ar.top-(br.top+8);if(Math.abs(delta)>2)body.scrollTo({top:Math.max(0,body.scrollTop+delta),behavior:'smooth'});},180)}
 window.addEventListener('resize',syncViewportRegions,{passive:true});window.addEventListener('orientationchange',()=>setTimeout(syncViewportRegions,100));window.addEventListener('load',syncViewportRegions,{once:true});if(window.visualViewport){window.visualViewport.addEventListener('resize',syncViewportRegions,{passive:true});window.visualViewport.addEventListener('scroll',syncViewportRegions,{passive:true});}if(window.ResizeObserver){new ResizeObserver(syncViewportRegions).observe(document.querySelector('header'))}
 requestAnimationFrame(syncViewportRegions);
 function showDialog(el){if(!el)return;if(typeof el.showModal==='function')el.showModal();else{el.setAttribute('open','');el.style.display='block'}}
@@ -253,33 +254,11 @@ function closeDevice(){closeDialog($('deviceDialog'))}
  // Dismiss the software keyboard when the Add/Edit form starts scrolling on mobile.
  // Opening the dialog no longer auto-focuses Barcode; users tap a field when ready.
  const deviceFormBody=$('deviceDialog').querySelector('.modal-body');
-// Hide the keyboard only when a real scroll happens inside the form.
-// This allows swipes that begin on an input, but avoids dismissing the keyboard
-// from small finger movements while typing.
-let formTouchStartY=null,formTouchStartScroll=0,formTouchStartTarget=null,formTouchDismissScheduled=false;
-deviceFormBody.addEventListener('touchstart',e=>{
- formTouchStartY=e.touches?.[0]?.clientY??null;
- formTouchStartScroll=deviceFormBody.scrollTop;
- formTouchStartTarget=e.target;
- formTouchDismissScheduled=false;
-},{passive:true});
-deviceFormBody.addEventListener('touchmove',e=>{
- if(formTouchStartY===null||formTouchDismissScheduled)return;
- const y=e.touches?.[0]?.clientY;
- if(typeof y!=='number'||Math.abs(y-formTouchStartY)<28)return;
- const active=document.activeElement;
- if(!(active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox'))return;
- // Wait briefly for the browser to actually scroll; caret/viewport movement alone is not enough.
- formTouchDismissScheduled=true;
- setTimeout(()=>{
-  const scrolled=Math.abs(deviceFormBody.scrollTop-formTouchStartScroll)>5;
-  const startY=formTouchStartY;
-  const currentY=window.__blsLastFormTouchY;
-  if(scrolled&&active===document.activeElement)active.blur();
-  formTouchDismissScheduled=false;
- },120);
- window.__blsLastFormTouchY=y;
-},{passive:true});
+// Dismiss the keyboard only after a deliberate scroll, then preserve the
+// focused field's position with a short, smooth adjustment after iOS resizes.
+let formTouchStartY=null,formTouchStartScroll=0,formTouchDismissScheduled=false;
+deviceFormBody.addEventListener('touchstart',e=>{formTouchStartY=e.touches?.[0]?.clientY??null;formTouchStartScroll=deviceFormBody.scrollTop;formTouchDismissScheduled=false;},{passive:true});
+deviceFormBody.addEventListener('touchmove',e=>{if(formTouchStartY===null||formTouchDismissScheduled)return;const y=e.touches?.[0]?.clientY;if(typeof y!=='number'||Math.abs(y-formTouchStartY)<28)return;const active=document.activeElement;if(!(active&&$('deviceDialog').contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox'))return;formTouchDismissScheduled=true;setTimeout(()=>{const didScroll=Math.abs(deviceFormBody.scrollTop-formTouchStartScroll)>5;if(didScroll&&active===document.activeElement){active.blur();setTimeout(()=>{const body=$('deviceDialog').querySelector('.modal-body');if(!body||!$('deviceDialog').open)return;const br=body.getBoundingClientRect(),ar=active.getBoundingClientRect();let delta=0;if(ar.bottom>br.bottom-12)delta=ar.bottom-(br.bottom-12);else if(ar.top<br.top+8)delta=ar.top-(br.top+8);if(Math.abs(delta)>2)body.scrollTo({top:Math.max(0,body.scrollTop+delta),behavior:'smooth'});},180);}formTouchDismissScheduled=false;},140);},{passive:true});
 deviceFormBody.addEventListener('touchend',()=>{formTouchStartY=null;formTouchStartTarget=null;},{passive:true});
 deviceFormBody.addEventListener('touchcancel',()=>{formTouchStartY=null;formTouchStartTarget=null;},{passive:true});
 const barcodeInput=$('barcode'),serialInput=$('serialNumber');
