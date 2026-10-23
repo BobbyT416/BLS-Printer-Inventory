@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.38
+ Version 1.8.39
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -302,6 +302,8 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
 // Verified HP product-number mappings. Expand this catalogue from official HP product guides over time.
 // Type is based on the device's functions: print-only = Single Function; print/copy/scan = MFP.
  const PRODUCT_MODEL_MAP={
+  '1PS54A':{model:'HP LaserJet Managed MFP E52645dn',type:'MFP',source:'Official HP E52645 series datasheet'},
+  '1PS55A':{model:'HP LaserJet Managed Flow MFP E52645c',type:'MFP',source:'Official HP E52645 series datasheet'},
   'F2A80A':{model:'HP LaserJet Enterprise Flow MFP M527cm',type:'MFP',source:'HP product information'},
   'K0Q14A':{model:'HP LaserJet Enterprise M607n',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
   'K0Q15A':{model:'HP LaserJet Enterprise M607dn',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
