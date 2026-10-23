@@ -342,7 +342,10 @@ async function startCamera(){
  $('scanBox').innerHTML='<video id="scanVideo" autoplay muted playsinline></video>';
  try{
   // Request camera permission immediately, before loading any barcode library.
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},focusMode:{ideal:'continuous'}},audio:false});
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:2560},height:{ideal:1440},frameRate:{ideal:30},focusMode:{ideal:'continuous'},exposureMode:{ideal:'continuous'},whiteBalanceMode:{ideal:'continuous'}},audio:false});
+  const cameraTrack=stream.getVideoTracks()[0];
+  // Prefer continuous focus/exposure and modest optical/digital zoom when this iPhone supports it.
+  try{const caps=cameraTrack.getCapabilities?.()||{},settings={};if(caps.focusMode?.includes('continuous'))settings.focusMode='continuous';if(caps.exposureMode?.includes('continuous'))settings.exposureMode='continuous';if(caps.zoom&&Number.isFinite(caps.zoom.max)&&caps.zoom.max>1)settings.zoom=Math.min(caps.zoom.max,2.0);if(Object.keys(settings).length)await cameraTrack.applyConstraints({advanced:[settings]})}catch(e){}
   const cameraVideo=$('scanVideo');cameraVideo.srcObject=stream;
   try{await cameraVideo.play()}catch(e){}
   $('scanStatus').textContent='Camera permission granted. Starting barcode reader…';
@@ -350,6 +353,7 @@ async function startCamera(){
   if(!forceZXing&&supportedBarcodeFormats.includes('code_128')){
    const preferredFormats=scanTarget==='formLabel'?['code_128']:['code_128','code_39','ean_13','ean_8','upc_a','upc_e','qr_code','itf'];
    const detector=new BarcodeDetector({formats:preferredFormats.filter(f=>supportedBarcodeFormats.includes(f))});
+   const cropCanvas=document.createElement('canvas');const cropCtx=cropCanvas.getContext('2d',{willReadFrequently:true});
    const video=$('scanVideo');video.srcObject=stream;
    $('scanStatus').textContent='Camera running. Center one barcode, keep it steady, and allow a moment for focus.';
    let detecting=false;
@@ -367,7 +371,10 @@ async function startCamera(){
      lastDetectAt=now;
      detecting=true;
      try{
-      const codes=await detector.detect(video);
+      let codes=await detector.detect(video);
+      // Printer-label barcodes are often narrow and dense. If a full-frame pass misses,
+      // retry a high-resolution crop around the center where the user is aiming the label.
+      if(!codes.length&&video.videoWidth&&video.videoHeight){const cw=Math.round(video.videoWidth*.82),ch=Math.round(video.videoHeight*.62),sx=Math.round((video.videoWidth-cw)/2),sy=Math.round((video.videoHeight-ch)/2);cropCanvas.width=cw;cropCanvas.height=ch;cropCtx.drawImage(video,sx,sy,cw,ch,0,0,cw,ch);try{codes=await detector.detect(cropCanvas)}catch(e){}}
       if(codes.length){for(const item of codes){if(!item.rawValue)continue;if(scanTarget==='formLabel'){acceptLabelCode(item.rawValue);if(!stream)return}else{const value=item.rawValue;stopCamera();useScanned(value);return}}}
      }catch(e){}
      detecting=false;
@@ -402,6 +409,8 @@ async function startCamera(){
     const hints=new Map();
     if(ZX.DecodeHintType&&ZX.BarcodeFormat){
      hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,(scanTarget==='formLabel'?[ZX.BarcodeFormat.CODE_128]:[ZX.BarcodeFormat.CODE_128,ZX.BarcodeFormat.CODE_39,ZX.BarcodeFormat.EAN_13,ZX.BarcodeFormat.EAN_8,ZX.BarcodeFormat.UPC_A,ZX.BarcodeFormat.UPC_E,ZX.BarcodeFormat.QR_CODE,ZX.BarcodeFormat.ITF]).filter(Boolean));
+     if(ZX.DecodeHintType.TRY_HARDER)hints.set(ZX.DecodeHintType.TRY_HARDER,true);
+     if(ZX.DecodeHintType.ALSO_INVERTED)hints.set(ZX.DecodeHintType.ALSO_INVERTED,true);
     }
     const reader=new ZX.BrowserMultiFormatReader(hints,scanTarget==='formLabel'?100:100);
     $('scanStatus').textContent='Camera running. Center one barcode, keep it steady, and allow a moment for focus.';
