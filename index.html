@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.40
+ Version 1.8.41
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -403,7 +403,9 @@ async function startCamera(){
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
   // Reuse one worker instead of reinitializing OCR on every camera frame.
   ocrWorker=await Tesseract.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='Reading label… '+Math.round((m.progress||0)*100)+'%'}});
-  await ocrWorker.setParameters({tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',tessedit_pageseg_mode:Tesseract.PSM.SINGLE_BLOCK,preserve_interword_spaces:'1'});
+  // Keep the persistent worker for speed, but let OCR consider its normal character set and layout.
+  // A strict alphanumeric whitelist and forced single-block mode caused bad reads on HP labels.
+  await ocrWorker.setParameters({tessedit_pageseg_mode:Tesseract.PSM.AUTO,preserve_interword_spaces:'1'});
   $('scanStatus').textContent='Fast OCR active. Hold the printed numbers steady in view.';
   const processFrame=async()=>{
    if(!stream||!video.isConnected)return;
@@ -412,13 +414,10 @@ async function startCamera(){
     try{
      const vw=video.videoWidth,vh=video.videoHeight;
      if(vw&&vh){
-      const cropX=Math.round(vw*.04),cropY=Math.round(vh*.08),cropW=Math.round(vw*.92),cropH=Math.round(vh*.84);
-      canvas.width=Math.round(cropW*1.5);canvas.height=Math.round(cropH*1.5);
-      ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+      const cropX=Math.round(vw*.08),cropY=Math.round(vh*.12),cropW=Math.round(vw*.84),cropH=Math.round(vh*.76);
+      canvas.width=Math.round(cropW*2);canvas.height=Math.round(cropH*2);
+      ctx.imageSmoothingEnabled=false;
       ctx.drawImage(video,cropX,cropY,cropW,cropH,0,0,canvas.width,canvas.height);
-      const pixels=ctx.getImageData(0,0,canvas.width,canvas.height),data=pixels.data;
-      for(let i=0;i<data.length;i+=4){const gray=data[i]*.299+data[i+1]*.587+data[i+2]*.114;const v=Math.max(0,Math.min(255,(gray-128)*1.35+128));data[i]=data[i+1]=data[i+2]=v}
-      ctx.putImageData(pixels,0,0);
       const result=await ocrWorker.recognize(canvas);
       const raw=String(result?.data?.text||'').toUpperCase();
       const cleaned=raw.replace(/[^A-Z0-9\n]/g,' ');
