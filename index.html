@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.41
+ Version 1.8.42
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -430,10 +430,17 @@ async function startCamera(){
       if(!/^[A-Z0-9]{6}$/.test(product))product=tokens.find(v=>/^[A-Z0-9]{6}$/.test(v))||'';
       // O/0 and V/Y are both possible characters; do not silently guess.
       if(scanTarget==='formLabel'){
-       if(serial)$('serialNumber').value=serial;
+       if(serial){
+        $('serialNumber').value=serial;
+        // OCR cannot safely decide between O/0 or V/Y without additional evidence.
+        // Preserve the recognized value and explicitly flag ambiguous characters for review.
+        const ambiguousSerial=/[O0VY]/.test(serial);
+        $('serialNumber').dataset.ocrNeedsReview=ambiguousSerial?'true':'false';
+       }
        if(product){$('productNumber').value=product;updateModelFromProductNumber()}
        if(serial||product){
-        $('scanStatus').textContent='OCR found '+(serial?'serial number':'')+(serial&&product?' and ':'')+(product?'product number':'')+'. Check O/0 and V/Y before saving.';
+        const serialNeedsReview=serial&&/[O0VY]/.test(serial);
+        $('scanStatus').textContent='OCR found '+(serial?'serial number':'')+(serial&&product?' and ':'')+(product?'product number':'')+'. '+(serialNeedsReview?'Please verify O/0 and V/Y in the serial number.':'Verify the values before saving.');
         if(serial&&product){stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('OCR captured both numbers — verify O/0 and V/Y')}
        }else{$('scanStatus').textContent='Fast OCR is running. Looking for the 10-character serial and 6-character product number…'}
       }else{
