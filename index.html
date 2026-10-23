@@ -77,6 +77,27 @@ dialog{max-height:calc(var(--visible-vh, 100dvh) - 12px);margin:auto}dialog[open
 @page{size:letter landscape;margin:0.25in}@media print{#inventoryTable{display:none!important}#printReportTableWrap{display:block!important}#printReportTable{display:table!important;min-width:0;width:100%;table-layout:fixed;font-size:7pt}#printReportTable th,#printReportTable td{padding:3px 4px;border:1px solid #bbb;vertical-align:top;overflow-wrap:anywhere;word-break:normal}#printReportTable th{position:static;background:#eee!important;color:#000;font-size:6pt;line-height:1.15;letter-spacing:0;text-transform:uppercase;white-space:nowrap}#printReportTable td{font-size:7pt}#printReportTable th:nth-child(1),#printReportTable td:nth-child(1){width:15%}#printReportTable th:nth-child(2),#printReportTable td:nth-child(2){width:8%}#printReportTable th:nth-child(3),#printReportTable td:nth-child(3){width:10%}#printReportTable th:nth-child(4),#printReportTable td:nth-child(4){width:9%}#printReportTable th:nth-child(5),#printReportTable td:nth-child(5){width:8%}#printReportTable th:nth-child(6),#printReportTable td:nth-child(6){width:12%}#printReportTable th:nth-child(7),#printReportTable td:nth-child(7){width:8%}#printReportTable th:nth-child(8),#printReportTable td:nth-child(8){width:8%}#printReportTable th:nth-child(9),#printReportTable td:nth-child(9){width:10%}body{background:white;font-size:10pt}header,.cards,.no-print,.panel-head .tools,.filters,.actions,.hint{display:none!important}main{padding:0;max-width:none}.panel{border:0;padding:0}#printHeader{display:block;margin:0 0 12px}#inventoryTable{min-width:0;width:100%;font-size:8pt}#inventoryTable th,#inventoryTable td{padding:5px;border:1px solid #bbb}#inventoryTable th{position:static;background:#eee!important;color:#000}#inventoryTable td .badge{border:1px solid #888;background:white;color:#000}#inventoryTable .print-hide{display:none!important}.table-wrap{overflow:visible;border:0}table{page-break-inside:auto}tr{page-break-inside:avoid;page-break-after:auto}thead{display:table-header-group}}
 
 
+/* v1.8.26: clean borderless printer report cards, landscape */
+@media print{
+ @page{size:letter landscape;margin:0.3in}
+ #printReportTable{display:block!important;width:100%;table-layout:auto;border:0!important;border-collapse:separate!important;border-spacing:0 5px!important;font-size:9pt}
+ #printReportTable thead{display:none!important}
+ #printReportTable tbody{display:block!important;width:100%}
+ #printReportTable tr{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px 14px;page-break-inside:avoid;break-inside:avoid;border:0!important;padding:8px 10px;margin:0 0 5px;background:#fff!important}
+ #printReportTable tr:nth-child(even){background:#eef2f7!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ #printReportTable td{display:block!important;width:auto!important;padding:1px 0!important;border:0!important;background:transparent!important;font-size:8.5pt;line-height:1.3;overflow-wrap:anywhere;white-space:normal}
+ #printReportTable td:nth-child(1)::before{content:"Serial: ";font-weight:700}
+ #printReportTable td:nth-child(2)::before{content:"Model: ";font-weight:700}
+ #printReportTable td:nth-child(3)::before{content:"Asset tag: ";font-weight:700}
+ #printReportTable td:nth-child(4)::before{content:"Type: ";font-weight:700}
+ #printReportTable td:nth-child(5)::before{content:"Pages: ";font-weight:700}
+ #printReportTable td:nth-child(6)::before{content:"Disposition: ";font-weight:700}
+ #printReportTable td:nth-child(7)::before{content:"Cost: ";font-weight:700}
+ #printReportTable td:nth-child(8)::before{content:"Price: ";font-weight:700}
+ #printReportTable td:nth-child(9)::before{content:"Status: ";font-weight:700}
+ #printHeader{margin-bottom:8px}
+}
+
 /* v1.6.9: compact fixed header with a single scrolling content region */
 html,body{min-height:100%;margin:0}
 body{overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
@@ -115,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.25
+ Version 1.8.26
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
