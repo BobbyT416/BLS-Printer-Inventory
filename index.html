@@ -414,7 +414,7 @@ async function startCamera(){
   try{
    const track=stream.getVideoTracks()[0],caps=track.getCapabilities?.()||{},advanced=[];
    if(caps.focusMode&&caps.focusMode.includes('continuous'))advanced.push({focusMode:'continuous'});
-   if(caps.zoom&&Number.isFinite(caps.zoom.max)&&caps.zoom.max>(caps.zoom.min||1))advanced.push({zoom:Math.min(caps.zoom.max,Math.max(caps.zoom.min||1,(caps.zoom.min||1)*1.25)});
+   if(caps.zoom&&Number.isFinite(caps.zoom.max)&&caps.zoom.max>(caps.zoom.min||1))advanced.push({zoom:Math.min(caps.zoom.max,Math.max(caps.zoom.min||1,(caps.zoom.min||1)*1.25))});
    if(advanced.length)await track.applyConstraints({advanced});
   }catch(_){}
   $('scanStatus').textContent='Camera ready. Loading free text recognition…';
