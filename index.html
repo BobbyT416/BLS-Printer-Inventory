@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.30
+ Version 1.8.31
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -225,7 +225,7 @@ const fields=[
 ['serialNumber','Serial number'],['assetTag','Asset tag'],['deviceType','Type'],['model','Model'],['productNumber','Product number'],['pageCount','Page count'],['disposition','Disposition'],['acquiredFrom','Acquired from'],['refurbishedBy','Refurbished by'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
 ];
 const defaults={serialNumber:true,assetTag:true,deviceType:true,model:true,productNumber:true,pageCount:true,disposition:true,acquiredFrom:true,refurbishedBy:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
-let devices=[],editingId=null,stream=null,zxingControls=null,scanTarget='inventory',forceZXing=true,printPrefs={...defaults};
+let devices=[],editingId=null,stream=null,zxingControls=null,scanFallbackTimer=null,quaggaActive=false,scanTarget='inventory',forceZXing=true,printPrefs={...defaults};
 try{devices=JSON.parse(safeGet(STORE)||'[]');if(!Array.isArray(devices))devices=[];let typeMigrated=false;devices=devices.map(d=>{if(d&&d.deviceType==='Single function printer'){typeMigrated=true;return {...d,deviceType:'Printer'}}return d});if(typeMigrated)safeSet(STORE,JSON.stringify(devices));}catch(e){devices=[]}
 try{printPrefs={...defaults,...JSON.parse(safeGet(PRINT)||'{}')};}catch(e){}
 let listView=false;
@@ -466,13 +466,54 @@ async function startCamera(){
       if(result?.getText){const rawValue=result.getText();const value=String(rawValue||'').trim().toUpperCase();if(scanTarget==='formLabel'){acceptLabelCode(value)}else{stopCamera();useScanned(value)}}
      }
     );
+    // If ZXing does not decode a label within eight seconds, automatically try Quagga2.
+    // This gives a second independent open-source decoder a chance without user intervention.
+    clearTimeout(scanFallbackTimer);
+    scanFallbackTimer=setTimeout(()=>{if(stream||zxingControls)startQuaggaFallback()},8000);
    } catch(readerError) {
-    $('scanStatus').textContent='Camera is working, but barcode scanning failed: '+(readerError?.message||readerError?.name||'reader error')+'. You can still enter the barcode manually.';
+    $('scanStatus').textContent='Primary barcode reader failed. Trying alternate scanner…';
+    startQuaggaFallback();
    }
   }
  }catch(e){stopCamera();let reason='';if(e?.name==='NotAllowedError'||e?.name==='PermissionDeniedError')reason=' Camera permission was denied or blocked. In iPhone Settings, open Safari → Camera and allow access, then reload this website.';else if(e?.name==='NotFoundError')reason=' No camera was found on this device.';else if(e?.name==='NotReadableError')reason=' The camera may already be in use by another app.';else reason=' '+(e?.message||'');$('scanStatus').textContent='Could not start camera scanner. '+reason+' You can still enter the barcode manually.'}
 }
-function stopCamera(){if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
+function stopCamera(){clearTimeout(scanFallbackTimer);scanFallbackTimer=null;if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if(quaggaActive&&window.Quagga){try{window.Quagga.offDetected(quaggaDetectedHandler);window.Quagga.stop()}catch(e){}quaggaActive=false}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
+function quaggaDetectedHandler(result){const raw=String(result?.codeResult?.code||'').trim().toUpperCase();if(!raw)return;if(scanTarget==='formLabel'){acceptLabelCode(raw)}else{stopCamera();useScanned(raw)}}
+async function startQuaggaFallback(){
+ if(quaggaActive||!$('scanBox')||!$('scanDialog').open)return;
+ clearTimeout(scanFallbackTimer);scanFallbackTimer=null;
+ if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}
+ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+ $('scanStatus').textContent='Trying alternate free barcode reader…';
+ try{
+  if(!window.Quagga){
+   await new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js';
+    script.onload=()=>window.Quagga?resolve():reject(new Error('Alternate reader did not load'));
+    script.onerror=()=>reject(new Error('Could not load alternate reader'));
+    document.head.appendChild(script);
+   });
+  }
+  const Q=window.Quagga;
+  if(!Q)throw new Error('Alternate reader unavailable');
+  Q.offDetected(quaggaDetectedHandler);
+  Q.init({
+   inputStream:{type:'LiveStream',target:$('scanBox'),constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},area:{top:'12%',right:'4%',left:'4%',bottom:'12%'}},
+   locator:{patchSize:'large',halfSample:false},
+   locate:true,
+   frequency:10,
+   decoder:{readers:['code_128_reader','code_39_reader','ean_reader','ean_8_reader','upc_reader','upc_e_reader','i2of5_reader']}
+  },err=>{
+   if(err){$('scanStatus').textContent='Both automatic readers had trouble. Move closer, hold steady, or use photo/manual entry.';return}
+   quaggaActive=true;
+   Q.onDetected(quaggaDetectedHandler);
+   $('scanStatus').textContent='Alternate reader active. Center one barcode and hold steady.';
+  });
+ }catch(err){
+  $('scanStatus').textContent='Automatic readers could not start. Try moving closer, improving light, or entering the barcode manually.';
+ }
+}
 function applyScannedPrinterIdentity(value){
  const code=String(value||'').trim().toUpperCase();
  // First match a known HP product number embedded in or equal to the scanned value.
