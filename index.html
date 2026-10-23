@@ -449,8 +449,10 @@ function acceptLabelCode(value){
  const code=String(value||'').trim().toUpperCase();if(!code)return;
  if(/^[A-Z0-9]{10}$/.test(code)){
   if($('serialNumber').value!==code){$('serialNumber').value=code;toast('Serial number captured')}
+  applyScannedPrinterIdentity(code);
  }else if(/^[A-Z0-9]{6}$/.test(code)){
   if($('productNumber').value!==code){$('productNumber').value=code;updateModelFromProductNumber();toast('Product number captured')}
+  applyScannedPrinterIdentity(code);
  }else{
   $('scanStatus').textContent='Barcode read: '+code+'. Keep the full label in view; waiting for a 10-character serial and 6-character product number.';
   return;
