@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.37
+ Version 1.8.38
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -395,48 +395,49 @@ async function startCamera(){
     document.head.appendChild(script);
    });
   }
-  $('scanStatus').textContent='OCR scanner active. Hold the HP label steady in the camera view.';
-  let busy=false,lastRun=0,frameCount=0;
-  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+  $('scanStatus').textContent='Preparing fast OCR…';
+  let busy=false,lastRun=0,ocrWorker=null;
+  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+  // Reuse one worker instead of reinitializing OCR on every camera frame.
+  ocrWorker=await Tesseract.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='Reading label… '+Math.round((m.progress||0)*100)+'%'}});
+  await ocrWorker.setParameters({tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',tessedit_pageseg_mode:Tesseract.PSM.SINGLE_BLOCK,preserve_interword_spaces:'1'});
+  $('scanStatus').textContent='Fast OCR active. Hold the printed numbers steady in view.';
   const processFrame=async()=>{
    if(!stream||!video.isConnected)return;
-   if(!busy&&video.readyState>=2&&performance.now()-lastRun>1200){
+   if(!busy&&video.readyState>=2&&performance.now()-lastRun>350){
     busy=true;lastRun=performance.now();
     try{
-     // Focus OCR on the central label area, excluding much of the surrounding machine.
      const vw=video.videoWidth,vh=video.videoHeight;
      if(vw&&vh){
-      const cropX=Math.round(vw*.08),cropY=Math.round(vh*.12),cropW=Math.round(vw*.84),cropH=Math.round(vh*.76);
-      canvas.width=cropW*2;canvas.height=cropH*2;
-      ctx.imageSmoothingEnabled=false;
+      const cropX=Math.round(vw*.04),cropY=Math.round(vh*.08),cropW=Math.round(vw*.92),cropH=Math.round(vh*.84);
+      canvas.width=Math.round(cropW*1.5);canvas.height=Math.round(cropH*1.5);
+      ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
       ctx.drawImage(video,cropX,cropY,cropW,cropH,0,0,canvas.width,canvas.height);
-      const result=await Tesseract.recognize(canvas,'eng',{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='OCR reading label… '+Math.round((m.progress||0)*100)+'%'}});
+      const pixels=ctx.getImageData(0,0,canvas.width,canvas.height),data=pixels.data;
+      for(let i=0;i<data.length;i+=4){const gray=data[i]*.299+data[i+1]*.587+data[i+2]*.114;const v=Math.max(0,Math.min(255,(gray-128)*1.35+128));data[i]=data[i+1]=data[i+2]=v}
+      ctx.putImageData(pixels,0,0);
+      const result=await ocrWorker.recognize(canvas);
       const raw=String(result?.data?.text||'').toUpperCase();
       const cleaned=raw.replace(/[^A-Z0-9\n]/g,' ');
       const tokens=cleaned.split(/\s+/).map(v=>v.replace(/[^A-Z0-9]/g,'')).filter(Boolean);
-      // Only accept a 10-character serial and a 6-character product number.
-      // Prefer values beside explicit labels; never treat arbitrary-length text as a match.
       const serialLabel=raw.match(/(?:SERIAL(?:\s*(?:NUMBER|NO\.?))?|S\/N|SN)\s*[:#-]?\s*([A-Z0-9][A-Z0-9 -]{8,14}[A-Z0-9])/i);
       const productLabel=raw.match(/(?:PRODUCT(?:\s*(?:NUMBER|NO\.?))?|PROD\.?\s*(?:NO\.?|#))\s*[:#-]?\s*([A-Z0-9][A-Z0-9 -]{4,10}[A-Z0-9])/i);
       const compact=v=>String(v||'').replace(/[^A-Z0-9]/g,'');
-      let serial=compact(serialLabel?.[1]);
-      let product=compact(productLabel?.[1]);
+      let serial=compact(serialLabel?.[1]),product=compact(productLabel?.[1]);
       if(!/^[A-Z0-9]{10}$/.test(serial))serial=tokens.find(v=>/^[A-Z0-9]{10}$/.test(v))||'';
-      if(!/^[A-Z0-9]{6}$/.test(product))product=tokens.find(v=>/^[A-Z0-9]{6}$/.test(v)&&v!=='SERIAL'&&v!=='NUMBER')||'';
+      if(!/^[A-Z0-9]{6}$/.test(product))product=tokens.find(v=>/^[A-Z0-9]{6}$/.test(v))||'';
+      // O/0 and V/Y are both possible characters; do not silently guess.
       if(scanTarget==='formLabel'){
-       if(serial){$('serialNumber').value=serial}
+       if(serial)$('serialNumber').value=serial;
        if(product){$('productNumber').value=product;updateModelFromProductNumber()}
        if(serial||product){
-        $('scanStatus').textContent='OCR found '+(serial?'serial number':'')+(serial&&product?' and ':'')+(product?'product number':'')+'. Verify the values before saving.';
-        if(serial&&product){stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('OCR captured both label numbers — please verify')}
-       }else{
-        frameCount++;
-        $('scanStatus').textContent='OCR is running. Looking for a 10-character serial number and 6-character product number…';
-       }
+        $('scanStatus').textContent='OCR found '+(serial?'serial number':'')+(serial&&product?' and ':'')+(product?'product number':'')+'. Check O/0 and V/Y before saving.';
+        if(serial&&product){stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('OCR captured both numbers — verify O/0 and V/Y')}
+       }else{$('scanStatus').textContent='Fast OCR is running. Looking for the 10-character serial and 6-character product number…'}
       }else{
        const candidate=serial||product;
        if(candidate){stopCamera();useScanned(candidate);toast('OCR found a possible label number. Please verify it.');return}
-       $('scanStatus').textContent='OCR is running. Looking for a 10-character serial or 6-character product number…';
+       $('scanStatus').textContent='Fast OCR is running. Looking for a 10-character serial or 6-character product number…';
       }
      }
     }catch(err){$('scanStatus').textContent='OCR scan error: '+(err?.message||'unknown error')}
