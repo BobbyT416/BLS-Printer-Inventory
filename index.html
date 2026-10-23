@@ -153,7 +153,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.52
+ Version 1.8.54
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -168,7 +168,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
    <div class="note" style="margin-bottom:15px">The barcode sticker identifies the individual device. Scan with your camera or use a USB/Bluetooth scanner that types into the barcode field.</div>
    <div class="form-grid">
     <div class="field"><label for="barcode">Barcode</label><div style="display:flex;gap:7px"><input id="barcode" autocomplete="off" placeholder="Optional — enter or scan barcode"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Optional. Leave blank unless you enter or scan a barcode.</div></div>
-    <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"><div id="serialOcrReview" class="hint" hidden></div><button type="button" id="toggleSerialOZero" style="margin-top:6px;padding:7px 10px" hidden>Change O to 0</button></div>
+    <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"></div>
      <div class="field"><label for="model">Model number *</label><input id="model" required placeholder="e.g. M607"></div>
      <div class="field"><label for="productNumber">Product number</label><input id="productNumber" autocomplete="off" placeholder="Manufacturer product number"></div>
     <div class="field"><label for="assetTag">Asset tag</label><input id="assetTag" autocomplete="off" placeholder="Enter company asset tag"></div>
@@ -355,7 +355,7 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
    $('model').dataset.autoFromProduct='true';
    $('deviceType').value=matched.type;
    $('deviceType').dataset.autoFromProduct='true';
-   // Do not overwrite the live OCR progress message while the camera scanner is running.
+   // Preserve scanner status while the camera is active.
    if(!stream)$('scanStatus').textContent='Model identified: '+matched.model+' ('+matched.type+')';
   }else if($('model').dataset.autoFromProduct==='true'){
    $('model').value='';
@@ -363,29 +363,12 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
    if($('deviceType').dataset.autoFromProduct==='true'){$('deviceType').value='';delete $('deviceType').dataset.autoFromProduct;}
   }
  }
- const serialReview=$('serialOcrReview'),serialToggle=$('toggleSerialOZero');
- function refreshSerialOcrReview(){
-  const value=String($('serialNumber').value||'').toUpperCase();
-  const flagged=$('serialNumber').dataset.ocrNeedsReview==='true';
-  serialReview.hidden=!flagged;
-  serialToggle.hidden=true;
-  serialReview.textContent=flagged?'Please verify V/Y characters against the printed serial label. Letter O is automatically converted to zero for scanned serial numbers.':'';
- }
- // Normalize O to 0 for serial numbers only, including manual edits; leave product numbers untouched.
+ // Normalize O to 0 for serial numbers only; barcode decoding supplies the value.
  $('serialNumber').addEventListener('input',()=>{
-  const input=$('serialNumber');
-  const pos=input.selectionStart;
-  if(input.value.includes('o')||input.value.includes('O')){
-   const before=input.value;
-   input.value=before.replace(/[oO]/g,'0');
-   try{input.setSelectionRange(pos,pos)}catch(e){}
-  }
-  refreshSerialOcrReview();
+  const input=$('serialNumber');const pos=input.selectionStart;
+  if(input.value.includes('o')||input.value.includes('O')){input.value=input.value.replace(/[oO]/g,'0');try{input.setSelectionRange(pos,pos)}catch(e){}}
  });
- serialToggle.hidden=true;
- $('serialNumber').addEventListener('input',refreshSerialOcrReview);
- refreshSerialOcrReview();
- $('productNumber').addEventListener('input',updateModelFromProductNumber);
+$('productNumber').addEventListener('input',updateModelFromProductNumber);
  $('productNumber').addEventListener('change',updateModelFromProductNumber);
  $('disposition').addEventListener('change',()=>{$('disposition').dataset.userChanged='true'});
 $('deviceForm').addEventListener('invalid',e=>{const el=e.target;toast((el.labels?.[0]?.textContent||el.id||'A required field')+' is required. Please complete the highlighted field.');},{capture:true});
@@ -441,89 +424,23 @@ $('addBtn').onclick=()=>openDevice();$('closeDevice').onclick=closeDevice;$('can
 function openScanner(target='inventory'){scanTarget=target;forceZXing=false;$('manualBarcode').value='';$('scanStatus').textContent='Camera has not started.';showDialog($('scanDialog'));setTimeout(()=>$('manualBarcode').focus(),100)}
 $('scanSearchBtn').onclick=()=>openScanner('search');$('scanFromForm').onclick=()=>openScanner('formLabel');
 async function startCamera(){
- stopCamera();
- $('scanStatus').textContent='Starting camera for OCR…';
+ stopCamera();$('scanStatus').textContent='Starting barcode scanner…';
  if(!window.isSecureContext){$('scanStatus').textContent='Camera access requires HTTPS. Open this app in Safari.';return}
  if(!navigator.mediaDevices?.getUserMedia){$('scanStatus').textContent='Camera access is unavailable here. Open the app directly in Safari.';return}
- $('scanBox').innerHTML='<video id="scanVideo" autoplay muted playsinline></video>';
+ if(!('BarcodeDetector' in window)){await startQuaggaFallback();return}
  try{
+  const supported=await BarcodeDetector.getSupportedFormats();
+  const formats=['code_128','code_39','code_93','codabar','ean_13','ean_8','upc_a','upc_e','itf','qr_code','data_matrix'].filter(f=>supported.includes(f));
+  if(!formats.length){await startQuaggaFallback();return}
+  const detector=new BarcodeDetector({formats});
   stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
-  const video=$('scanVideo');video.srcObject=stream;video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');video.muted=true;
-  await video.play();
-  $('scanStatus').textContent='Camera ready. Loading free text recognition…';
-  if(!window.Tesseract){
-   await new Promise((resolve,reject)=>{
-    const script=document.createElement('script');
-    script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-    script.onload=()=>window.Tesseract?resolve():reject(new Error('Text recognition could not load. Check internet access.'));
-    script.onerror=()=>reject(new Error('Text recognition library could not load.'));
-    document.head.appendChild(script);
-   });
-  }
-  $('scanStatus').textContent='Preparing fast OCR…';
-  let busy=false,lastRun=0,ocrWorker=null;
-  // Require repeated agreement across camera frames before accepting OCR candidates.
-  const serialVotes=new Map(),productVotes=new Map();
-  const voteCandidate=(votes,value)=>{if(!value)return '';const n=(votes.get(value)||0)+1;votes.set(value,n);return n>=2?value:''};
-  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
-  // Reuse one worker instead of reinitializing OCR on every camera frame.
-  ocrWorker=await Tesseract.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='Reading label… '+Math.round((m.progress||0)*100)+'%'}});
-  // Keep the persistent worker for speed, but let OCR consider its normal character set and layout.
-  // A strict alphanumeric whitelist and forced single-block mode caused bad reads on HP labels.
-  await ocrWorker.setParameters({tessedit_pageseg_mode:Tesseract.PSM.AUTO,preserve_interword_spaces:'1'});
-  $('scanStatus').textContent='Fast OCR active. Hold the printed numbers steady in view.';
-  const processFrame=async()=>{
-   if(!stream||!video.isConnected)return;
-   if(!busy&&video.readyState>=2&&performance.now()-lastRun>350){
-    busy=true;lastRun=performance.now();
-    try{
-     const vw=video.videoWidth,vh=video.videoHeight;
-     if(vw&&vh){
-      const cropX=Math.round(vw*.08),cropY=Math.round(vh*.12),cropW=Math.round(vw*.84),cropH=Math.round(vh*.76);
-      canvas.width=Math.round(cropW*2);canvas.height=Math.round(cropH*2);
-      ctx.imageSmoothingEnabled=false;
-      ctx.drawImage(video,cropX,cropY,cropW,cropH,0,0,canvas.width,canvas.height);
-      const result=await ocrWorker.recognize(canvas);
-      const raw=String(result?.data?.text||'').toUpperCase();
-      const cleaned=raw.replace(/[^A-Z0-9\n]/g,' ');
-      const tokens=cleaned.split(/\s+/).map(v=>v.replace(/[^A-Z0-9]/g,'')).filter(Boolean);
-      const serialLabel=raw.match(/(?:SERIAL(?:\s*(?:NUMBER|NO\.?))?|S\/N|SN)\s*[:#-]?\s*([A-Z0-9][A-Z0-9 -]{8,14}[A-Z0-9])/i);
-      const productLabel=raw.match(/(?:PRODUCT(?:\s*(?:NUMBER|NO\.?))?|PROD\.?\s*(?:NO\.?|#))\s*[:#-]?\s*([A-Z0-9][A-Z0-9 -]{4,10}[A-Z0-9])/i);
-      const compact=v=>String(v||'').replace(/[^A-Z0-9]/g,'');
-      let serial=compact(serialLabel?.[1]),product=compact(productLabel?.[1]);
-      if(!/^[A-Z0-9]{10}$/.test(serial))serial=tokens.find(v=>/^[A-Z0-9]{10}$/.test(v))||'';
-      if(!/^[A-Z0-9]{6}$/.test(product))product=tokens.find(v=>/^[A-Z0-9]{6}$/.test(v))||'';
-      // Keep O-to-zero normalization scoped to serials, then require the same candidate twice.
-      if(serial)serial=serial.replace(/O/g,'0');
-      serial=voteCandidate(serialVotes,serial);
-      product=voteCandidate(productVotes,product);
-      if(scanTarget==='formLabel'){
-       if(serial){
-        $('serialNumber').value=serial;
-        $('serialNumber').dataset.ocrNeedsReview=/[VY]/.test(serial)?'true':'false';
-       }
-       if(product){$('productNumber').value=product;updateModelFromProductNumber()}
-       if(serial||product){
-        const serialNeedsReview=serial&&/[VY]/.test(serial);
-        $('scanStatus').textContent='Repeated OCR reading confirmed '+(serial?'serial number':'')+(serial&&product?' and ':'')+(product?'product number':'')+'. '+(serialNeedsReview?'Please verify V/Y in the serial number.':'Verify the values before saving.');
-        if(serial&&product){stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Repeated OCR readings confirmed both numbers — verify the serial')}
-       }else{$('scanStatus').textContent='Comparing repeated readings to reduce character errors…'}
-      }else{
-       const candidate=serial||product;
-       if(candidate){stopCamera();useScanned(candidate);toast('OCR found a possible label number. Please verify it.');return}
-       $('scanStatus').textContent='Fast OCR is running. Looking for a 10-character serial or 6-character product number…';
-      }
-     }
-    }catch(err){$('scanStatus').textContent='OCR scan error: '+(err?.message||'unknown error')}
-    busy=false;
-   }
-   if(stream)requestAnimationFrame(processFrame);
-  };
-  requestAnimationFrame(processFrame);
- }catch(e){
-  stopCamera();
-  $('scanStatus').textContent='Could not start OCR camera: '+(e?.message||e?.name||'unknown error')+'. Check Safari camera permission and try again.';
- }
+  $('scanBox').innerHTML='<video id="scanVideo" autoplay muted playsinline></video>';
+  const video=$('scanVideo');video.srcObject=stream;video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');video.muted=true;await video.play();
+  $('scanStatus').textContent='Barcode scanner active. Center the printed barcode and hold steady.';
+  let busy=false;
+  const processFrame=async()=>{if(!stream||!video.isConnected)return;if(!busy&&video.readyState>=2){busy=true;try{const hits=await detector.detect(video);for(const hit of hits){const value=String(hit.rawValue||'').trim().toUpperCase();if(!value)continue;if(scanTarget==='formLabel')acceptLabelCode(value);else{stopCamera();useScanned(value);return}}}catch(_){}busy=false}if(stream)requestAnimationFrame(processFrame)};
+  requestAnimationFrame(processFrame);scanFallbackTimer=setTimeout(()=>{if(stream)startQuaggaFallback()},9000);
+ }catch(e){stopCamera();$('scanStatus').textContent='Could not start the barcode scanner: '+(e?.message||e?.name||'unknown error')+'. Trying the alternate barcode reader…';await startQuaggaFallback()}
 }
 function stopCamera(){clearTimeout(scanFallbackTimer);scanFallbackTimer=null;if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if(quaggaActive&&window.Quagga){try{window.Quagga.offDetected(quaggaDetectedHandler);window.Quagga.stop()}catch(e){}quaggaActive=false}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
 function quaggaDetectedHandler(result){const raw=String(result?.codeResult?.code||'').trim().toUpperCase();if(!raw)return;if(scanTarget==='formLabel'){acceptLabelCode(raw)}else{stopCamera();useScanned(raw)}}
@@ -558,7 +475,7 @@ async function startQuaggaFallback(){
    Q.onDetected(quaggaDetectedHandler);
    $('scanStatus').textContent='Alternate reader active. Center one barcode and hold steady.';
    clearTimeout(scanFallbackTimer);
-   scanFallbackTimer=setTimeout(()=>readLiveLabelText(),9000);
+   scanFallbackTimer=setTimeout(()=>{$('scanStatus').textContent='Still looking for a barcode. Center it in the camera or enter it manually.'},9000);
   });
  }catch(err){
   $('scanStatus').textContent='Automatic readers could not start. Try moving closer, improving light, or entering the barcode manually.';
@@ -625,37 +542,10 @@ $('labelPhotoInput').addEventListener('change',async e=>{
   }
   const values=[...new Set(found.map(x=>String(x.rawValue||'').trim().toUpperCase()).filter(Boolean))];
   for(const value of values){if(scanTarget==='formLabel')acceptLabelCode(value);else{URL.revokeObjectURL(src);stopCamera();useScanned(value);e.target.value='';return}}
-  // OCR is a free fallback for labels whose bars are too small or reflective to decode.
-  $('scanStatus').textContent='Barcode not decoded from photo. Loading text recognition…';
-  if(!window.Tesseract){
-   await new Promise((resolve,reject)=>{
-    const script=document.createElement('script');
-    script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-    script.onload=()=>window.Tesseract?resolve():reject(new Error('Text recognition library could not load'));
-    script.onerror=()=>reject(new Error('Text recognition library could not load'));
-    document.head.appendChild(script);
-   });
-  }
-  const result=await Tesseract.recognize(img,'eng',{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='Reading printed label text… '+Math.round((m.progress||0)*100)+'%'}});
-  const textOut=String(result?.data?.text||'').toUpperCase();
-  const normalized=textOut.replace(/[^A-Z0-9\n]/g,' ');
-  // Prefer values next to explicit labels, then validate by expected lengths.
-  const serialMatch=textOut.match(/(?:SN|S\/N|SERIAL(?:\s+NUMBER)?)\s*[:#-]?\s*([A-Z0-9]{10})/i);
-  const productMatch=textOut.match(/(?:PRODUCT(?:\s+NUMBER)?|PROD(?:UCT)?\s*(?:NO|NUM|#))\s*[:#-]?\s*([A-Z0-9]{6})/i);
-  const candidates=normalized.split(/\s+/).map(v=>v.replace(/[^A-Z0-9]/g,'')).filter(Boolean);
-  const serial=serialMatch?.[1]||candidates.find(v=>/^[A-Z0-9]{10}$/.test(v));
-  const product=productMatch?.[1]||candidates.find(v=>/^[A-Z0-9]{6}$/.test(v)&&v!=='SERIAL');
-  if(scanTarget==='formLabel'&&(serial||product)){
-   if(serial)acceptLabelCode(serial);
-   if(product)acceptLabelCode(product);
-   $('scanStatus').textContent='Photo text read. Check the serial and product number fields for accuracy.';
-  }else if(serial||product){
-   const value=serial||product;
-   URL.revokeObjectURL(src);stopCamera();useScanned(value);
-   toast('Value read from label photo. Please verify it.');
-  }else $('scanStatus').textContent='Could not confidently read a barcode or label number. Try a closer, straighter photo with less glare.';
-  URL.revokeObjectURL(src);
- }catch(err){$('scanStatus').textContent='Photo scan failed: '+(err?.message||'unknown error')+'. Try again or enter the value manually.'}
+  if(values.length){URL.revokeObjectURL(src);e.target.value='';return}
+   $('scanStatus').textContent='No barcode could be decoded from this photo. Try a closer, straighter photo with less glare, or enter the barcode manually.';
+   URL.revokeObjectURL(src);
+  }catch(err){$('scanStatus').textContent='Photo scan failed: '+(err?.message||'unknown error')+'. Try again or enter the value manually.'}
  e.target.value='';
 });
 $('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{stopCamera();$('scanStatus').textContent='Camera stopped.'};
