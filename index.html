@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.42
+ Version 1.8.43
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -150,7 +150,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
    <div class="note" style="margin-bottom:15px">The barcode sticker identifies the individual device. Scan with your camera or use a USB/Bluetooth scanner that types into the barcode field.</div>
    <div class="form-grid">
     <div class="field"><label for="barcode">Barcode</label><div style="display:flex;gap:7px"><input id="barcode" autocomplete="off" placeholder="Optional — enter or scan barcode"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Optional. Leave blank unless you enter or scan a barcode.</div></div>
-    <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"></div>
+    <div class="field"><label for="serialNumber">Serial number</label><input id="serialNumber" autocomplete="off" autocapitalize="characters" placeholder="Enter serial number"><div id="serialOcrReview" class="hint" hidden></div><button type="button" id="toggleSerialOZero" style="margin-top:6px;padding:7px 10px" hidden>Change O to 0</button></div>
      <div class="field"><label for="model">Model number *</label><input id="model" required placeholder="e.g. M607"></div>
      <div class="field"><label for="productNumber">Product number</label><input id="productNumber" autocomplete="off" placeholder="Manufacturer product number"></div>
     <div class="field"><label for="assetTag">Asset tag</label><input id="assetTag" autocomplete="off" placeholder="Enter company asset tag"></div>
@@ -345,6 +345,25 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
    if($('deviceType').dataset.autoFromProduct==='true'){$('deviceType').value='';delete $('deviceType').dataset.autoFromProduct;}
   }
  }
+ const serialReview=$('serialOcrReview'),serialToggle=$('toggleSerialOZero');
+ function refreshSerialOcrReview(){
+  const value=String($('serialNumber').value||'').toUpperCase();
+  const hasO=/O/.test(value),hasZero=/0/.test(value);
+  const flagged=$('serialNumber').dataset.ocrNeedsReview==='true';
+  serialReview.hidden=!(flagged||hasO);
+  serialToggle.hidden=!hasO;
+  serialReview.textContent=hasO?'OCR may confuse the letter O with the digit 0. Check the printed label before saving.':(flagged?'Please verify ambiguous characters against the label.':'');
+  serialToggle.textContent=hasO?'Change O to 0':'';
+ }
+ serialToggle.addEventListener('click',()=>{
+  const input=$('serialNumber');
+  if(!/[O]/.test(input.value))return;
+  input.value=input.value.replace(/O/g,'0');
+  input.dataset.ocrNeedsReview='false';
+  refreshSerialOcrReview();
+ });
+ $('serialNumber').addEventListener('input',refreshSerialOcrReview);
+ refreshSerialOcrReview();
  $('productNumber').addEventListener('input',updateModelFromProductNumber);
  $('productNumber').addEventListener('change',updateModelFromProductNumber);
  $('disposition').addEventListener('change',()=>{$('disposition').dataset.userChanged='true'});
