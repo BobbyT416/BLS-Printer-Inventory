@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.35
+ Version 1.8.36
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -477,6 +477,42 @@ async function startCamera(){
   }
  }catch(e){stopCamera();let reason='';if(e?.name==='NotAllowedError'||e?.name==='PermissionDeniedError')reason=' Camera permission was denied or blocked. In iPhone Settings, open Safari → Camera and allow access, then reload this website.';else if(e?.name==='NotFoundError')reason=' No camera was found on this device.';else if(e?.name==='NotReadableError')reason=' The camera may already be in use by another app.';else reason=' '+(e?.message||'');$('scanStatus').textContent='Could not start camera scanner. '+reason+' You can still enter the barcode manually.'}
 }
+async function readLiveLabelText(){
+ if(!$('scanDialog').open||!quaggaActive)return;
+ $('scanStatus').textContent='Barcode readers did not decode it. Trying text recognition from the camera…';
+ try{
+  if(!window.Tesseract){
+   await new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    script.onload=()=>window.Tesseract?resolve():reject(new Error('Text recognition library could not load'));
+    script.onerror=()=>reject(new Error('Text recognition library could not load'));
+    document.head.appendChild(script);
+   });
+  }
+  const video=$('scanBox').querySelector('video');
+  if(!video||video.readyState<2)throw new Error('Camera image is not ready');
+  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+  canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  const result=await Tesseract.recognize(canvas,'eng',{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='Reading label text… '+Math.round((m.progress||0)*100)+'%'}});
+  const textOut=String(result?.data?.text||'').toUpperCase();
+  const cleaned=textOut.replace(/[^A-Z0-9\n]/g,' ');
+  const serialMatch=textOut.match(/(?:SN|S\/N|SERIAL(?:\s+NUMBER)?)\s*[:#-]?\s*([A-Z0-9]{10})/i);
+  const productMatch=textOut.match(/(?:PRODUCT(?:\s+NUMBER)?|PROD(?:UCT)?\s*(?:NO|NUM|#))\s*[:#-]?\s*([A-Z0-9]{6})/i);
+  const candidates=cleaned.split(/\s+/).map(v=>v.replace(/[^A-Z0-9]/g,'')).filter(Boolean);
+  const serial=serialMatch?.[1]||candidates.find(v=>/^[A-Z0-9]{10}$/.test(v));
+  const product=productMatch?.[1]||candidates.find(v=>/^[A-Z0-9]{6}$/.test(v)&&v!=='SERIAL');
+  if(scanTarget==='formLabel'&&(serial||product)){
+   if(serial)acceptLabelCode(serial);
+   if(product)acceptLabelCode(product);
+   $('scanStatus').textContent='Text recognition found a possible value. Verify both fields before saving.';
+  }else if(serial||product){
+   const value=serial||product;stopCamera();useScanned(value);
+   toast('Possible value read from label text. Please verify it.');
+  }else $('scanStatus').textContent='Still unable to read it. Move closer so the label fills most of the frame, then try again.';
+ }catch(err){$('scanStatus').textContent='Automatic text recognition failed: '+(err?.message||'unknown error')+'. Try Take photo of label.'}
+}
 function stopCamera(){clearTimeout(scanFallbackTimer);scanFallbackTimer=null;if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if(quaggaActive&&window.Quagga){try{window.Quagga.offDetected(quaggaDetectedHandler);window.Quagga.stop()}catch(e){}quaggaActive=false}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
 function quaggaDetectedHandler(result){const raw=String(result?.codeResult?.code||'').trim().toUpperCase();if(!raw)return;if(scanTarget==='formLabel'){acceptLabelCode(raw)}else{stopCamera();useScanned(raw)}}
 async function startQuaggaFallback(){
@@ -509,6 +545,8 @@ async function startQuaggaFallback(){
    quaggaActive=true;
    Q.onDetected(quaggaDetectedHandler);
    $('scanStatus').textContent='Alternate reader active. Center one barcode and hold steady.';
+   clearTimeout(scanFallbackTimer);
+   scanFallbackTimer=setTimeout(()=>readLiveLabelText(),9000);
   });
  }catch(err){
   $('scanStatus').textContent='Automatic readers could not start. Try moving closer, improving light, or entering the barcode manually.';
