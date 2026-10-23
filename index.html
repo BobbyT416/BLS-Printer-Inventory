@@ -116,23 +116,6 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
 }
 
 @media print{html,body{height:auto;overflow:visible;display:block}header,main,#appVersion{position:static;margin-top:0}main{height:auto;overflow:visible}#appVersion{display:none}}
-/* v1.8.51: keep the scanner preview visible on phone screens */
-#scanDialog{width:min(1120px,calc(100% - 16px));max-height:calc(var(--visible-vh, 100dvh) - 16px)}
-#scanDialog .modal-body{min-height:0;padding:12px;overflow-y:auto}
-#scanDialog .scanner-area{grid-template-columns:minmax(0,1.25fr) minmax(220px,.85fr);align-items:start;gap:14px}
-#scanDialog .scan-box{min-height:240px;height:auto;max-height:360px}
-#scanDialog .scan-box video{display:block;width:100%;height:auto;max-height:360px;object-fit:cover;background:#101820}
-#scanDialog .modal-foot{padding:10px 14px max(10px,env(safe-area-inset-bottom))}
-@media(max-width:700px){
- #scanDialog .scanner-area{grid-template-columns:minmax(0,1fr);gap:10px}
- #scanDialog .scan-box{min-height:190px;max-height:260px}
- #scanDialog .scanner-area>div:nth-child(2) h3{margin:0 0 5px;font-size:16px}
- #scanDialog .scanner-area>div:nth-child(2)>p{margin:4px 0;font-size:12px}
- #scanDialog .scan-input{margin-top:7px}
- #scanDialog .note{margin-top:6px;padding:8px 10px;font-size:12px}
- #scanDialog .modal-foot .hint{max-width:68%;line-height:1.25}
-}
-
 </style>
 </head>
 <body>
@@ -153,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.52
+ Version 1.8.53
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -355,7 +338,7 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
    $('model').dataset.autoFromProduct='true';
    $('deviceType').value=matched.type;
    $('deviceType').dataset.autoFromProduct='true';
-   // Do not overwrite the live OCR progress message while the camera scanner is running.
+   // Do not overwrite the live barcode-reader status while the camera scanner is running.
    if(!stream)$('scanStatus').textContent='Model identified: '+matched.model+' ('+matched.type+')';
   }else if($('model').dataset.autoFromProduct==='true'){
    $('model').value='';
@@ -366,7 +349,7 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
  const serialReview=$('serialOcrReview'),serialToggle=$('toggleSerialOZero');
  function refreshSerialOcrReview(){
   const value=String($('serialNumber').value||'').toUpperCase();
-  const flagged=$('serialNumber').dataset.ocrNeedsReview==='true';
+  const flagged=$('serialNumber').dataset.needsReview==='true';
   serialReview.hidden=!flagged;
   serialToggle.hidden=true;
   serialReview.textContent=flagged?'Please verify V/Y characters against the printed serial label. Letter O is automatically converted to zero for scanned serial numbers.':'';
@@ -442,88 +425,10 @@ function openScanner(target='inventory'){scanTarget=target;forceZXing=false;$('m
 $('scanSearchBtn').onclick=()=>openScanner('search');$('scanFromForm').onclick=()=>openScanner('formLabel');
 async function startCamera(){
  stopCamera();
- $('scanStatus').textContent='Starting camera for OCR…';
  if(!window.isSecureContext){$('scanStatus').textContent='Camera access requires HTTPS. Open this app in Safari.';return}
  if(!navigator.mediaDevices?.getUserMedia){$('scanStatus').textContent='Camera access is unavailable here. Open the app directly in Safari.';return}
- $('scanBox').innerHTML='<video id="scanVideo" autoplay muted playsinline></video>';
- try{
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
-  const video=$('scanVideo');video.srcObject=stream;video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');video.muted=true;
-  await video.play();
-  $('scanStatus').textContent='Camera ready. Loading free text recognition…';
-  if(!window.Tesseract){
-   await new Promise((resolve,reject)=>{
-    const script=document.createElement('script');
-    script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-    script.onload=()=>window.Tesseract?resolve():reject(new Error('Text recognition could not load. Check internet access.'));
-    script.onerror=()=>reject(new Error('Text recognition library could not load.'));
-    document.head.appendChild(script);
-   });
-  }
-  $('scanStatus').textContent='Preparing fast OCR…';
-  let busy=false,lastRun=0,ocrWorker=null;
-  // Require repeated agreement across camera frames before accepting OCR candidates.
-  const serialVotes=new Map(),productVotes=new Map();
-  const voteCandidate=(votes,value)=>{if(!value)return '';const n=(votes.get(value)||0)+1;votes.set(value,n);return n>=2?value:''};
-  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
-  // Reuse one worker instead of reinitializing OCR on every camera frame.
-  ocrWorker=await Tesseract.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='Reading label… '+Math.round((m.progress||0)*100)+'%'}});
-  // Keep the persistent worker for speed, but let OCR consider its normal character set and layout.
-  // A strict alphanumeric whitelist and forced single-block mode caused bad reads on HP labels.
-  await ocrWorker.setParameters({tessedit_pageseg_mode:Tesseract.PSM.AUTO,preserve_interword_spaces:'1'});
-  $('scanStatus').textContent='Fast OCR active. Hold the printed numbers steady in view.';
-  const processFrame=async()=>{
-   if(!stream||!video.isConnected)return;
-   if(!busy&&video.readyState>=2&&performance.now()-lastRun>350){
-    busy=true;lastRun=performance.now();
-    try{
-     const vw=video.videoWidth,vh=video.videoHeight;
-     if(vw&&vh){
-      const cropX=Math.round(vw*.08),cropY=Math.round(vh*.12),cropW=Math.round(vw*.84),cropH=Math.round(vh*.76);
-      canvas.width=Math.round(cropW*2);canvas.height=Math.round(cropH*2);
-      ctx.imageSmoothingEnabled=false;
-      ctx.drawImage(video,cropX,cropY,cropW,cropH,0,0,canvas.width,canvas.height);
-      const result=await ocrWorker.recognize(canvas);
-      const raw=String(result?.data?.text||'').toUpperCase();
-      const cleaned=raw.replace(/[^A-Z0-9\n]/g,' ');
-      const tokens=cleaned.split(/\s+/).map(v=>v.replace(/[^A-Z0-9]/g,'')).filter(Boolean);
-      const serialLabel=raw.match(/(?:SERIAL(?:\s*(?:NUMBER|NO\.?))?|S\/N|SN)\s*[:#-]?\s*([A-Z0-9][A-Z0-9 -]{8,14}[A-Z0-9])/i);
-      const productLabel=raw.match(/(?:PRODUCT(?:\s*(?:NUMBER|NO\.?))?|PROD\.?\s*(?:NO\.?|#))\s*[:#-]?\s*([A-Z0-9][A-Z0-9 -]{4,10}[A-Z0-9])/i);
-      const compact=v=>String(v||'').replace(/[^A-Z0-9]/g,'');
-      let serial=compact(serialLabel?.[1]),product=compact(productLabel?.[1]);
-      if(!/^[A-Z0-9]{10}$/.test(serial))serial=tokens.find(v=>/^[A-Z0-9]{10}$/.test(v))||'';
-      if(!/^[A-Z0-9]{6}$/.test(product))product=tokens.find(v=>/^[A-Z0-9]{6}$/.test(v))||'';
-      // Keep O-to-zero normalization scoped to serials, then require the same candidate twice.
-      if(serial)serial=serial.replace(/O/g,'0');
-      serial=voteCandidate(serialVotes,serial);
-      product=voteCandidate(productVotes,product);
-      if(scanTarget==='formLabel'){
-       if(serial){
-        $('serialNumber').value=serial;
-        $('serialNumber').dataset.ocrNeedsReview=/[VY]/.test(serial)?'true':'false';
-       }
-       if(product){$('productNumber').value=product;updateModelFromProductNumber()}
-       if(serial||product){
-        const serialNeedsReview=serial&&/[VY]/.test(serial);
-        $('scanStatus').textContent='Repeated OCR reading confirmed '+(serial?'serial number':'')+(serial&&product?' and ':'')+(product?'product number':'')+'. '+(serialNeedsReview?'Please verify V/Y in the serial number.':'Verify the values before saving.');
-        if(serial&&product){stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Repeated OCR readings confirmed both numbers — verify the serial')}
-       }else{$('scanStatus').textContent='Comparing repeated readings to reduce character errors…'}
-      }else{
-       const candidate=serial||product;
-       if(candidate){stopCamera();useScanned(candidate);toast('OCR found a possible label number. Please verify it.');return}
-       $('scanStatus').textContent='Fast OCR is running. Looking for a 10-character serial or 6-character product number…';
-      }
-     }
-    }catch(err){$('scanStatus').textContent='OCR scan error: '+(err?.message||'unknown error')}
-    busy=false;
-   }
-   if(stream)requestAnimationFrame(processFrame);
-  };
-  requestAnimationFrame(processFrame);
- }catch(e){
-  stopCamera();
-  $('scanStatus').textContent='Could not start OCR camera: '+(e?.message||e?.name||'unknown error')+'. Check Safari camera permission and try again.';
- }
+ $('scanStatus').textContent='Starting barcode reader…';
+ await startQuaggaFallback();
 }
 function stopCamera(){clearTimeout(scanFallbackTimer);scanFallbackTimer=null;if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if(quaggaActive&&window.Quagga){try{window.Quagga.offDetected(quaggaDetectedHandler);window.Quagga.stop()}catch(e){}quaggaActive=false}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
 function quaggaDetectedHandler(result){const raw=String(result?.codeResult?.code||'').trim().toUpperCase();if(!raw)return;if(scanTarget==='formLabel'){acceptLabelCode(raw)}else{stopCamera();useScanned(raw)}}
@@ -558,7 +463,7 @@ async function startQuaggaFallback(){
    Q.onDetected(quaggaDetectedHandler);
    $('scanStatus').textContent='Alternate reader active. Center one barcode and hold steady.';
    clearTimeout(scanFallbackTimer);
-   scanFallbackTimer=setTimeout(()=>readLiveLabelText(),9000);
+   scanFallbackTimer=null;
   });
  }catch(err){
   $('scanStatus').textContent='Automatic readers could not start. Try moving closer, improving light, or entering the barcode manually.';
@@ -625,69 +530,6 @@ $('labelPhotoInput').addEventListener('change',async e=>{
   }
   const values=[...new Set(found.map(x=>String(x.rawValue||'').trim().toUpperCase()).filter(Boolean))];
   for(const value of values){if(scanTarget==='formLabel')acceptLabelCode(value);else{URL.revokeObjectURL(src);stopCamera();useScanned(value);e.target.value='';return}}
-  // OCR is a free fallback for labels whose bars are too small or reflective to decode.
-  $('scanStatus').textContent='Barcode not decoded from photo. Loading text recognition…';
-  if(!window.Tesseract){
-   await new Promise((resolve,reject)=>{
-    const script=document.createElement('script');
-    script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-    script.onload=()=>window.Tesseract?resolve():reject(new Error('Text recognition library could not load'));
-    script.onerror=()=>reject(new Error('Text recognition library could not load'));
-    document.head.appendChild(script);
-   });
-  }
-  const result=await Tesseract.recognize(img,'eng',{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='Reading printed label text… '+Math.round((m.progress||0)*100)+'%'}});
-  const textOut=String(result?.data?.text||'').toUpperCase();
-  const normalized=textOut.replace(/[^A-Z0-9\n]/g,' ');
-  // Prefer values next to explicit labels, then validate by expected lengths.
-  const serialMatch=textOut.match(/(?:SN|S\/N|SERIAL(?:\s+NUMBER)?)\s*[:#-]?\s*([A-Z0-9]{10})/i);
-  const productMatch=textOut.match(/(?:PRODUCT(?:\s+NUMBER)?|PROD(?:UCT)?\s*(?:NO|NUM|#))\s*[:#-]?\s*([A-Z0-9]{6})/i);
-  const candidates=normalized.split(/\s+/).map(v=>v.replace(/[^A-Z0-9]/g,'')).filter(Boolean);
-  const serial=serialMatch?.[1]||candidates.find(v=>/^[A-Z0-9]{10}$/.test(v));
-  const product=productMatch?.[1]||candidates.find(v=>/^[A-Z0-9]{6}$/.test(v)&&v!=='SERIAL');
-  if(scanTarget==='formLabel'&&(serial||product)){
-   if(serial)acceptLabelCode(serial);
-   if(product)acceptLabelCode(product);
-   $('scanStatus').textContent='Photo text read. Check the serial and product number fields for accuracy.';
-  }else if(serial||product){
-   const value=serial||product;
-   URL.revokeObjectURL(src);stopCamera();useScanned(value);
-   toast('Value read from label photo. Please verify it.');
-  }else $('scanStatus').textContent='Could not confidently read a barcode or label number. Try a closer, straighter photo with less glare.';
+    $('scanStatus').textContent='No barcode could be decoded from this photo. Try a closer, straighter photo, use live barcode scanning, or enter it manually.';
   URL.revokeObjectURL(src);
- }catch(err){$('scanStatus').textContent='Photo scan failed: '+(err?.message||'unknown error')+'. Try again or enter the value manually.'}
- e.target.value='';
-});
-$('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{stopCamera();$('scanStatus').textContent='Camera stopped.'};
-$('useBarcode').onclick=()=>useScanned($('manualBarcode').value);
-$('manualBarcode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();useScanned(e.target.value)}});
-$('closeScan').onclick=$('cancelScan').onclick=()=>{stopCamera();closeDialog($('scanDialog'))};
-function getReportDevices(){return devices.filter(d=>($('filterArchived').checked?(d.disposition==='Sold'&&d.soldAt):d.disposition!=='Sold')&&(!$('search').value.trim()||[d.barcode,d.assetTag,d.family,d.model,d.serialNumber,d.notes,d.deviceType,d.claimedBy].some(v=>String(v||'').toLowerCase().includes($('search').value.trim().toLowerCase())))&&(!$('filterType').value||d.deviceType===$('filterType').value)&&($('filterArchived').checked||[...document.querySelectorAll('.disposition-choice:checked')].some(el=>el.value===(d.disposition||'Not evaluated'))))}
-function prepareReport(){const now=new Date(),reportDevices=getReportDevices();$('printMeta').textContent=`Generated ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · ${reportDevices.length} device(s)`;$('printHeader').querySelector('h2').textContent=$('reportTitle').value.trim()||'Printer Inventory Report';const val=v=>v===undefined||v===null||v===''?'—':String(v);$('printReportBody').innerHTML=reportDevices.map(d=>`<tr><td>${esc(val(d.serialNumber))}</td><td>${esc(val(shortModelName(d.model)))}</td><td>${esc(val(d.assetTag))}</td><td>${esc(val(d.deviceType))}</td><td>${esc(d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString())}</td><td>${esc(val(d.disposition))}</td><td>${esc(money(d.cost))}</td><td>${esc(money(d.price))}</td><td>${esc(d.pendingSale?'Sale pending':'Available')}</td></tr>`).join('');return reportDevices}
-function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
-function reportBaseName(){return ($('reportTitle').value.trim()||'Printer Inventory Report').replace(/[^a-z0-9-_]+/gi,'-').replace(/^-|-$/g,'')||'printer-inventory-report'}
-function reportCsv(rows){const cols=[['Serial Number','serialNumber'],['Model','modelShort'],['Asset Tag','assetTag'],['Type','deviceType'],['Page Count','pageCount'],['Disposition','disposition'],['Cost','cost'],['Price','price'],['Status','pendingSale']];const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';return [cols.map(c=>q(c[0])).join(','),...rows.map(d=>cols.map(c=>q(c[1]==='pendingSale'?(d.pendingSale?'Sale pending':'Available'):c[1]==='modelShort'?shortModelName(d.model):d[c[1]]??'')).join(','))].join('\r\n')}
-function saveReport(){const rows=prepareReport(),fmt=$('reportFormat').value,name=reportBaseName();document.querySelectorAll('[data-print]').forEach(c=>printPrefs[c.dataset.print]=c.checked);safeSet(PRINT,JSON.stringify(printPrefs));if(fmt==='csv'){downloadBlob(new Blob(['\ufeff',reportCsv(rows)],{type:'text/csv;charset=utf-8'}),name+'.csv');toast('CSV report downloaded')}else if(fmt==='doc'){const html='<!doctype html><html><head><meta charset="utf-8"><title>'+esc($('reportTitle').value)+'</title><style>body{font-family:Arial}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:5px;text-align:left}th{background:#eee}</style></head><body><h1>'+esc($('reportTitle').value||'Printer Inventory Report')+'</h1><p>'+esc($('printMeta').textContent)+'</p>'+ $('printReportTable').outerHTML+'</body></html>';downloadBlob(new Blob([html],{type:'application/msword'}),name+'.doc');toast('Word report downloaded')}else{if(!window.jspdf||!window.jspdf.jsPDF){toast('PDF generator could not load. Check your internet connection and try again.');return}const {jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});const title=$('reportTitle').value.trim()||'Printer Inventory Report';pdf.setFontSize(18);pdf.text(title,36,36);pdf.setFontSize(9);pdf.text($('printMeta').textContent,36,52);const cols=[['Serial Number','serialNumber'],['Model','model'],['Asset Tag','assetTag'],['Type','deviceType'],['Page Count','pageCount'],['Disposition','disposition'],['Cost','cost'],['Price','price'],['Status','pendingSale']];const margin=36,top=72,rowH=24,pageW=pdf.internal.pageSize.getWidth(),usableW=pageW-margin*2,widths=[usableW*.17,usableW*.13,usableW*.12,usableW*.09,usableW*.09,usableW*.14,usableW*.08,usableW*.08,usableW*.10];let y=top;const drawHeader=()=>{pdf.setFontSize(8);pdf.setFillColor(230,237,245);pdf.rect(margin,y,usableW,rowH,'F');let x=margin;cols.forEach((c,i)=>{pdf.text(c[0],x+4,y+15,{maxWidth:widths[i]-8});x+=widths[i]});y+=rowH};drawHeader();pdf.setFontSize(8);rows.forEach(d=>{if(y+rowH>pdf.internal.pageSize.getHeight()-30){pdf.addPage();y=36;drawHeader();pdf.setFontSize(8)}let x=margin;cols.forEach((c,i)=>{let v=c[1]==='pendingSale'?(d.pendingSale?'Sale pending':'Available'):c[1]==='modelShort'?shortModelName(d.model):c[1]==='pageCount'&&d.pageCount!==''&&d.pageCount!=null?Number(d.pageCount).toLocaleString():c[1]==='cost'||c[1]==='price'?money(d[c[1]]):String(d[c[1]]??'—');pdf.text(v||'—',x+4,y+15,{maxWidth:widths[i]-8});x+=widths[i]});pdf.setDrawColor(210);pdf.line(margin,y+rowH,margin+usableW,y+rowH);y+=rowH});const pdfBlob=pdf.output('blob');const pdfFile=new File([pdfBlob],name+'.pdf',{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[pdfFile]})&&navigator.share){navigator.share({files:[pdfFile],title:title,text:'Printer inventory report'}).then(()=>toast('Choose Save to Files in the share sheet to keep the PDF')).catch(err=>{if(err&&err.name!=='AbortError'){downloadBlob(pdfBlob,name+'.pdf');toast('PDF report generated')}})}else{downloadBlob(pdfBlob,name+'.pdf');toast('PDF report generated. Check your Downloads or browser share options to save it.')}}}
-$('saveReport').onclick=saveReport;
-$('printReportBtn').onclick=()=>{try{prepareReport();closeDialog($('printDialog'));window.print()}catch(err){console.error('Print report failed',err);toast('Printing could not start. Try Save report → PDF instead.')}};
-$('printSetupBtn').onclick=()=>{$('reportTitle').value=$('reportTitle').value||'Printer Inventory Report';buildPrintOptions();showDialog($('printDialog'))};
-function buildPrintOptions(){$('printOptions').innerHTML=fields.map(([k,label])=>`<label style="display:flex;align-items:center;gap:9px;padding:8px;border:1px solid var(--line);border-radius:8px"><input type="checkbox" data-print="${k}" ${printPrefs[k]?'checked':''} style="width:auto"> ${label}</label>`).join('')}
-$('printSetupBtn').onclick=()=>{$('reportTitle').value=$('reportTitle').value||'Printer Inventory Report';buildPrintOptions();showDialog($('printDialog'))};
-$('closePrintSetup').onclick=()=>closeDialog($('printDialog'));
-$('savePrint')?.remove();
-$('resetPrint').onclick=()=>{printPrefs={...defaults};buildPrintOptions()};
-$('backupSettingsBtn').onclick=()=>showDialog($('backupDialog'));
-$('closeBackupSettings').onclick=()=>closeDialog($('backupDialog'));
-$('closeBackupSettingsBottom').onclick=()=>closeDialog($('backupDialog'));
-$('exportBackupBtn').onclick=()=>$('exportBtnHiddenAction').click();
-$('importBackupBtn').onclick=()=>{closeDialog($('backupDialog'));$('importFile').click()};
-$('exportBtnHiddenAction').onclick=()=>{const data={app:'Printer Inventory',version:1,exportedAt:new Date().toISOString(),devices,printPrefs};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='printer-inventory-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);toast('Backup exported')};
-
-$('importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());const incoming=Array.isArray(data)?data:data.devices;if(!Array.isArray(incoming))throw Error('Invalid backup');if(!confirm(`Import ${incoming.length} printer records? This replaces the inventory currently saved in this browser.`))return;devices=incoming;printPrefs={...defaults,...(data.printPrefs||{})};persist();safeSet(PRINT,JSON.stringify(printPrefs));toast('Backup imported')}catch(err){alert('Could not import that file. Choose a valid Printer Inventory JSON backup.')}finally{e.target.value=''}};
-window.addEventListener('beforeunload',()=>{if(stream)stream.getTracks().forEach(t=>t.stop());if(syncChannel&&supabaseClient)supabaseClient.removeChannel(syncChannel)});
-render();
-initializeCloudSync();
-})();
-</script>
-</body>
-</html>
+>
