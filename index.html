@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.43
+ Version 1.8.44
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -348,20 +348,23 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
  const serialReview=$('serialOcrReview'),serialToggle=$('toggleSerialOZero');
  function refreshSerialOcrReview(){
   const value=String($('serialNumber').value||'').toUpperCase();
-  const hasO=/O/.test(value),hasZero=/0/.test(value);
   const flagged=$('serialNumber').dataset.ocrNeedsReview==='true';
-  serialReview.hidden=!(flagged||hasO);
-  serialToggle.hidden=!hasO;
-  serialReview.textContent=hasO?'OCR may confuse the letter O with the digit 0. Check the printed label before saving.':(flagged?'Please verify ambiguous characters against the label.':'');
-  serialToggle.textContent=hasO?'Change O to 0':'';
+  serialReview.hidden=!flagged;
+  serialToggle.hidden=true;
+  serialReview.textContent=flagged?'Please verify V/Y characters against the printed serial label. Letter O is automatically converted to zero for scanned serial numbers.':'';
  }
- serialToggle.addEventListener('click',()=>{
+ // Normalize O to 0 for serial numbers only, including manual edits; leave product numbers untouched.
+ $('serialNumber').addEventListener('input',()=>{
   const input=$('serialNumber');
-  if(!/[O]/.test(input.value))return;
-  input.value=input.value.replace(/O/g,'0');
-  input.dataset.ocrNeedsReview='false';
+  const pos=input.selectionStart;
+  if(input.value.includes('o')||input.value.includes('O')){
+   const before=input.value;
+   input.value=before.replace(/[oO]/g,'0');
+   try{input.setSelectionRange(pos,pos)}catch(e){}
+  }
   refreshSerialOcrReview();
  });
+ serialToggle.hidden=true;
  $('serialNumber').addEventListener('input',refreshSerialOcrReview);
  refreshSerialOcrReview();
  $('productNumber').addEventListener('input',updateModelFromProductNumber);
@@ -450,11 +453,11 @@ async function startCamera(){
       // O/0 and V/Y are both possible characters; do not silently guess.
       if(scanTarget==='formLabel'){
        if(serial){
+        // User-requested rule: normalize letter O to digit zero in serial numbers only.
+        // Do not apply this transformation to product numbers or other fields.
+        serial=serial.replace(/O/g,'0');
         $('serialNumber').value=serial;
-        // OCR cannot safely decide between O/0 or V/Y without additional evidence.
-        // Preserve the recognized value and explicitly flag ambiguous characters for review.
-        const ambiguousSerial=/[O0VY]/.test(serial);
-        $('serialNumber').dataset.ocrNeedsReview=ambiguousSerial?'true':'false';
+        $('serialNumber').dataset.ocrNeedsReview=/[VY]/.test(serial)?'true':'false';
        }
        if(product){$('productNumber').value=product;updateModelFromProductNumber()}
        if(serial||product){
