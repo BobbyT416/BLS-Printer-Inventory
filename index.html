@@ -120,12 +120,12 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
 #scanDialog{width:min(1120px,calc(100% - 16px));max-height:calc(var(--visible-vh, 100dvh) - 16px)}
 #scanDialog .modal-body{min-height:0;padding:12px;overflow-y:auto}
 #scanDialog .scanner-area{grid-template-columns:minmax(0,1.25fr) minmax(220px,.85fr);align-items:start;gap:14px}
-#scanDialog .scan-box{min-height:0;height:clamp(220px,48vh,440px);height:clamp(220px,48dvh,440px)}
-#scanDialog .scan-box video{display:block;width:100%;height:100%;max-height:none;object-fit:contain;background:#101820}
+#scanDialog .scan-box{min-height:240px;height:auto;max-height:360px}
+#scanDialog .scan-box video{display:block;width:100%;height:auto;max-height:360px;object-fit:cover;background:#101820}
 #scanDialog .modal-foot{padding:10px 14px max(10px,env(safe-area-inset-bottom))}
 @media(max-width:700px){
  #scanDialog .scanner-area{grid-template-columns:minmax(0,1fr);gap:10px}
- #scanDialog .scan-box{height:clamp(180px,34vh,300px);height:clamp(180px,34dvh,300px)}
+ #scanDialog .scan-box{min-height:190px;max-height:260px}
  #scanDialog .scanner-area>div:nth-child(2) h3{margin:0 0 5px;font-size:16px}
  #scanDialog .scanner-area>div:nth-child(2)>p{margin:4px 0;font-size:12px}
  #scanDialog .scan-input{margin-top:7px}
@@ -153,7 +153,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.51
+ Version 1.8.52
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
