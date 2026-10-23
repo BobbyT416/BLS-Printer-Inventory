@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.49
+ Version 1.8.50
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -147,6 +147,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
  <form id="deviceForm">
   <div class="modal-body">
+   <div id="duplicateWarning" role="alert" aria-live="assertive" style="display:none;background:#fde9e7;border:1px solid #b42318;color:#8f1d16;border-radius:9px;padding:11px 13px;margin:0 0 12px;font-weight:750"></div>
    <div class="note" style="margin-bottom:15px">The barcode sticker identifies the individual device. Scan with your camera or use a USB/Bluetooth scanner that types into the barcode field.</div>
    <div class="form-grid">
     <div class="field"><label for="barcode">Barcode</label><div style="display:flex;gap:7px"><input id="barcode" autocomplete="off" placeholder="Optional — enter or scan barcode"><button type="button" id="scanFromForm">Scan</button></div><div class="hint">Optional. Leave blank unless you enter or scan a barcode.</div></div>
@@ -384,9 +385,18 @@ $('deviceForm').addEventListener('submit',e=>{
   const message=isSerialDuplicate
    ? 'Serial number '+serial+' already exists'
    : 'Barcode '+barcode+' already exists';
-  toast(message,3000);
+  const warning=$('duplicateWarning');
+  if(warning){
+   warning.textContent=message;
+   warning.style.display='block';
+   clearTimeout(window.duplicateWarningTimer);
+   window.duplicateWarningTimer=setTimeout(()=>{warning.style.display='none';warning.textContent=''},3000);
+  }
   return;
  }
+ const warning=$('duplicateWarning');
+ if(warning){warning.style.display='none';warning.textContent=''}
+
  const old=devices.find(d=>d.id===editingId)||{};
  const d={...old,id:editingId||('dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,7))};
  d.barcode=barcode;
