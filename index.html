@@ -204,7 +204,7 @@ const fields=[
 ['serialNumber','Serial number'],['assetTag','Asset tag'],['deviceType','Type'],['model','Model'],['productNumber','Product number'],['pageCount','Page count'],['disposition','Disposition'],['acquiredFrom','Acquired from'],['refurbishedBy','Refurbished by'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale status'],['claimedBy','Salesperson'],['notes','Refurb notes']
 ];
 const defaults={serialNumber:true,assetTag:true,deviceType:true,model:true,productNumber:true,pageCount:true,disposition:true,acquiredFrom:true,refurbishedBy:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
-let devices=[],editingId=null,stream=null,zxingControls=null,scanTarget='inventory',forceZXing=false,printPrefs={...defaults};
+let devices=[],editingId=null,stream=null,zxingControls=null,scanTarget='inventory',forceZXing=true,printPrefs={...defaults};
 try{devices=JSON.parse(safeGet(STORE)||'[]');if(!Array.isArray(devices))devices=[];let typeMigrated=false;devices=devices.map(d=>{if(d&&d.deviceType==='Single function printer'){typeMigrated=true;return {...d,deviceType:'Printer'}}return d});if(typeMigrated)safeSet(STORE,JSON.stringify(devices));}catch(e){devices=[]}
 try{printPrefs={...defaults,...JSON.parse(safeGet(PRINT)||'{}')};}catch(e){}
 let listView=false;
@@ -419,11 +419,11 @@ async function startCamera(){
     const video=$('scanVideo');
     video.style.width='100%';video.style.height='auto';video.setAttribute('playsinline','');video.muted=true;video.setAttribute('autoplay','');
     zxingControls=await reader.decodeFromConstraints(
-     {video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720},focusMode:{ideal:'continuous'}},audio:false},
+     {video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30},focusMode:{ideal:'continuous'}},audio:false},
      video,
      (result,error,controls)=>{
       if(controls)zxingControls=controls;
-      if(result?.getText){const value=result.getText();if(scanTarget==='formLabel'){acceptLabelCode(value)}else{stopCamera();useScanned(value)}}
+      if(result?.getText){const rawValue=result.getText();const value=String(rawValue||'').trim().toUpperCase();if(scanTarget==='formLabel'){acceptLabelCode(value)}else{stopCamera();useScanned(value)}}
      }
     );
    } catch(readerError) {
@@ -455,7 +455,7 @@ function acceptLabelCode(value){
   stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Serial and product numbers captured');
  }else $('scanStatus').textContent='Captured one value. Keep both barcodes in view so the other can be read.';
 }
-function useScanned(value){const code=String(value||'').trim();if(!code)return;if(scanTarget==='form'){$('barcode').value=code;applyScannedPrinterIdentity(code);closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Barcode entered')}else if(scanTarget==='search'){closeDialog($('scanDialog'));$('search').value=code;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory searched by barcode')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>String(d.serialNumber||'').toLowerCase()===code.toLowerCase()||String(d.barcode||'').toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);$('barcode').value=code;toast('Existing printer found')}else{openDevice(null,code);toast('Scanned barcode entered')}}}
+function useScanned(value){const code=String(value||'').trim().toUpperCase();if(!code)return;if(scanTarget==='form'){$('barcode').value=code;applyScannedPrinterIdentity(code);closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Barcode entered')}else if(scanTarget==='search'){closeDialog($('scanDialog'));$('search').value=code;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory searched by barcode')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>String(d.serialNumber||'').toLowerCase()===code.toLowerCase()||String(d.barcode||'').toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);$('barcode').value=code;toast('Existing printer found')}else{openDevice(null,code);toast('Scanned barcode entered')}}}
 $('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{stopCamera();$('scanStatus').textContent='Camera stopped.'};
 $('useBarcode').onclick=()=>useScanned($('manualBarcode').value);
 $('manualBarcode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();useScanned(e.target.value)}});
