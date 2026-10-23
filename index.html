@@ -136,7 +136,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.32
+ Version 1.8.33
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -175,7 +175,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  <div class="modal-head"><h2>Scan barcode</h2><button id="closeScan">✕</button></div>
  <div class="modal-body">
   <div class="scanner-area">
-   <div><div class="scan-box" id="scanBox"><div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera scanner</p><small>Allow camera access when prompted.</small></div></div><div class="tools" style="margin-top:10px"><button id="startCamera" class="primary">Start camera</button><button id="stopCamera">Stop camera</button></div></div>
+   <div><div class="scan-box" id="scanBox"><div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera scanner</p><small>Allow camera access when prompted.</small></div></div><div class="tools" style="margin-top:10px"><button id="startCamera" class="primary">Start camera</button><button id="stopCamera">Stop camera</button></div><div class="tools" style="margin-top:8px"><button id="photoLabelBtn">Take photo of label</button><input id="labelPhotoInput" type="file" accept="image/*" capture="environment" style="display:none"></div></div>
    <div><h3 style="margin-top:0">Enter a barcode</h3><p style="color:var(--muted);font-size:13px">If camera scanning is not supported, use a USB/Bluetooth barcode reader or type the sticker value here.</p><div class="scan-input"><input id="manualBarcode" placeholder="Barcode value" autocomplete="off"><button id="useBarcode" class="primary">Use barcode</button></div><p class="hint">Most handheld scanners act like a keyboard and can enter the code directly.</p><div class="note" id="scanStatus">Camera has not started.</div></div>
   </div>
  </div>
@@ -543,6 +543,70 @@ function acceptLabelCode(value){
  }else $('scanStatus').textContent='Captured one value. Keep both barcodes in view so the other can be read.';
 }
 function useScanned(value){const code=String(value||'').trim().toUpperCase();if(!code)return;if(scanTarget==='form'){$('barcode').value=code;applyScannedPrinterIdentity(code);closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Barcode entered')}else if(scanTarget==='search'){closeDialog($('scanDialog'));$('search').value=code;render();window.scrollTo({top:0,behavior:'smooth'});toast('Inventory searched by barcode')}else{closeDialog($('scanDialog'));const existing=devices.find(d=>String(d.serialNumber||'').toLowerCase()===code.toLowerCase()||String(d.barcode||'').toLowerCase()===code.toLowerCase());if(existing){openDevice(existing.id);$('barcode').value=code;applyScannedPrinterIdentity(code);toast('Existing printer found')}else{openDevice(null,code);applyScannedPrinterIdentity(code);toast('Scanned barcode entered')}}}
+$('photoLabelBtn').onclick=()=> $('labelPhotoInput').click();
+$('labelPhotoInput').addEventListener('change',async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ $('scanStatus').textContent='Reading photo…';
+ try{
+  const img=new Image();
+  const src=URL.createObjectURL(file);
+  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=src});
+  // First attempt barcode decoding from the full still image and focused horizontal crops.
+  let found=[];
+  if('BarcodeDetector' in window){
+   try{
+    const supported=await BarcodeDetector.getSupportedFormats();
+    const formats=['code_128','code_39','code_93','codabar','ean_13','ean_8','upc_a','upc_e','itf','qr_code','data_matrix'].filter(f=>supported.includes(f));
+    if(formats.length){
+     const detector=new BarcodeDetector({formats});
+     found=await detector.detect(img);
+     if(!found.length){
+      const c=document.createElement('canvas'),ctx=c.getContext('2d');
+      const regions=[{y:.35,h:.32},{y:.58,h:.34},{y:.25,h:.6}];
+      for(const region of regions){
+       c.width=img.naturalWidth;c.height=Math.round(img.naturalHeight*region.h);
+       ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(img,0,Math.round(img.naturalHeight*region.y),c.width,c.height,0,0,c.width,c.height);
+       try{const hits=await detector.detect(c);if(hits.length){found=found.concat(hits);break}}catch(_){}
+      }
+     }
+    }
+   }catch(_){}
+  }
+  const values=[...new Set(found.map(x=>String(x.rawValue||'').trim().toUpperCase()).filter(Boolean))];
+  for(const value of values){if(scanTarget==='formLabel')acceptLabelCode(value);else{URL.revokeObjectURL(src);stopCamera();useScanned(value);e.target.value='';return}}
+  // OCR is a free fallback for labels whose bars are too small or reflective to decode.
+  $('scanStatus').textContent='Barcode not decoded from photo. Loading text recognition…';
+  if(!window.Tesseract){
+   await new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    script.onload=()=>window.Tesseract?resolve():reject(new Error('Text recognition library could not load'));
+    script.onerror=()=>reject(new Error('Text recognition library could not load'));
+    document.head.appendChild(script);
+   });
+  }
+  const result=await Tesseract.recognize(img,'eng',{logger:m=>{if(m.status==='recognizing text')$('scanStatus').textContent='Reading printed label text… '+Math.round((m.progress||0)*100)+'%'}});
+  const textOut=String(result?.data?.text||'').toUpperCase();
+  const normalized=textOut.replace(/[^A-Z0-9\n]/g,' ');
+  // Prefer values next to explicit labels, then validate by expected lengths.
+  const serialMatch=textOut.match(/(?:SN|S/N|SERIAL(?:\s+NUMBER)?)\s*[:#-]?\s*([A-Z0-9]{10})/i);
+  const productMatch=textOut.match(/(?:PRODUCT(?:\s+NUMBER)?|PROD(?:UCT)?\s*(?:NO|NUM|#))\s*[:#-]?\s*([A-Z0-9]{6})/i);
+  const candidates=normalized.split(/\s+/).map(v=>v.replace(/[^A-Z0-9]/g,'')).filter(Boolean);
+  const serial=serialMatch?.[1]||candidates.find(v=>/^[A-Z0-9]{10}$/.test(v));
+  const product=productMatch?.[1]||candidates.find(v=>/^[A-Z0-9]{6}$/.test(v)&&v!=='SERIAL');
+  if(scanTarget==='formLabel'&&(serial||product)){
+   if(serial)acceptLabelCode(serial);
+   if(product)acceptLabelCode(product);
+   $('scanStatus').textContent='Photo text read. Check the serial and product number fields for accuracy.';
+  }else if(serial||product){
+   const value=serial||product;
+   URL.revokeObjectURL(src);stopCamera();useScanned(value);
+   toast('Value read from label photo. Please verify it.');
+  }else $('scanStatus').textContent='Could not confidently read a barcode or label number. Try a closer, straighter photo with less glare.';
+  URL.revokeObjectURL(src);
+ }catch(err){$('scanStatus').textContent='Photo scan failed: '+(err?.message||'unknown error')+'. Try again or enter the value manually.'}
+ e.target.value='';
+});
 $('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{stopCamera();$('scanStatus').textContent='Camera stopped.'};
 $('useBarcode').onclick=()=>useScanned($('manualBarcode').value);
 $('manualBarcode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();useScanned(e.target.value)}});
