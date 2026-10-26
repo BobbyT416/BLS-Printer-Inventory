@@ -151,7 +151,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
 }
 
 
-/* v1.8.59 cosmetic refinement: visually separate inventory from search/filter controls */
+/* v1.8.60 cosmetic refinement: visually separate inventory from search/filter controls */
 .inventory-list-heading{display:flex;align-items:center;gap:10px;margin:18px 0 8px;padding:10px 13px;background:linear-gradient(90deg,#e8f1fc,#f7faff);border:1px solid #c5d6eb;border-left:4px solid #2459a9;border-radius:9px}
 .inventory-list-heading h2{margin:0;font-size:16px;color:#1c3f70}
 .inventory-list-heading span{font-size:12px;color:#526071}
@@ -177,7 +177,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.59
+ Version 1.8.60
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -264,7 +264,7 @@ const memoryStore={};
 function safeGet(key){try{return window.localStorage.getItem(key)}catch(e){return Object.prototype.hasOwnProperty.call(memoryStore,key)?memoryStore[key]:null}}
 function safeSet(key,value){try{window.localStorage.setItem(key,String(value));memoryStore[key]=String(value);return true}catch(e){console.error('Storage write failed for '+key,e);return false}}
 const fields=[
-['model','Model'],['productNumber','Product Number'],['serialNumber','Serial Number'],['assetTag','Asset Tag'],['deviceType','Type'],['pageCount','Page count'],['disposition','Disposition'],['acquiredFrom','Acquired from'],['cost','Cost'],['price','Selling price'],['pendingSale','Sale Status'],['claimedBy','Salesperson'],['refurbishedBy','Refurbished by'],['notes','Refurb notes']
+['model','Model'],['productNumber','Product Number'],['serialNumber','Serial Number'],['assetTag','Asset Tag'],['deviceType','Type'],['pageCount','Page count'],['disposition','Disposition'],['acquiredFrom','Acquired from'],['cost','Cost'],['price','Sell Price'],['pendingSale','Status'],['claimedBy','Rep'],['refurbishedBy','Tech'],['notes','Notes']
 ];
 const defaults={serialNumber:true,assetTag:true,deviceType:true,model:true,productNumber:true,pageCount:true,disposition:true,acquiredFrom:true,refurbishedBy:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
 let devices=[],editingId=null,stream=null,zxingControls=null,scanFallbackTimer=null,quaggaActive=false,scanTarget='inventory',forceZXing=true,printPrefs={...defaults};
