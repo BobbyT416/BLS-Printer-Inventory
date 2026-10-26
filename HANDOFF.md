@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-10-21
+Last updated: 2026-10-26 (Version 1.8.72)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.4.4
+Current version: 1.8.72
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -445,3 +445,83 @@ Fields include Barcode, Serial Number, Asset Tag, Date Received, Type, Model, Pa
 - Updated visible app version to 1.8.23.
 - This is a software fallback improvement, not a guarantee of camera focus or barcode readability. No physical iPhone or Android test has been performed yet.
 - Model/type identification remains limited to verified entries in PRODUCT_MODEL_MAP. At this version, F2A80A is the only verified product-number mapping; additional models require a verified lookup catalog or data source.
+
+
+---
+
+# Current authoritative handoff — 2026-10-26
+
+> **Use this section as the source of truth for continuing work in a new chat.** The older version-by-version notes above preserve history, but they are not all current. In particular, older notes about a home-page barcode scanner were superseded by Version 1.8.72.
+
+## Current release and repository state
+
+- **App:** BLS Used Printer Inventory
+- **Repository:** https://github.com/BobbyT416/BLS-Printer-Inventory
+- **Branch:** `main`
+- **Live app:** https://bobbyt416.github.io/BLS-Printer-Inventory/
+- **Current committed version:** **1.8.72**
+- **Latest known commit:** `9eadfeee8bb3ace39ee405d1a7098f5261b4c9d2`
+- **Commit purpose:** remove the barcode scan option from the home-page search field.
+- **Versioned app URL for cache refresh:** https://bobbyt416.github.io/BLS-Printer-Inventory/?v=1872
+- **Source verification:** after commit, fetched `index.html` again and confirmed the home scan button and its handler are absent, the visible version is 1.8.72, and the Add Printer scan handler remains. This was source verification, **not** a physical iPhone camera test.
+
+## Immediate user priority and guardrails
+
+The project is nearly complete. Preserve working behavior; avoid broad rewrites and regressions. Make only the requested, tightly scoped change, verify the current source before editing, increment the visible version, commit, then fetch the file again and verify the committed result. State exactly what was verified and what still needs the user's device test.
+
+**Critical scanner constraint: Do not modify the Add Printer scanning workflow unless the user explicitly asks.** The user has spent significant time getting it to work and is especially sensitive to regressions.
+
+## Scanner status and decisions
+
+### Home page
+- As of **1.8.72**, the barcode-scan icon/button beside the home-page search input has been removed.
+- The `scanSearchBtn` element, its click handler, and its dedicated button styling were removed.
+- The ordinary home-page text search remains.
+- Do not restore a home-page scanner unless the user specifically requests it.
+
+### Add Printer screen
+- The Add Printer form's own **Scan** button remains connected to `openScanner('formLabel')`.
+- The Add Printer scanner's OCR-assisted label capture path remains in the code. Do not remove OCR from this path as part of home-page search changes.
+- The user explicitly rejected OCR for barcode/serial recognition in the search context because it misread characters (examples included `g` for `6`, and confusion among `O`/`0`, `v`/`y`). Do not add OCR to the home search.
+- Scanning previously worked inconsistently and sometimes required tilting the phone due to suspected subtle glare/reflection. User reported that Add Printer scanning had finally become usable; small changes later broke preview/recognition, so preserve it.
+- Prior regressions included a black half-camera preview and a camera view zoomed so far in that the phone had to be held overhead. Do not reintroduce those CSS/camera changes.
+- The user does not want to deal with scanning-library licensing; favor no-license-cost options if scanner work is requested.
+- A previously verified product-number mapping noted in history: HP product number `F2A80A` → HP LaserJet Enterprise Flow MFP M527cm (type MFP). Do not infer a broad catalog from this single mapping without verified data.
+
+### History of home-page scanner experiments (historical only)
+Versions 1.8.64–1.8.71 iterated on home search barcode behavior, including exact-serial matching, avoiding product-number/OCR fallbacks, native BarcodeDetector, and Quagga with a dedicated target. There were display/recognition issues. These efforts are now moot because **1.8.72 removes the home scanner entirely**. Do not resume that work unless asked.
+
+## Inventory, data, and sync safety
+
+- Inventory is a business-critical dataset. Avoid changes that clear, migrate, overwrite, or silently replace inventory.
+- The app has browser-local persistence and a Supabase cloud-sync implementation. Past sync problems included permissions, inventory appearing in one browser but not another, deleted records reappearing, and UX problems around forms/keyboard. Do not claim sync is healthy without evidence from the current implementation/runtime.
+- Earlier code specifically attempted to preserve local records if the cloud returned no records and verified cloud deletion to prevent a deleted record from reappearing. Preserve such protections unless a verified bug requires a targeted fix.
+- Never ask the user to clear site data or reinstall as a first-line step; this may risk inventory. If a data-related change is needed, recommend exporting a JSON backup first.
+- Duplicate serial-number handling was improved in earlier iterations. If modifying save logic, preserve duplicate prevention and its user-visible short-lived message; duplicate attempts previously made the Save button appear dead.
+- Default disposition requested: **Not evaluated**.
+- Do not add OCR-driven auto-corrections to serial numbers. The user specifically found OCR unreliable.
+
+## Current UI/report requirements to preserve
+
+- Home inventory rows: two-line display per device showing **serial number, model number, asset tag, disposition, and page count** in the approved compact layout; no barcode shown on the home list.
+- Add/Edit form: single-column layout was chosen after keyboard/scroll usability issues. Keep fields usable on mobile and avoid reintroducing form jumps or hidden active fields.
+- Report defaults to **landscape** and uses clean rows without borders, alternating shading, and no Notes column in the printed report.
+- Report field order: **Serial number, Model, Asset tag, Type, Page count, Disposition, Cost, Price, Status**. (The earlier user-level report preference also mentioned Product Number, Acquired from, Rep, Tech and Notes for broader report layouts; inspect the current report configuration before changing fields. The most recent explicit print requirement in this app history was the nine-field order above.)
+- Report title/date format: `Printer Inventory Report DDMMMYY`, e.g. `Printer Inventory Report 26OCT26`. Filenames should include title/date and HHMMSS to avoid collisions.
+- The Brother Lazer Service logo and existing blue gradient header are intentional. Avoid unrelated visual changes.
+
+## Recommended workflow for any further code change
+
+1. Fetch the latest `main/index.html` and record the current blob SHA. Never edit from an old Library copy or stale chat snippet.
+2. Read the exact current implementation around the requested feature and identify dependencies/handlers/styles.
+3. Make the smallest possible targeted edit. Preserve data/storage keys and unrelated behavior.
+4. Increment the visible app version in the source. Do not skip versions.
+5. Run a syntax check where possible. If no browser/device test was run, explicitly say so.
+6. Commit the change to `main` only for the explicitly requested small release (this project has been worked directly on main; don't assume a separate test branch exists).
+7. Fetch the committed file again and verify version, expected code, and absence of unintended edits.
+8. If inventory data, sync, save, scanner, or print behavior changes, be extra conservative and tell the user what exact on-device check is needed.
+9. Keep this handoff updated after meaningful changes, including date, version, commit SHA, verification performed, limitations, and next action.
+
+## Current next action
+
+No further code change is currently requested. The last request was to update this handoff so work can resume reliably in a new chat. Do not reopen scanner development; Version 1.8.72's home-scan removal is the intended current behavior. Continue only when the user gives the next instruction.
