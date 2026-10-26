@@ -45,7 +45,7 @@ dialog{max-height:calc(var(--visible-vh, 100dvh) - 12px);margin:auto}dialog[open
 #detailDialog .field label{display:block;margin:0 0 2px;font-size:14px;line-height:1.25}
 #detailDialog .field>div{padding:2px 0!important;line-height:1.35}
 #detailDialog .modal-head{padding:16px 18px}
-#detailDialog .modal-foot{padding:12px 18px max(12px,env(safe-area-inset-bottom))}.modal-foot{padding:14px 20px max(14px,env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;flex:0 0 auto;background:#fff}.scanner-area{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.8fr);gap:16px}.scan-box{background:#101820;border-radius:12px;overflow:hidden;min-height:240px;display:grid;place-items:center;color:#fff}.scan-box video{width:100%;max-height:360px;object-fit:cover}.scan-box .scan-placeholder{padding:24px;text-align:center}.scan-input{display:flex;gap:8px;margin-top:12px}.scan-input input{flex:1}
+#detailDialog .modal-foot{padding:12px 18px max(12px,env(safe-area-inset-bottom))}.modal-foot{padding:14px 20px max(14px,env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;flex:0 0 auto;background:#fff}.scanner-area{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.8fr);gap:16px}.scan-box{background:#101820;border-radius:12px;overflow:hidden;min-height:240px;position:relative;display:block;color:#fff}.scan-box video{display:block;width:100%;height:auto;max-height:360px;object-fit:cover}.scan-box canvas{position:absolute;inset:0;width:100%;height:100%;max-height:360px;pointer-events:none}.scan-box .scan-placeholder{position:relative;padding:24px;text-align:center}.scan-input{display:flex;gap:8px;margin-top:12px}.scan-input input{flex:1}
 .note{background:#f4f8ff;border:1px solid #d9e6fb;border-radius:9px;padding:11px 13px;color:#344b6c;font-size:13px}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#182433;color:#fff;padding:11px 16px;border-radius:10px;display:none;z-index:99;box-shadow:0 6px 25px #0003}
 #inventoryTable.list-view{width:100%;min-width:0}
 #inventoryTable.list-view thead{display:none}
@@ -177,7 +177,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.66
+ Version 1.8.67
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
