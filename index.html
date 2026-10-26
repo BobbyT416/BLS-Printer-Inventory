@@ -177,7 +177,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.69
+ Version 1.8.70
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -466,14 +466,7 @@ function openScanner(target='inventory'){scanTarget=target;forceZXing=false;$('m
 $('scanSearchBtn').onclick=()=>openScanner('search');$('scanFromForm').onclick=()=>openScanner('formLabel');
 async function startCamera(){
  stopCamera();
- // Home-screen inventory search uses barcode decoding only. Do not run OCR here.
- // The Add Printer label workflow below remains unchanged.
- if(scanTarget==='search'){
-  $('scanStatus').textContent='Starting barcode reader for serial-number search…';
-  await startQuaggaFallback();
-  return;
- }
- $('scanStatus').textContent='Starting camera for OCR…';
+ $('scanStatus').textContent=scanTarget==='search'?'Starting camera for serial-number barcode search…':'Starting camera for OCR…';
  if(!window.isSecureContext){$('scanStatus').textContent='Camera access requires HTTPS. Open this app in Safari.';return}
  if(!navigator.mediaDevices?.getUserMedia){$('scanStatus').textContent='Camera access is unavailable here. Open the app directly in Safari.';return}
  $('scanBox').innerHTML='<video id="scanVideo" autoplay muted playsinline></video>';
@@ -481,6 +474,41 @@ async function startCamera(){
   stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
   const video=$('scanVideo');video.srcObject=stream;video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');video.muted=true;
   await video.play();
+  if(scanTarget==='search'){
+   // Reuse the proven Add Printer camera/video setup, but decode barcodes only for search.
+   if(!('BarcodeDetector' in window)){
+    $('scanStatus').textContent='This browser does not support live barcode decoding. Add Printer scanning is unchanged; try updating Safari or use Take photo of label.';
+    return;
+   }
+   let detector;
+   try{
+    const supported=await BarcodeDetector.getSupportedFormats();
+    const formats=['code_128','code_39','code_93','codabar','ean_13','ean_8','upc_a','upc_e','itf'].filter(f=>supported.includes(f));
+    if(!formats.length)throw new Error('No supported barcode formats');
+    detector=new BarcodeDetector({formats});
+   }catch(e){$('scanStatus').textContent='Live barcode decoding is unavailable in this browser. Add Printer scanning is unchanged.';return}
+   $('scanStatus').textContent='Camera ready. Center the serial-number barcode and hold steady.';
+   let detecting=false;
+   const detectFrame=async()=>{
+    if(!stream||!video.isConnected||scanTarget!=='search')return;
+    if(!detecting&&video.readyState>=2){
+     detecting=true;
+     try{
+      const hits=await detector.detect(video);
+      for(const hit of hits){
+       const code=String(hit.rawValue||'').trim().toUpperCase();
+       if(code&&devices.some(d=>String(d.serialNumber||'').trim().toUpperCase()===code)){
+        stopCamera();useScanned(code);return;
+       }
+      }
+     }catch(_){}
+     detecting=false;
+    }
+    if(stream&&scanTarget==='search')requestAnimationFrame(detectFrame);
+   };
+   requestAnimationFrame(detectFrame);
+   return;
+  }
   $('scanStatus').textContent='Camera ready. Loading free text recognition…';
   if(!window.Tesseract){
    await new Promise((resolve,reject)=>{
@@ -570,9 +598,7 @@ async function startQuaggaFallback(){
  if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}
  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
  $('scanStatus').textContent='Trying alternate free barcode reader…';
- // Give Quagga a fresh, dedicated target for home-screen search so it cannot
- // leave or overlap the "Camera stopped" placeholder. Add Printer is untouched.
- if(scanTarget==='search')$('scanBox').innerHTML='<div id="searchScanLive" style="width:100%;min-height:240px;position:relative;background:#101820"></div>';
+ // Camera target is created by startCamera; search no longer starts a second camera.
  try{
   if(!window.Quagga){
    await new Promise((resolve,reject)=>{
@@ -587,7 +613,7 @@ async function startQuaggaFallback(){
   if(!Q)throw new Error('Alternate reader unavailable');
   Q.offDetected(quaggaDetectedHandler);
   Q.init({
-   inputStream:{type:'LiveStream',target:(scanTarget==='search'?$('searchScanLive'):$('scanBox')),constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},area:{top:'12%',right:'4%',left:'4%',bottom:'12%'}},
+   inputStream:{type:'LiveStream',target:$('scanBox'),constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},area:{top:'12%',right:'4%',left:'4%',bottom:'12%'}},
    locator:{patchSize:'large',halfSample:false},
    locate:true,
    frequency:10,
