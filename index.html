@@ -177,7 +177,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.68
+ Version 1.8.69
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -570,9 +570,9 @@ async function startQuaggaFallback(){
  if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}
  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
  $('scanStatus').textContent='Trying alternate free barcode reader…';
- // Quagga appends its own video/canvas into the target. Remove the stopped-camera
- // placeholder first, but only for home-screen search; Add Printer stays untouched.
- if(scanTarget==='search')$('scanBox').innerHTML='';
+ // Give Quagga a fresh, dedicated target for home-screen search so it cannot
+ // leave or overlap the "Camera stopped" placeholder. Add Printer is untouched.
+ if(scanTarget==='search')$('scanBox').innerHTML='<div id="searchScanLive" style="width:100%;min-height:240px;position:relative;background:#101820"></div>';
  try{
   if(!window.Quagga){
    await new Promise((resolve,reject)=>{
@@ -587,7 +587,7 @@ async function startQuaggaFallback(){
   if(!Q)throw new Error('Alternate reader unavailable');
   Q.offDetected(quaggaDetectedHandler);
   Q.init({
-   inputStream:{type:'LiveStream',target:$('scanBox'),constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},area:{top:'12%',right:'4%',left:'4%',bottom:'12%'}},
+   inputStream:{type:'LiveStream',target:(scanTarget==='search'?$('searchScanLive'):$('scanBox')),constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},area:{top:'12%',right:'4%',left:'4%',bottom:'12%'}},
    locator:{patchSize:'large',halfSample:false},
    locate:true,
    frequency:10,
