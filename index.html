@@ -133,6 +133,23 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  #scanDialog .modal-foot .hint{max-width:68%;line-height:1.25}
 }
 
+
+/* Cosmetic-only home page change: visually separate the machine list from search and filters. */
+.table-wrap{
+ margin-top:20px;
+ border:2px solid #cbd8e6;
+ border-radius:12px;
+ background:#f5f8fc;
+ box-shadow:0 3px 10px rgba(24,36,51,.06);
+}
+#inventoryTable thead th{
+ background:#eaf0f8;
+ border-bottom:2px solid #d3deeb;
+}
+@media(max-width:520px){
+ .table-wrap{margin-top:16px;border-width:1px}
+}
+
 </style>
 </head>
 <body>
