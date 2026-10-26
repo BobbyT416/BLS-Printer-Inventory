@@ -177,7 +177,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.70
+ Version 1.8.71
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -475,38 +475,11 @@ async function startCamera(){
   const video=$('scanVideo');video.srcObject=stream;video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');video.muted=true;
   await video.play();
   if(scanTarget==='search'){
-   // Reuse the proven Add Printer camera/video setup, but decode barcodes only for search.
-   if(!('BarcodeDetector' in window)){
-    $('scanStatus').textContent='This browser does not support live barcode decoding. Add Printer scanning is unchanged; try updating Safari or use Take photo of label.';
-    return;
-   }
-   let detector;
-   try{
-    const supported=await BarcodeDetector.getSupportedFormats();
-    const formats=['code_128','code_39','code_93','codabar','ean_13','ean_8','upc_a','upc_e','itf'].filter(f=>supported.includes(f));
-    if(!formats.length)throw new Error('No supported barcode formats');
-    detector=new BarcodeDetector({formats});
-   }catch(e){$('scanStatus').textContent='Live barcode decoding is unavailable in this browser. Add Printer scanning is unchanged.';return}
-   $('scanStatus').textContent='Camera ready. Center the serial-number barcode and hold steady.';
-   let detecting=false;
-   const detectFrame=async()=>{
-    if(!stream||!video.isConnected||scanTarget!=='search')return;
-    if(!detecting&&video.readyState>=2){
-     detecting=true;
-     try{
-      const hits=await detector.detect(video);
-      for(const hit of hits){
-       const code=String(hit.rawValue||'').trim().toUpperCase();
-       if(code&&devices.some(d=>String(d.serialNumber||'').trim().toUpperCase()===code)){
-        stopCamera();useScanned(code);return;
-       }
-      }
-     }catch(_){}
-     detecting=false;
-    }
-    if(stream&&scanTarget==='search')requestAnimationFrame(detectFrame);
-   };
-   requestAnimationFrame(detectFrame);
+   // Search-only barcode decoding via Quagga; Add Printer's OCR path below is unchanged.
+   stopCamera();
+   $('scanBox').innerHTML='<div id="searchScanLive" style="width:100%;min-height:240px;position:relative;background:#101820"></div>';
+   $('scanStatus').textContent='Starting barcode reader for serial-number search…';
+   await startQuaggaFallback();
    return;
   }
   $('scanStatus').textContent='Camera ready. Loading free text recognition…';
@@ -613,7 +586,7 @@ async function startQuaggaFallback(){
   if(!Q)throw new Error('Alternate reader unavailable');
   Q.offDetected(quaggaDetectedHandler);
   Q.init({
-   inputStream:{type:'LiveStream',target:$('scanBox'),constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},area:{top:'12%',right:'4%',left:'4%',bottom:'12%'}},
+   inputStream:{type:'LiveStream',target:(scanTarget==='search'?$('searchScanLive'):$('scanBox')),constraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},area:{top:'12%',right:'4%',left:'4%',bottom:'12%'}},
    locator:{patchSize:'large',halfSample:false},
    locate:true,
    frequency:10,
