@@ -177,7 +177,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.64
+ Version 1.8.65
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -533,9 +533,15 @@ async function startCamera(){
         if(serial&&product){stopCamera();closeDialog($('scanDialog'));showDialog($('deviceDialog'));toast('Repeated OCR readings confirmed both numbers — verify the serial')}
        }else{$('scanStatus').textContent='Comparing repeated readings to reduce character errors…'}
       }else{
-       const candidate=serial||product;
-       if(candidate){stopCamera();useScanned(candidate);toast('OCR found a possible label number. Please verify it.');return}
-       $('scanStatus').textContent='Fast OCR is running. Looking for a 10-character serial or 6-character product number…';
+       // Inventory search must use a serial number only; never fall back to the product number.
+       if(scanTarget==='search'){
+        if(serial){stopCamera();useScanned(serial);toast('OCR found a possible serial number. Please verify it.');return}
+        $('scanStatus').textContent='Looking for the 10-character serial number only. Product numbers are ignored for inventory search…';
+       }else{
+        const candidate=serial||product;
+        if(candidate){stopCamera();useScanned(candidate);toast('OCR found a possible label number. Please verify it.');return}
+        $('scanStatus').textContent='Fast OCR is running. Looking for a 10-character serial or 6-character product number…';
+       }
       }
      }
     }catch(err){$('scanStatus').textContent='OCR scan error: '+(err?.message||'unknown error')}
@@ -550,7 +556,7 @@ async function startCamera(){
  }
 }
 function stopCamera(){clearTimeout(scanFallbackTimer);scanFallbackTimer=null;if(zxingControls){try{zxingControls.stop()}catch(e){}zxingControls=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if(quaggaActive&&window.Quagga){try{window.Quagga.offDetected(quaggaDetectedHandler);window.Quagga.stop()}catch(e){}quaggaActive=false}if($('scanBox'))$('scanBox').innerHTML='<div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera stopped</p></div>'}
-function quaggaDetectedHandler(result){const raw=String(result?.codeResult?.code||'').trim().toUpperCase();if(!raw)return;if(scanTarget==='formLabel'){acceptLabelCode(raw)}else{stopCamera();useScanned(raw)}}
+function quaggaDetectedHandler(result){const raw=String(result?.codeResult?.code||'').trim().toUpperCase();if(!raw)return;if(scanTarget==='formLabel'){acceptLabelCode(raw)}else if(scanTarget==='search'){const isSerial=devices.some(d=>String(d.serialNumber||'').trim().toUpperCase()===raw);if(isSerial){stopCamera();useScanned(raw)}else{$('scanStatus').textContent='That barcode is not an inventory serial number. Aim at the serial-number barcode or use the 10-character serial text.'}}else{stopCamera();useScanned(raw)}}
 async function startQuaggaFallback(){
  if(quaggaActive||!$('scanBox')||!$('scanDialog').open)return;
  clearTimeout(scanFallbackTimer);scanFallbackTimer=null;
