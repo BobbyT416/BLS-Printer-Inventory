@@ -177,7 +177,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.65
+ Version 1.8.66
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -466,6 +466,13 @@ function openScanner(target='inventory'){scanTarget=target;forceZXing=false;$('m
 $('scanSearchBtn').onclick=()=>openScanner('search');$('scanFromForm').onclick=()=>openScanner('formLabel');
 async function startCamera(){
  stopCamera();
+ // Home-screen inventory search uses barcode decoding only. Do not run OCR here.
+ // The Add Printer label workflow below remains unchanged.
+ if(scanTarget==='search'){
+  $('scanStatus').textContent='Starting barcode reader for serial-number search…';
+  await startQuaggaFallback();
+  return;
+ }
  $('scanStatus').textContent='Starting camera for OCR…';
  if(!window.isSecureContext){$('scanStatus').textContent='Camera access requires HTTPS. Open this app in Safari.';return}
  if(!navigator.mediaDevices?.getUserMedia){$('scanStatus').textContent='Camera access is unavailable here. Open the app directly in Safari.';return}
@@ -655,7 +662,12 @@ $('labelPhotoInput').addEventListener('change',async e=>{
   }
   const values=[...new Set(found.map(x=>String(x.rawValue||'').trim().toUpperCase()).filter(Boolean))];
   for(const value of values){if(scanTarget==='formLabel')acceptLabelCode(value);else{URL.revokeObjectURL(src);stopCamera();useScanned(value);e.target.value='';return}}
-  // OCR is a free fallback for labels whose bars are too small or reflective to decode.
+  // Search mode must never use OCR or mistake printed product numbers for serial numbers.
+  if(scanTarget==='search'){
+   $('scanStatus').textContent='No barcode decoded. Retake the photo with the serial-number barcode centered, or use live barcode scanning.';
+   URL.revokeObjectURL(src);e.target.value='';return;
+  }
+  // OCR is a free fallback for Add Printer labels whose bars are too small or reflective to decode.
   $('scanStatus').textContent='Barcode not decoded from photo. Loading text recognition…';
   if(!window.Tesseract){
    await new Promise((resolve,reject)=>{
