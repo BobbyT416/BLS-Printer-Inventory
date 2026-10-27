@@ -170,22 +170,22 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
    <select id="filterType"><option value="">All types</option><option value="Printer">Printer</option><option value="MFP">MFP</option></select>
    <details id="dispositionFilter" class="disposition-filter"><summary id="dispositionSummary">Dispositions</summary><div class="disposition-options"><div class="disposition-actions"><button type="button" id="selectAllDispositions">Select all</button><button type="button" id="clearDispositions">Deselect all</button><button type="button" id="closeDispositionFilter">Apply Filter</button></div><label><input type="checkbox" class="disposition-choice" value="Ready for sale" checked> Ready for sale</label><label><input type="checkbox" class="disposition-choice" value="Needs minor work" checked> Needs minor work</label><label><input type="checkbox" class="disposition-choice" value="Needs major work" checked> Needs major work</label><label><input type="checkbox" class="disposition-choice" value="Waiting for parts" checked> Waiting for parts</label><label><input type="checkbox" class="disposition-choice" value="Parts only / scrap"> Parts only / scrap</label><label><input type="checkbox" class="disposition-choice" value="Not evaluated" checked> Not evaluated</label><label><input type="checkbox" class="disposition-choice" value="Sold"> Sold</label><hr><label><input type="checkbox" id="filterArchived"> Archived machines</label></div></details>
   </div>
-  <div id="archiveBanner" class="note no-print" style="display:none;margin-bottom:12px">Archived machines — sold devices remain here for 30 days, then are automatically removed from the active archive view.</div><div id="printHeader"><h2>Printer Inventory Report</h2><div id="printMeta"></div></div>
+  <div id="cloudSyncStatus" class="note no-print" role="status" aria-live="polite" aria-atomic="true" style="margin:0 0 12px">Connecting to shared inventory…</div><div id="archiveBanner class="note no-print" style="display:none;margin-bottom:12px">Archived machines — sold devices remain here for 30 days, then are automatically removed from the active archive view.</div><div id="printHeader"><h2>Printer Inventory Report</h2><div id="printMeta"></div></div>
   <div class="inventory-list-heading no-print"><h2>Inventory list</h2><span>Machines matching your current filters</span></div>
   <div class="table-wrap"><table id="inventoryTable"><thead><tr id="tableHead"></tr></thead><tbody id="tableBody"></tbody></table></div><div id="printReportTableWrap"><table id="printReportTable"><thead><tr><th>Serial Number</th><th>Asset Tag</th><th>Type</th><th>Model</th><th>Page Count</th><th>Disposition</th><th>Cost</th><th>Price</th><th>Status</th></tr></thead><tbody id="printReportBody"></tbody></table></div>
-  <div id="emptyState" class="empty">No printers yet. Scan an existing barcode or select “Add printer” to start.</div>
+  <div id="emptyState" class="empty"><p id="emptyStateMessage">No printers yet. Scan an existing barcode or select “Add printer” to start.</p><button id="clearFiltersBtn" type="button" style="display:none">Clear search and filters</button></div>
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
  Version 1.8.72
 </footer>
 <dialog id="detailDialog">
- <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
+ <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail" type="button" aria-label="Close dialog">✕</button></div>
  <div class="modal-body"><div id="detailContent" class="form-grid"></div></div>
  <div class="modal-foot"><button type="button" id="closeDetailBottom">Close</button><button type="button" class="primary" id="editDetailBtn">Edit printer</button></div>
 </dialog>
 <dialog id="deviceDialog">
- <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
+ <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice" type="button" aria-label="Close dialog">✕</button></div>
  <form id="deviceForm">
   <div class="modal-body">
    <div id="duplicateWarning" role="alert" aria-live="assertive" style="display:none;background:#fde9e7;border:1px solid #b42318;color:#8f1d16;border-radius:9px;padding:11px 13px;margin:0 0 12px;font-weight:750"></div>
@@ -199,13 +199,13 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
     <div class="field"><label for="acquiredFrom">Acquired from</label><input id="acquiredFrom" autocomplete="off" placeholder="Company, person, auction, etc."></div>
     
     <div class="field"><label for="pageCount">Page count</label><input id="pageCount" type="number" min="0" step="1" placeholder="e.g. 128450"></div>
-    <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="">Select type</option><option value="Single function printer">Single function printer</option><option value="MFP">MFP</option></select></div>
+    <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="">Select type</option><option value="Printer">Printer</option><option value="MFP">MFP</option></select></div>
     
     <div class="field"><label for="disposition">Disposition / readiness</label><select id="disposition"><option>Not evaluated</option><option>Needs major work</option><option>Needs minor work</option><option>Waiting for parts</option><option>Ready for sale</option><option>Parts only / scrap</option><option>Sold</option></select></div>
     <div class="field"><label for="refurbishedBy">Refurbished by (optional)</label><input id="refurbishedBy" autocomplete="name" placeholder="Name of technician"></div>
     <div class="field"><label for="cost">Cost ($)</label><input id="cost" type="number" min="0" step="0.01" placeholder="0.00"></div>
     <div class="field"><label for="price">Selling price ($)</label><input id="price" type="number" min="0" step="0.01" placeholder="0.00"></div>
-    <div class="field"><label style="display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink)"><input id="pendingSale" type="checkbox" style="width:auto"> Tentatively claimed by sales</label><div class="hint">Device remains available, but others can see a sale is pending.</div></div>
+    <div class="field"><label style="display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink)"><input id="pendingSale" type="checkbox" style="width:auto"> Sale Pending</label><div class="hint">A salesperson is following up. The printer remains available until its disposition is marked Sold.</div></div>
     <div class="field"><label for="claimedBy">Salesperson (optional)</label><input id="claimedBy" placeholder="Who is following up?"></div>
     <div class="field span3"><label for="notes">Refurbishment notes / work log</label><textarea id="notes" placeholder="What is needed, what was done, parts installed (include part numbers), and time spent. Add dated entries as work progresses."></textarea><div class="hint">Recommended: enter each update on a new line with date, technician, work/parts, and time spent.</div></div>
    </div>
@@ -214,7 +214,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </form>
 </dialog>
 <dialog id="scanDialog">
- <div class="modal-head"><h2>Scan barcode</h2><button id="closeScan">✕</button></div>
+ <div class="modal-head"><h2>Scan barcode</h2><button id="closeScan" type="button" aria-label="Close dialog">✕</button></div>
  <div class="modal-body">
   <div class="scanner-area">
    <div><div class="scan-box" id="scanBox"><div class="scan-placeholder"><div style="font-size:34px">▦</div><p>Camera scanner</p><small>Allow camera access when prompted.</small></div></div><div class="tools" style="margin-top:10px"><button id="startCamera" class="primary">Start camera</button><button id="stopCamera">Stop camera</button></div><div class="tools" style="margin-top:8px"><button id="photoLabelBtn">Take photo of label</button><input id="labelPhotoInput" type="file" accept="image/*" capture="environment" style="display:none"></div></div>
@@ -224,7 +224,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  <div class="modal-foot"><span class="hint">Keep the barcode sharp, straight, well lit, and large in the camera preview. Camera access uses this secure HTTPS page.</span><button id="cancelScan">Close</button></div>
 </dialog>
 <dialog id="printDialog">
- <div class="modal-head"><h2>Report setup</h2><button id="closePrintSetup">✕</button></div>
+ <div class="modal-head"><h2>Report setup</h2><button id="closePrintSetup" type="button" aria-label="Close dialog">✕</button></div>
  <div class="modal-body">
   <p>Use <strong>Save report</strong> to download a PDF, CSV spreadsheet, or Word-compatible document. On a computer, files download through your browser (usually to Downloads, depending on browser settings). Use <strong>Print report</strong> to open the normal print dialog, where you can choose a printer or Save as PDF. The selected fields apply to the print-ready report.</p>
   <div class="form-grid" id="printOptions"></div>
@@ -240,11 +240,11 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
   <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
   <p><strong>Import Backup</strong> restores records from a previous JSON backup. <strong>This replaces the inventory currently stored in this browser.</strong> Export a backup first if you need to preserve the current records.</p>
   <button id="importBackupBtn" type="button">Import Backup</button>
-  <p class="hint" style="margin-top:14px">Current storage: this browser/device only. These records are not yet synced automatically to other users or devices.</p>
+  <p class="hint" style="margin-top:14px">This is a shared inventory. When the connection status says “Shared inventory connected,” changes sync across users and devices. If the connection is unavailable, changes stay on this device until the app reconnects.</p>
  </div>
  <div class="modal-foot"><button id="closeBackupSettingsBottom" type="button">Close</button></div>
 </dialog>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <script>
 (() => {
 const $ = id => document.getElementById(id);
@@ -261,6 +261,7 @@ const SUPABASE_TABLE='printer_inventory';
 let supabaseClient=null,remoteReady=false,remoteApplying=false,syncChannel=null;
 try{if(window.supabase?.createClient)supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);}catch(e){console.error('Supabase initialization failed',e)}
 const memoryStore={};
+function normalizeDeviceType(d){return d&&d.deviceType==='Single function printer'?{...d,deviceType:'Printer'}:d}
 function safeGet(key){try{return window.localStorage.getItem(key)}catch(e){return Object.prototype.hasOwnProperty.call(memoryStore,key)?memoryStore[key]:null}}
 function safeSet(key,value){try{window.localStorage.setItem(key,String(value));memoryStore[key]=String(value);return true}catch(e){console.error('Storage write failed for '+key,e);return false}}
 const fields=[
@@ -274,14 +275,24 @@ let listView=false;
 let archiveMode=false;
 const money=n=>Number(n||0).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function setCloudSyncStatus(msg){const el=$('cloudSyncStatus');if(el)el.textContent=msg}
 function toast(msg,duration=2600){$('toast').textContent=msg;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',duration)}
-function persist(){try{const payload=JSON.stringify(devices);if(!safeSet(STORE,payload)){toast('Printer was NOT saved locally. Check browser storage settings and try again.');return false}render();if(supabaseClient&&remoteReady&&!remoteApplying){syncAllToCloud().catch(e=>{console.error('Cloud save failed',e);toast('Cloud sync failed: '+(e&&e.message?e.message:'unknown error'))})}return true}catch(e){console.error('Inventory save failed',e);toast('Printer was NOT saved. '+(e&&e.message?e.message:'An unexpected storage error occurred.'));return false}}
+function persist(){try{const payload=JSON.stringify(devices);if(!safeSet(STORE,payload)){toast('Printer was NOT saved locally. Check browser storage settings and try again.');return false}render();if(supabaseClient&&remoteReady&&!remoteApplying){syncAllToCloud().catch(e=>{console.error('Cloud save failed',e);setCloudSyncStatus('Shared inventory unavailable. This change is saved on this device only.');toast('Cloud sync failed. This change is saved on this device only.')})}return true}catch(e){console.error('Inventory save failed',e);toast('Printer was NOT saved. '+(e&&e.message?e.message:'An unexpected storage error occurred.'));return false}}
 async function retryCloudRequest(makeRequest,label){let lastError;for(let attempt=0;attempt<4;attempt++){let timer;try{const result=await Promise.race([Promise.resolve().then(makeRequest),new Promise((_,reject)=>{timer=setTimeout(()=>{const e=new Error('Request timed out after 10 seconds ('+label+')');e.name='TimeoutError';reject(e)},10000)})]);clearTimeout(timer);if(result&&result.error)throw result.error;return result}catch(e){clearTimeout(timer);lastError=e;const message=String(e&&e.message||e||'');const retryable=e instanceof TypeError||e.name==='TimeoutError'||/load failed|failed to fetch|network|timeout|temporar/i.test(message);if(!retryable||attempt===3)break;console.warn('Cloud request retry',label,'attempt',attempt+2,e);await new Promise(resolve=>setTimeout(resolve,[500,1200,2500][attempt]));}}throw lastError}
 async function syncAllToCloud(){if(!supabaseClient||!remoteReady||remoteApplying)return;const rows=devices.map(d=>({id:String(d.id),data:d,updated_at:new Date().toISOString()}));if(!rows.length)return;await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).upsert(rows,{onConflict:'id'}),'save inventory')}
-async function loadCloudInventory(){if(!supabaseClient)return;const {data}=await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).select('id,data,updated_at'),'load inventory');const remote=(data||[]).map(r=>r.data).filter(d=>d&&d.id&&!d._deleted);const local=devices.slice();const initialized=safeGet('printerInventoryCloudInitialized.v1')==='true';remoteApplying=true;try{if(remote.length){if(!initialized){const remoteIds=new Set(remote.map(d=>String(d.id)));const localOnly=local.filter(d=>!remoteIds.has(String(d.id)));devices=[...remote,...localOnly];if(localOnly.length){const rows=localOnly.map(d=>({id:String(d.id),data:d,updated_at:new Date().toISOString()}));await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).upsert(rows,{onConflict:'id'}),'one-time local inventory import');}}else{devices=remote;}safeSet(STORE,JSON.stringify(devices));render();}else if(local.length&&!initialized){const rows=local.map(d=>({id:String(d.id),data:d,updated_at:new Date().toISOString()}));await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).upsert(rows,{onConflict:'id'}),'initial local inventory import');}else if(local.length){devices=local;safeSet(STORE,JSON.stringify(devices));render();console.warn('Cloud inventory returned no records; preserving local inventory instead of clearing it.');toast('Cloud inventory is empty; kept this device’s printers to prevent data loss.');}else{devices=[];safeSet(STORE,JSON.stringify(devices));render();}if(remote.length||local.length||!initialized)safeSet('printerInventoryCloudInitialized.v1','true');}finally{remoteApplying=false}remoteReady=true;startRealtimeSync();toast('Shared inventory connected');}
+async function loadCloudInventory(){if(!supabaseClient)return;const {data}=await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).select('id,data,updated_at'),'load inventory');const remote=(data||[]).map(r=>r.data).filter(d=>d&&d.id&&!d._deleted).map(normalizeDeviceType);const local=devices.slice();const initialized=safeGet('printerInventoryCloudInitialized.v1')==='true';remoteApplying=true;try{if(remote.length){if(!initialized){const remoteIds=new Set(remote.map(d=>String(d.id)));const localOnly=local.filter(d=>!remoteIds.has(String(d.id)));devices=[...remote,...localOnly];if(localOnly.length){const rows=localOnly.map(d=>({id:String(d.id),data:d,updated_at:new Date().toISOString()}));await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).upsert(rows,{onConflict:'id'}),'one-time local inventory import');}}else{devices=remote;}safeSet(STORE,JSON.stringify(devices));render();}else if(local.length&&!initialized){const rows=local.map(d=>({id:String(d.id),data:d,updated_at:new Date().toISOString()}));await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).upsert(rows,{onConflict:'id'}),'initial local inventory import');}else if(local.length){devices=local;safeSet(STORE,JSON.stringify(devices));render();console.warn('Cloud inventory returned no records; preserving local inventory instead of clearing it.');toast('Cloud inventory is empty; kept this device’s printers to prevent data loss.');}else{devices=[];safeSet(STORE,JSON.stringify(devices));render();}if(remote.length||local.length||!initialized)safeSet('printerInventoryCloudInitialized.v1','true');}finally{remoteApplying=false}remoteReady=true;startRealtimeSync();toast('Shared inventory connected');}
 async function deleteCloudRecord(id){if(!supabaseClient||!remoteReady)throw new Error('Cloud sync is not connected; deletion was not attempted.');const target=String(id);const result=await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).delete().eq('id',target).select('id'),'delete inventory record');if(!Array.isArray(result.data)||!result.data.some(row=>String(row.id)===target)){const check=await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).select('id').eq('id',target).maybeSingle(),'verify inventory deletion');if(check.data)throw new Error('Supabase did not delete this record. Check the table DELETE policy and matching record ID.');}const verify=await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).select('id').eq('id',target).maybeSingle(),'confirm inventory deletion');if(verify.data)throw new Error('The record still exists in Supabase after deletion.');return true}
-function startRealtimeSync(){if(!supabaseClient||syncChannel)return;syncChannel=supabaseClient.channel('printer-inventory-live').on('postgres_changes',{event:'*',schema:'public',table:SUPABASE_TABLE},async()=>{if(remoteApplying)return;try{const {data}=await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).select('id,data,updated_at'),'refresh shared inventory');remoteApplying=true;devices=(data||[]).map(r=>r.data).filter(d=>d&&d.id);safeSet(STORE,JSON.stringify(devices));render();}catch(e){console.error('Realtime refresh failed',e)}finally{remoteApplying=false}}).subscribe();}
-async function initializeCloudSync(){const showSyncStatus=(msg)=>{console.info('[Cloud sync]',msg)};const diagnostic=async()=>{try{const response=await fetch(SUPABASE_URL+'/rest/v1/printer_inventory?select=id&limit=1',{method:'GET',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,Accept:'application/json'},cache:'no-store'});const body=await response.text();showSyncStatus('Supabase direct check: HTTP '+response.status+' '+response.statusText+'. '+body.slice(0,350));return response.ok}catch(e){showSyncStatus('Supabase direct check failed: '+(e&&e.name?e.name+': ':'')+(e&&e.message?e.message:String(e))+'. This is a browser/network-level failure before an HTTP response.');return false}};setTimeout(()=>{const el=document.getElementById('cloudSyncStatus');if(el&&el.textContent==='Cloud sync: checking Supabase API directly…')el.textContent='Supabase direct check is still waiting for a response…'},7000);const diagnosticOK=await diagnostic();if(!diagnosticOK)return;if(!supabaseClient){showSyncStatus('Cloud sync: Supabase library unavailable. Check internet access and reload this test page.');return}try{await loadCloudInventory();showSyncStatus('Cloud sync: connected to Supabase. Shared inventory records: '+devices.length+'.')}catch(e){remoteReady=false;console.error('Cloud sync setup failed',e);const detail=[e&&e.message,e&&e.code,e&&e.details,e&&e.hint].filter(Boolean).join(' | ')||String(e||'unknown error');showSyncStatus('CLOUD SYNC FAILED: '+detail+'. Inventory remains saved on this device.')}}
+function startRealtimeSync(){if(!supabaseClient||syncChannel)return;syncChannel=supabaseClient.channel('printer-inventory-live').on('postgres_changes',{event:'*',schema:'public',table:SUPABASE_TABLE},async()=>{if(remoteApplying)return;try{const {data}=await retryCloudRequest(()=>supabaseClient.from(SUPABASE_TABLE).select('id,data,updated_at'),'refresh shared inventory');remoteApplying=true;devices=(data||[]).map(r=>r.data).filter(d=>d&&d.id).map(normalizeDeviceType);safeSet(STORE,JSON.stringify(devices));render();}catch(e){console.error('Realtime refresh failed',e)}finally{remoteApplying=false}}).subscribe();}
+async function initializeCloudSync(){
+ const showSyncStatus=msg=>{console.info('[Cloud sync]',msg);setCloudSyncStatus(msg)};
+ showSyncStatus('Connecting to shared inventory…');
+ let diagnosticOK=false;
+ try{const response=await fetch(SUPABASE_URL+'/rest/v1/printer_inventory?select=id&limit=1',{method:'GET',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,Accept:'application/json'},cache:'no-store'});diagnosticOK=response.ok}catch(e){console.warn('Shared inventory connection check failed',e)}
+ if(!diagnosticOK){showSyncStatus('Shared inventory unavailable. Changes may stay on this device.');return}
+ if(!supabaseClient){showSyncStatus('Shared inventory unavailable. Reload when you have an internet connection.');return}
+ try{await loadCloudInventory();showSyncStatus('Shared inventory connected.')}
+ catch(e){remoteReady=false;console.error('Cloud sync setup failed',e);showSyncStatus('Shared inventory unavailable. Changes remain on this device; reload to reconnect.')}
+}
 function badge(d){let c=d.disposition==='Ready for sale'?'ready':(['Needs minor work','Waiting for parts'].includes(d.disposition)?'partial':(['Needs major work','Parts only / scrap','Sold'].includes(d.disposition)?'hold':''));return `<span class="badge ${c}">${esc(d.disposition||'Not evaluated')}</span>`}
 function render(){
  const q=$('search').value.toLowerCase(),type=$('filterType').value,selectedDispositions=[...document.querySelectorAll('.disposition-choice:checked')].map(el=>el.value),showArchived=$('filterArchived').checked;
@@ -294,14 +305,14 @@ function render(){
  $('tableHead').innerHTML='';
  $('tableBody').innerHTML=filtered.map(d=>`<tr tabindex="0" role="button" aria-label="View printer ${esc(d.model||d.serialNumber||'details')}">
  <td><span class="row-main">${esc(shortModelName(d.model)||'—')}</span><span class="row-sub">${esc(d.serialNumber||'No serial number')}</span></td><td><span class="row-main">${badge(d)}</span><span class="row-sub">Pages: ${d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString()}</span></td></tr>`).join('');
- $('emptyState').style.display=filtered.length?'none':'block';
+ $('emptyState').style.display=filtered.length?'none':'block';$('emptyStateMessage').textContent=devices.length?'No printers match your search or filters.':'No printers yet. Scan an existing barcode or select “Add printer” to start.';$('clearFiltersBtn').style.display=devices.length?'inline-flex':'none';
  $('inventoryTable').classList.add('list-view');
  $('tableBody').querySelectorAll('tr').forEach((tr,index)=>{const d=filtered[index];if(!d)return;tr.addEventListener('click',()=>openDetail(d.id));tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(d.id)}})});
 }
 function openDetail(id){
  const d=devices.find(x=>x.id===id);if(!d)return;
  $('detailTitle').textContent=(d.model||'Printer')+' — Details';
- const items=[['Serial number',d.serialNumber],['Asset tag',d.assetTag],['Type',d.deviceType],['Model',d.model],['Page count',d.pageCount],['Disposition',d.disposition],['Acquired from',d.acquiredFrom],['Refurbished by',d.refurbishedBy],['Cost',money(d.cost)],['Selling price',money(d.price)],['Sale status',d.pendingSale?'Sale pending':'Available'],['Salesperson',d.claimedBy],['Refurbishment notes',d.notes]];
+ const items=[['Serial number',d.serialNumber],['Asset tag',d.assetTag],['Type',d.deviceType],['Model',d.model],['Page count',d.pageCount],['Disposition',d.disposition],['Acquired from',d.acquiredFrom],['Refurbished by',d.refurbishedBy],['Cost',money(d.cost)],['Selling price',money(d.price)],['Sale status',d.pendingSale?'Sale Pending':'Available'],['Salesperson',d.claimedBy],['Refurbishment notes',d.notes]];
  $('detailContent').innerHTML=items.map(([label,value])=>`<div class="field"><label>${esc(label)}</label><div style="white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 0">${esc(value===undefined||value===null||value===''?'—':value)}</div></div>`).join('');
  $('editDetailBtn').onclick=()=>{closeDialog($('detailDialog'));openDevice(id)};
  showDialog($('detailDialog'));
@@ -347,14 +358,14 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
   '1PS54A':{model:'HP LaserJet Managed MFP E52645dn',type:'MFP',source:'Official HP E52645 series datasheet'},
   '1PS55A':{model:'HP LaserJet Managed Flow MFP E52645c',type:'MFP',source:'Official HP E52645 series datasheet'},
   'F2A80A':{model:'HP LaserJet Enterprise Flow MFP M527cm',type:'MFP',source:'HP product information'},
-  'K0Q14A':{model:'HP LaserJet Enterprise M607n',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q15A':{model:'HP LaserJet Enterprise M607dn',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q17A':{model:'HP LaserJet Enterprise M608n',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q18A':{model:'HP LaserJet Enterprise M608dn',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q19A':{model:'HP LaserJet Enterprise M608x',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'M0P32A':{model:'HP LaserJet Enterprise M609dn',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q21A':{model:'HP LaserJet Enterprise M609dn',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q22A':{model:'HP LaserJet Enterprise M609x',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q14A':{model:'HP LaserJet Enterprise M607n',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q15A':{model:'HP LaserJet Enterprise M607dn',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q17A':{model:'HP LaserJet Enterprise M608n',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q18A':{model:'HP LaserJet Enterprise M608dn',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q19A':{model:'HP LaserJet Enterprise M608x',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'M0P32A':{model:'HP LaserJet Enterprise M609dn',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q21A':{model:'HP LaserJet Enterprise M609dn',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q22A':{model:'HP LaserJet Enterprise M609x',type:'Printer',source:'HP M607/M608/M609 user guide'},
   'J8J63A':{model:'HP LaserJet Enterprise MFP M631dn',type:'MFP',source:'HP M631/M632/M633 user guide'},
   'J8J64A':{model:'HP LaserJet Enterprise MFP M631h',type:'MFP',source:'HP M631/M632/M633 user guide'}
  };
@@ -709,7 +720,7 @@ $('closeScan').onclick=$('cancelScan').onclick=()=>{stopCamera();closeDialog($('
 function getReportDevices(){return devices.filter(d=>($('filterArchived').checked?(d.disposition==='Sold'&&d.soldAt):d.disposition!=='Sold')&&(!$('search').value.trim()||[d.barcode,d.assetTag,d.family,d.model,d.serialNumber,d.notes,d.deviceType,d.claimedBy].some(v=>String(v||'').toLowerCase().includes($('search').value.trim().toLowerCase())))&&(!$('filterType').value||d.deviceType===$('filterType').value)&&($('filterArchived').checked||[...document.querySelectorAll('.disposition-choice:checked')].some(el=>el.value===(d.disposition||'Not evaluated'))))}
 function selectedReportFields(){return fields.filter(([key])=>printPrefs[key]);}
 function syncReportPrefs(){document.querySelectorAll('[data-print]').forEach(c=>{printPrefs[c.dataset.print]=c.checked});safeSet(PRINT,JSON.stringify(printPrefs));}
-function reportValue(d,key){if(key==='model')return shortModelName(d.model)||'—';if(key==='pageCount')return d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString();if(key==='cost'||key==='price')return money(d[key]);if(key==='pendingSale')return d.pendingSale?'Sale pending':'Available';const v=d[key];return v===undefined||v===null||v===''?'—':String(v);}
+function reportValue(d,key){if(key==='model')return shortModelName(d.model)||'—';if(key==='pageCount')return d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString();if(key==='cost'||key==='price')return money(d[key]);if(key==='pendingSale')return d.pendingSale?'Sale Pending':'Available';const v=d[key];return v===undefined||v===null||v===''?'—':String(v);}
 function prepareReport(){const now=new Date(),reportDevices=getReportDevices(),cols=selectedReportFields();$('printMeta').textContent=`Generated ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · ${reportDevices.length} device(s)`;$('printHeader').querySelector('h2').textContent=$('reportTitle').value.trim()||'Printer Inventory Report';$('printReportTable').querySelector('thead').innerHTML='<tr>'+cols.map(([key,label])=>'<th>'+esc(label)+'</th>').join('')+'</tr>';$('printReportBody').innerHTML=reportDevices.map(d=>'<tr>'+cols.map(([key])=>'<td>'+esc(reportValue(d,key))+'</td>').join('')+'</tr>').join('');return reportDevices}
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 function reportBaseName(){const title=($('reportTitle').value.trim()||defaultReportTitle()).replace(/[^a-z0-9-_]+/gi,'-').replace(/^-|-$/g,'')||'printer-inventory-report';const now=new Date(),time=String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0')+String(now.getSeconds()).padStart(2,'0');return title+'-'+time}
@@ -734,6 +745,7 @@ $('exportBtnHiddenAction').onclick=()=>{const data={app:'Printer Inventory',vers
 
 $('importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());const incoming=Array.isArray(data)?data:data.devices;if(!Array.isArray(incoming))throw Error('Invalid backup');if(!confirm(`Import ${incoming.length} printer records? This replaces the inventory currently saved in this browser.`))return;devices=incoming;printPrefs={...defaults,...(data.printPrefs||{})};persist();safeSet(PRINT,JSON.stringify(printPrefs));toast('Backup imported')}catch(err){alert('Could not import that file. Choose a valid Printer Inventory JSON backup.')}finally{e.target.value=''}};
 window.addEventListener('beforeunload',()=>{if(stream)stream.getTracks().forEach(t=>t.stop());if(syncChannel&&supabaseClient)supabaseClient.removeChannel(syncChannel)});
+$('clearFiltersBtn').addEventListener('click',()=>{$('search').value='';$('filterType').value='';$('filterArchived').checked=false;document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=true);render()});
 render();
 initializeCloudSync();
 })();
