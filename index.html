@@ -174,7 +174,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.73
+ Version 1.8.74
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -197,7 +197,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
     
     <div class="field"><label for="pageCount">Page count</label><input id="pageCount" type="number" min="0" step="1" placeholder="e.g. 128450"></div>
     <div class="field"><label for="fax">Fax</label><select id="fax"><option value="">Not recorded</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
-    <div class="field"><label for="wirelessAccessory">Wireless Accessory</label><select id="wirelessAccessory"><option value="">Not recorded</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
+    <div class="field"><label for="wirelessAccessory">Wireless</label><select id="wirelessAccessory"><option value="">Not recorded</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
     <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="">Select type</option><option value="Single function printer">Single function printer</option><option value="MFP">MFP</option></select></div>
     
     <div class="field"><label for="disposition">Disposition / readiness</label><select id="disposition"><option>Not evaluated</option><option>Needs major work</option><option>Needs minor work</option><option>Waiting for parts</option><option>Ready for sale</option><option>Parts only / scrap</option><option>Sold</option></select></div>
@@ -263,7 +263,7 @@ const memoryStore={};
 function safeGet(key){try{return window.localStorage.getItem(key)}catch(e){return Object.prototype.hasOwnProperty.call(memoryStore,key)?memoryStore[key]:null}}
 function safeSet(key,value){try{window.localStorage.setItem(key,String(value));memoryStore[key]=String(value);return true}catch(e){console.error('Storage write failed for '+key,e);return false}}
 const fields=[
-['model','Model'],['productNumber','Product Number'],['serialNumber','Serial Number'],['assetTag','Asset Tag'],['deviceType','Type'],['pageCount','Page count'],['fax','Fax'],['wirelessAccessory','Wireless Accessory'],['disposition','Disposition'],['acquiredFrom','Acquired from'],['cost','Cost'],['price','Sell Price'],['pendingSale','Status'],['claimedBy','Rep'],['refurbishedBy','Tech'],['notes','Notes']
+['model','Model'],['productNumber','Product Number'],['serialNumber','Serial Number'],['assetTag','Asset Tag'],['deviceType','Type'],['pageCount','Page count'],['fax','Fax'],['wirelessAccessory','Wireless'],['disposition','Disposition'],['acquiredFrom','Acquired from'],['cost','Cost'],['price','Sell Price'],['pendingSale','Status'],['claimedBy','Rep'],['refurbishedBy','Tech'],['notes','Notes']
 ];
 const defaults={serialNumber:true,assetTag:true,deviceType:true,model:true,productNumber:true,pageCount:true,fax:true,wirelessAccessory:true,disposition:true,acquiredFrom:true,refurbishedBy:true,cost:true,price:true,pendingSale:true,claimedBy:true,notes:true};
 let devices=[],editingId=null,stream=null,zxingControls=null,scanFallbackTimer=null,quaggaActive=false,scanTarget='inventory',forceZXing=true,printPrefs={...defaults};
@@ -300,7 +300,7 @@ function render(){
 function openDetail(id){
  const d=devices.find(x=>x.id===id);if(!d)return;
  $('detailTitle').textContent=(d.model||'Printer')+' — Details';
- const items=[['Serial number',d.serialNumber],['Asset tag',d.assetTag],['Type',d.deviceType],['Model',d.model],['Page count',d.pageCount],['Fax',d.fax],['Wireless Accessory',d.wirelessAccessory],['Disposition',d.disposition],['Acquired from',d.acquiredFrom],['Refurbished by',d.refurbishedBy],['Cost',money(d.cost)],['Selling price',money(d.price)],['Sale status',d.pendingSale?'Sale pending':'Available'],['Salesperson',d.claimedBy],['Refurbishment notes',d.notes]];
+ const items=[['Serial number',d.serialNumber],['Asset tag',d.assetTag],['Type',d.deviceType],['Model',d.model],['Page count',d.pageCount],['Fax',d.fax],['Wireless',d.wirelessAccessory],['Disposition',d.disposition],['Acquired from',d.acquiredFrom],['Refurbished by',d.refurbishedBy],['Cost',money(d.cost)],['Selling price',money(d.price)],['Sale status',d.pendingSale?'Sale pending':'Available'],['Salesperson',d.claimedBy],['Refurbishment notes',d.notes]];
  $('detailContent').innerHTML=items.map(([label,value])=>`<div class="field"><label>${esc(label)}</label><div style="white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 0">${esc(value===undefined||value===null||value===''?'—':value)}</div></div>`).join('');
  $('editDetailBtn').onclick=()=>{closeDialog($('detailDialog'));openDevice(id)};
  showDialog($('detailDialog'));

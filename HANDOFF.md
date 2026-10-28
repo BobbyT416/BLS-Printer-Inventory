@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-10-28 (Version 1.8.73)
+Last updated: 2026-10-28 (Version 1.8.74)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.73
+Current version: 1.8.74
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -536,3 +536,9 @@ No further code change is currently requested. The last request was to update th
 - Add Printer barcode scanner implementation and vendor decoder unchanged. Automated label capture regression checked serial TEST000002 and product K0Q14A.
 - Verification: inline JavaScript syntax passed. Headless Microsoft Edge exercised create/edit/reload persistence, read-only detail values, Yes/No report order and CSV headings, mocked Supabase upsert payload, and label capture. Sample 30-row browser-print and jsPDF outputs each verified as one 792 x 612 point landscape Letter page and visually inspected. Test inventory and mocked cloud only; no live Supabase writes.
 - Physical camera decoding, physical iPhone, AirPrint, and multi-device live Supabase synchronization were not tested. Safari/AirPrint may override page orientation: use Save report → PDF and print/share the landscape PDF if native web printing stays portrait. Reference: https://github.com/mdn/browser-compat-data/issues/28626
+
+
+## Update — 2026-10-28 (v1.8.74)
+- Renamed the visible Wireless Accessory label to Wireless in Add/Edit Printer, Machine Details, and report field headings (including exported reports).
+- Saved wirelessAccessory key unchanged; existing inventory and synchronization remain compatible. Scanner code unchanged.
+- Validation: inline JavaScript syntax compilation passed; confirmed all three visible labels updated and the stored field key retained. Label-only change; no live inventory writes.
