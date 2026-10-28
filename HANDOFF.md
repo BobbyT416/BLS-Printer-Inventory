@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-10-26 (Version 1.8.72)
+Last updated: 2026-10-28 (Version 1.8.73)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.72
+Current version: 1.8.73
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -525,3 +525,14 @@ Versions 1.8.64–1.8.71 iterated on home search barcode behavior, including exa
 ## Current next action
 
 No further code change is currently requested. The last request was to update this handoff so work can resume reliably in a new chat. Do not reopen scanner development; Version 1.8.72's home-scan removal is the intended current behavior. Continue only when the user gives the next instruction.
+
+
+## Update — 2026-10-28 (v1.8.73)
+- Added Fax and Wireless Accessory selects to Add/Edit Printer and values to Machine Details. Values are "Yes"/"No"; blank "Not recorded" preserves unknown legacy values rather than assuming No.
+- Both fields use the existing fields loop, local JSON storage, backup data, and Supabase data JSON payload. No Supabase schema or sync-code change; no bulk migration or live inventory writes.
+- Report fields Fax and Wireless Accessory immediately follow Page count. Existing print preferences are merged with defaults, enabling the new columns by default without resetting existing choices. CSV, DOC, PDF, and browser print share field order.
+- Replaced obsolete print card overrides with a compact table, dynamic colgroup widths keyed by field name, narrower Model/Product Number/Type, and wrapped headers. Browser printing requests Letter landscape; beforeprint scales the entire report to the printable height and afterprint restores the screen view.
+- Downloaded PDF uses explicit Letter landscape dimensions and measured row wrapping with adaptive font/row sizing to fit the selected inventory to one page. Large inventories/long notes can become small; use filters or fewer fields for readability. Defensive page continuation remains if exceptional content exceeds the calculated area.
+- Add Printer barcode scanner implementation and vendor decoder unchanged. Automated label capture regression checked serial TEST000002 and product K0Q14A.
+- Verification: inline JavaScript syntax passed. Headless Microsoft Edge exercised create/edit/reload persistence, read-only detail values, Yes/No report order and CSV headings, mocked Supabase upsert payload, and label capture. Sample 30-row browser-print and jsPDF outputs each verified as one 792 x 612 point landscape Letter page and visually inspected. Test inventory and mocked cloud only; no live Supabase writes.
+- Physical camera decoding, physical iPhone, AirPrint, and multi-device live Supabase synchronization were not tested. Safari/AirPrint may override page orientation: use Save report → PDF and print/share the landscape PDF if native web printing stays portrait. Reference: https://github.com/mdn/browser-compat-data/issues/28626
