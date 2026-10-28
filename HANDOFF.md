@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-10-28 (Version 1.8.75)
+Last updated: 2026-10-28 (Version 1.8.76)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.75
+Current version: 1.8.76
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -553,3 +553,12 @@ No further code change is currently requested. The last request was to update th
 - Verification: JavaScript syntax passed. Isolated headless Edge tests confirmed old (2020 sale date) and undated legacy Sold records stay visible after repeated rendering, save, and reload; mocked Supabase upsert retains all records; Sold disposition filters and report filters agree; barcode search finds Sold records; newly marking Sold keeps the printer visible after save/reload; Add Printer serial/product label capture still passes. No physical camera/iPhone or live Supabase writes tested.
 - Suggested future workflow (not implemented): independent Delivered and Billed fields, with a manual Move to history action allowed only after both are complete. Preserve history/restore capability; any later permanent purge should be an explicit reviewed action after a backup.
 - Previously removed records cannot be reconstructed by this code change; recovery would require records still in Supabase or a prior backup.
+
+
+## Update — 2026-10-28 (v1.8.76)
+- Disposition is now the sole sale-state field. Added Sale Pending to the form and disposition filter (selected by default); both Sale Pending and Sold remain in the main list and reports.
+- Removed Tentatively claimed by sales checkbox, Sale status in Machine Details, and Status report column/option/export field. Salesperson remains available.
+- Added shared normalizeDevice compatibility handling for local load, Supabase initial/realtime reads, and backup imports: legacy pendingSale=true becomes disposition Sale Pending unless already Sold; Sold wins. Retired pendingSale property is removed from normalized records, preventing later edits from restoring a stale pending flag. Existing other data and type compatibility are retained.
+- No schema change or release-time inventory write. Converted data uses the existing local/cloud save mechanism; old clients should refresh before making further edits.
+- Sale Pending uses the amber disposition badge. Removed the hard-coded seven-disposition summary count.
+- Verification: JavaScript syntax passed; isolated headless Edge checks passed legacy pending migration, Sold precedence, false legacy flag, absence of retired checkbox and status detail/report option, pending form/save/reload, both sale dispositions remaining listed, age-independent retention, disposition/report filtering, mocked cloud payload preservation, barcode search, and Add Printer serial/product capture. No physical iPhone/camera or live Supabase test/write.
