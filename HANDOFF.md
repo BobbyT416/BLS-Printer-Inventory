@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-10-28 (Version 1.8.74)
+Last updated: 2026-10-28 (Version 1.8.75)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.74
+Current version: 1.8.75
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -542,3 +542,14 @@ No further code change is currently requested. The last request was to update th
 - Renamed the visible Wireless Accessory label to Wireless in Add/Edit Printer, Machine Details, and report field headings (including exported reports).
 - Saved wirelessAccessory key unchanged; existing inventory and synchronization remain compatible. Scanner code unchanged.
 - Validation: inline JavaScript syntax compilation passed; confirmed all three visible labels updated and the stored field key retained. Label-only change; no live inventory writes.
+
+
+## Update — 2026-10-28 (v1.8.75)
+- Sold machines now remain in the main inventory list and reports; Sold disposition is checked by default and can still be filtered on/off.
+- Removed the Archived machines control/banner and archive-only filtering. Existing soldAt timestamps remain as sale history and do not trigger removal.
+- Removed the age-based render mutation that dropped Sold records after 30 days. Rendering no longer removes sold inventory, so subsequent saves cannot propagate that automatic removal.
+- Barcode search now finds sold printers as well. Add Printer scanner/camera/decoder implementation otherwise unchanged.
+- Existing explicit Delete Printer action remains available; no new purge operation and no automatic deletion or archiving. No live inventory data was changed by this release.
+- Verification: JavaScript syntax passed. Isolated headless Edge tests confirmed old (2020 sale date) and undated legacy Sold records stay visible after repeated rendering, save, and reload; mocked Supabase upsert retains all records; Sold disposition filters and report filters agree; barcode search finds Sold records; newly marking Sold keeps the printer visible after save/reload; Add Printer serial/product label capture still passes. No physical camera/iPhone or live Supabase writes tested.
+- Suggested future workflow (not implemented): independent Delivered and Billed fields, with a manual Move to history action allowed only after both are complete. Preserve history/restore capability; any later permanent purge should be an explicit reviewed action after a backup.
+- Previously removed records cannot be reconstructed by this code change; recovery would require records still in Supabase or a prior backup.
