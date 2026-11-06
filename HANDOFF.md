@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-11-06 (Version 1.8.80)
+Last updated: 2026-11-06 (Version 1.8.81)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.80
+Current version: 1.8.81
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -595,3 +595,11 @@ No further code change is currently requested. The last request was to update th
 - Reduced measurement padding and retained compact, content-driven columns and one-page landscape fitting. Both browser and PDF fitting check width as well as height.
 - Verification used the actual 22-row report exported from the live app, reconstructed into a local-only fixture; no test/customer data committed and no live inventory writes. Browser checks assert identifier cells do not wrap or overflow. Both outputs verified one landscape page, all full serial strings present; actual rendered browser and PDF pages visually inspected. Physical printing not performed; in-app native print dialog could not be inspected through browser automation, so downloaded actual PDF and local browser print-to-PDF used.
 - Inventory/sync/scanner behavior unchanged. Users must refresh an existing tab to load the current version; old already-loaded tabs continue running old JavaScript.
+
+
+## Update — 2026-11-06 (v1.8.81)
+- Print report now uses the exact same jsPDF generation/layout path as Save report → PDF. It forces PDF regardless of the selected download format, then prints that generated document instead of window.print() on the HTML inventory page.
+- Desktop: load the generated PDF blob into a dedicated iframe and call its print function after load. Phone/tablet: open the generated landscape PDF in the viewer for the native Print/Share menu. If the PDF viewer popup is blocked, download the PDF with instructions to open and print it.
+- Previous print iframe/blob is cleaned up on the next print and page unload. Report setup instructions reflect the shared PDF layout.
+- Verification: JS syntax and isolated headless Edge using actual 22-row report fixture. Save PDF and Print PDF page content streams compared exactly equal (same geometry/text/columns); both one landscape page. Mocked iframe print call confirmed without invoking HTML window.print, including when reportFormat=CSV; repeat print and mobile viewer dispatch checked. No physical print job sent, and physical iPhone/desktop native print dialog not tested.
+- Inventory/cloud/scanner logic unchanged.
