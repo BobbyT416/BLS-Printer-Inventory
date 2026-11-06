@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-11-06 (Version 1.8.81)
+Last updated: 2026-11-06 (Version 1.8.82)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.81
+Current version: 1.8.82
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -603,3 +603,11 @@ No further code change is currently requested. The last request was to update th
 - Previous print iframe/blob is cleaned up on the next print and page unload. Report setup instructions reflect the shared PDF layout.
 - Verification: JS syntax and isolated headless Edge using actual 22-row report fixture. Save PDF and Print PDF page content streams compared exactly equal (same geometry/text/columns); both one landscape page. Mocked iframe print call confirmed without invoking HTML window.print, including when reportFormat=CSV; repeat print and mobile viewer dispatch checked. No physical print job sent, and physical iPhone/desktop native print dialog not tested.
 - Inventory/cloud/scanner logic unchanged.
+
+
+## Update — 2026-11-06 (v1.8.82)
+- Reproduced the missing-controls behavior in the in-app browser: v1.8.81 closed report setup and loaded a hidden PDF frame without exposing a visible print interface.
+- Print report now opens the generated PDF in a separate visible viewer, explicitly requesting toolbar=1. The user selects the PDF viewer's Print control to access native printer/copies/page settings. Removed hidden iframe and automatic iframe print call.
+- Original report setup and field choices remain open in the inventory tab. A blocked viewer popup falls back to downloading the PDF with instructions to open and print it.
+- Save/Print PDF layout remains identical. No column/format/inventory/scanner changes.
+- Verification: JS syntax; isolated Edge tests using actual 22-machine fixture confirmed visible-viewer URL/toolbar request, report checkboxes remain accessible, no hidden print iframe, popup-blocked fallback, and exact equality of Save/Print PDF page content streams. PDF viewer/native print toolbar behavior still depends on the host browser; no physical print job sent.
