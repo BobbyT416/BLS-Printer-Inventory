@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-10-28 (Version 1.8.76)
+Last updated: 2026-11-06 (Version 1.8.77)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.76
+Current version: 1.8.77
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -562,3 +562,12 @@ No further code change is currently requested. The last request was to update th
 - No schema change or release-time inventory write. Converted data uses the existing local/cloud save mechanism; old clients should refresh before making further edits.
 - Sale Pending uses the amber disposition badge. Removed the hard-coded seven-disposition summary count.
 - Verification: JavaScript syntax passed; isolated headless Edge checks passed legacy pending migration, Sold precedence, false legacy flag, absence of retired checkbox and status detail/report option, pending form/save/reload, both sale dispositions remaining listed, age-independent retention, disposition/report filtering, mocked cloud payload preservation, barcode search, and Add Printer serial/product capture. No physical iPhone/camera or live Supabase test/write.
+
+
+## Update — 2026-11-06 (v1.8.77)
+- Disabled OCR completely: removed live Tesseract worker, photo text-recognition fallback, OCR review controls, and delayed OCR fallback callback.
+- All live scanner modes now use the existing Quagga barcode decoder. Camera lifecycle remains controlled by Start/Stop/Close; no OCR library is loaded.
+- Removed automatic O-to-zero substitution from scanned serial numbers and manual serial input. Barcode letters/digits are preserved (existing uppercase handling remains).
+- Photo scanning only uses actual BarcodeDetector results. If no barcode can be decoded (including browsers without photo barcode support), show a retry/live-scan/manual-entry message and leave fields unchanged. No guessing from printed label text.
+- Changed photo button label to Take photo of barcode. Inventory/sync/report behavior unchanged.
+- Verification: JavaScript syntax and isolated headless Edge checks passed for mocked live barcode startup/detection/stop, serial OGZ602AB12 preservation, product capture, manual letter O preservation, no-result photos leaving fields empty, decoded photo results, and zero OCR library requests. Decoder results were mocked; physical iPhone/camera decoding was not tested.
