@@ -84,14 +84,15 @@ dialog{max-height:calc(var(--visible-vh, 100dvh) - 12px);margin:auto}dialog[open
  #printReportTable thead{display:table-header-group!important}
  #printReportTable tbody{display:table-row-group!important}
  #printReportTable tr{display:table-row!important;break-inside:avoid}
- #printReportTable th,#printReportTable td{width:auto!important;padding:2px 3px!important;font-size:6.5pt!important;line-height:1.15;white-space:normal!important;overflow-wrap:anywhere}
+ #printReportTable th,#printReportTable td{width:auto!important;padding:2px 3px!important;font-size:var(--report-font-size,9pt)!important;line-height:1.15;white-space:normal!important;overflow-wrap:anywhere}
  #printReportTable td::before{content:none!important}
  #printReportTable tbody tr:nth-child(even){background:#eef2f7!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
  main{width:10.5in!important;max-width:10.5in!important;min-height:0!important;padding:0!important;margin:0!important}
+ #printReportTable th{font-size:min(8pt,var(--report-font-size,9pt))!important}
  #printHeader{margin-bottom:5px}
  #printHeader h2{font-size:12pt;margin:0}
  #printMeta{font-size:7pt;margin:2px 0}
- .inventory-list-heading,.home-toolbar,dialog,.toast{display:none!important}
+ .panel-head,.table-wrap,.inventory-list-heading,.home-toolbar,dialog,.toast{display:none!important}
  #printReportTableWrap{margin:0;border:0;box-shadow:none}
 }
 
@@ -174,7 +175,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.77
+ Version 1.8.78
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -567,24 +568,40 @@ function getReportDevices(){return devices.filter(d=>(!$('search').value.trim()|
 function selectedReportFields(){return fields.filter(([key])=>printPrefs[key]);}
 function syncReportPrefs(){document.querySelectorAll('[data-print]').forEach(c=>{printPrefs[c.dataset.print]=c.checked});safeSet(PRINT,JSON.stringify(printPrefs));}
 function reportValue(d,key){if(key==='model')return shortModelName(d.model)||'—';if(key==='pageCount')return d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString();if(key==='cost'||key==='price')return money(d[key]);const v=d[key];return v===undefined||v===null||v===''?'—':String(v);}
-const reportWeights={serialNumber:1.35,model:.85,productNumber:.7,notes:1.7,acquiredFrom:1.15,refurbishedBy:1,claimedBy:.8,disposition:1.1,deviceType:.55,pageCount:.75,fax:.45,wirelessAccessory:.85,cost:.7,price:.7,assetTag:.8};
+const reportWeights={serialNumber:1.35,model:.85,productNumber:.9,notes:1.7,acquiredFrom:1.15,refurbishedBy:1,claimedBy:.8,disposition:1.1,deviceType:.55,pageCount:.75,fax:.45,wirelessAccessory:.85,cost:.7,price:.7,assetTag:.8};
 function prepareReport(){const now=new Date(),reportDevices=getReportDevices(),cols=selectedReportFields();$('printMeta').textContent=`Generated ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · ${reportDevices.length} device(s)`;$('printHeader').querySelector('h2').textContent=$('reportTitle').value.trim()||'Printer Inventory Report';const table=$('printReportTable');table.querySelector('colgroup')?.remove();const group=document.createElement('colgroup'),total=cols.reduce((sum,[key])=>sum+(reportWeights[key]||1),0);group.innerHTML=cols.map(([key])=>'<col style="width:'+((reportWeights[key]||1)/total*100)+'%">').join('');table.prepend(group);$('printReportTable').querySelector('thead').innerHTML='<tr>'+cols.map(([key,label])=>'<th>'+esc(label)+'</th>').join('')+'</tr>';$('printReportBody').innerHTML=reportDevices.map(d=>'<tr>'+cols.map(([key])=>'<td>'+esc(reportValue(d,key))+'</td>').join('')+'</tr>').join('');return reportDevices}
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 function reportBaseName(){const title=($('reportTitle').value.trim()||defaultReportTitle()).replace(/[^a-z0-9-_]+/gi,'-').replace(/^-|-$/g,'')||'printer-inventory-report';const now=new Date(),time=String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0')+String(now.getSeconds()).padStart(2,'0');return title+'-'+time}
 function reportCsv(rows){const cols=selectedReportFields();const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';return [cols.map(c=>q(c[1])).join(','),...rows.map(d=>cols.map(c=>q(reportValue(d,c[0])==='—'?'':reportValue(d,c[0]))).join(','))].join('\r\n')}
-function saveReport(){syncReportPrefs();const rows=prepareReport(),fmt=$('reportFormat').value,name=reportBaseName(),cols=selectedReportFields();if(!cols.length){toast('Select at least one report field.');return}if(fmt==='csv'){downloadBlob(new Blob(['\ufeff',reportCsv(rows)],{type:'text/csv;charset=utf-8'}),name+'.csv');toast('CSV report downloaded')}else if(fmt==='doc'){const html='<!doctype html><html><head><meta charset="utf-8"><title>'+esc($('reportTitle').value)+'</title><style>body{font-family:Arial,sans-serif}table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{border:1px solid #bbb;padding:6px;text-align:left;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}th{background:#e6edf5}tbody tr:nth-child(even){background:#f5f7fa}h1{font-size:18pt}</style></head><body><h1>'+esc($('reportTitle').value||'Printer Inventory Report')+'</h1><p>'+esc($('printMeta').textContent)+'</p>'+ $('printReportTable').outerHTML+'</body></html>';downloadBlob(new Blob([html],{type:'application/msword'}),name+'.doc');toast('Word report downloaded')}else{if(!window.jspdf||!window.jspdf.jsPDF){toast('PDF generator could not load. Check your internet connection and try again.');return}const {jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:'letter'});const title=$('reportTitle').value.trim()||defaultReportTitle();const margin=18,usableW=pdf.internal.pageSize.getWidth()-margin*2,bottom=pdf.internal.pageSize.getHeight()-28;const weights=reportWeights;const total=cols.reduce((sum,c)=>sum+(weights[c[0]]||1),0),widths=cols.map(c=>usableW*(weights[c[0]]||1)/total);let bodyFont=7.5,lineHeight=9,rowMin=18,padding=6;
-const measure=()=>rows.map(d=>{pdf.setFont('helvetica','normal');pdf.setFontSize(bodyFont);const cells=cols.map((c,i)=>pdf.splitTextToSize(String(reportValue(d,c[0])||'—'),Math.max(10,widths[i]-6)));return {cells,height:Math.max(rowMin,...cells.map(lines=>lines.length*lineHeight+padding))}});
-let measured=measure();
-for(let attempt=0;attempt<8;attempt++){const height=measured.reduce((sum,r)=>sum+r.height,0),available=bottom-80;if(height<=available)break;const scale=Math.min(.95,available/height);bodyFont*=scale;lineHeight*=scale;rowMin*=scale;padding*=scale;measured=measure()}
-let y=24;const drawTitle=()=>{pdf.setFont('helvetica','bold');pdf.setFontSize(16);pdf.text(title,margin,y);y+=16;pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text($('printMeta').textContent,margin,y);y+=14};const drawHeader=()=>{pdf.setFont('helvetica','bold');pdf.setFontSize(bodyFont);let x=margin;cols.forEach((c,i)=>{pdf.setFillColor(230,237,245);pdf.rect(x,y,widths[i],22,'F');pdf.text(pdf.splitTextToSize(c[1],widths[i]-8),x+4,y+9);x+=widths[i]});pdf.setDrawColor(185);pdf.line(margin,y+22,margin+usableW,y+22);y+=22;pdf.setFont('helvetica','normal');pdf.setFontSize(bodyFont)};drawTitle();drawHeader();rows.forEach((d,ri)=>{const {cells,height:rowH}=measured[ri];if(y+rowH>bottom){pdf.addPage();y=28;drawTitle();drawHeader()}if(ri%2===1){pdf.setFillColor(247,249,252);pdf.rect(margin,y,usableW,rowH,'F')}let x=margin;cells.forEach((lines,i)=>{pdf.text(lines,x+3,y+bodyFont+padding/2,{lineHeightFactor:lineHeight/bodyFont});pdf.setDrawColor(220);pdf.rect(x,y,widths[i],rowH);x+=widths[i]});y+=rowH});const pdfBlob=pdf.output('blob');const pdfFile=new File([pdfBlob],name+'.pdf',{type:'application/pdf'});const mobileShare=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Macintosh/i.test(navigator.userAgent)&&navigator.maxTouchPoints>1);if(mobileShare&&navigator.canShare&&navigator.canShare({files:[pdfFile]})&&navigator.share){navigator.share({files:[pdfFile],title:title,text:'Printer inventory report'}).then(()=>toast('Choose Save to Files in the share sheet to keep the PDF')).catch(err=>{if(err&&err.name!=='AbortError'){downloadBlob(pdfBlob,name+'.pdf');toast('PDF report generated')}})}else{downloadBlob(pdfBlob,name+'.pdf');toast('PDF report generated. Check your Downloads or browser share options to save it.')}}}
+function saveReport(){syncReportPrefs();const rows=prepareReport(),fmt=$('reportFormat').value,name=reportBaseName(),cols=selectedReportFields();if(!cols.length){toast('Select at least one report field.');return}if(fmt==='csv'){downloadBlob(new Blob(['\ufeff',reportCsv(rows)],{type:'text/csv;charset=utf-8'}),name+'.csv');toast('CSV report downloaded')}else if(fmt==='doc'){const html='<!doctype html><html><head><meta charset="utf-8"><title>'+esc($('reportTitle').value)+'</title><style>body{font-family:Arial,sans-serif}table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{border:1px solid #bbb;padding:6px;text-align:left;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}th{background:#e6edf5}tbody tr:nth-child(even){background:#f5f7fa}h1{font-size:18pt}</style></head><body><h1>'+esc($('reportTitle').value||'Printer Inventory Report')+'</h1><p>'+esc($('printMeta').textContent)+'</p>'+ $('printReportTable').outerHTML+'</body></html>';downloadBlob(new Blob([html],{type:'application/msword'}),name+'.doc');toast('Word report downloaded')}else{if(!window.jspdf||!window.jspdf.jsPDF){toast('PDF generator could not load. Check your internet connection and try again.');return}const {jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:'letter'});const title=$('reportTitle').value.trim()||defaultReportTitle();const margin=18,usableW=pdf.internal.pageSize.getWidth()-margin*2,bottom=pdf.internal.pageSize.getHeight()-28;const weights=reportWeights;const total=cols.reduce((sum,c)=>sum+(weights[c[0]]||1),0),widths=cols.map(c=>usableW*(weights[c[0]]||1)/total);let bodyFont=10,lineHeight=12,rowMin=17,padding=5,headerH=22,headerFont=8;
+const measure=()=>{
+ lineHeight=bodyFont*1.2;rowMin=bodyFont*1.7;padding=bodyFont*.5;
+ headerFont=Math.min(8,bodyFont);pdf.setFont('helvetica','bold');pdf.setFontSize(headerFont);
+ headerH=Math.max(22,...cols.map((c,i)=>pdf.splitTextToSize(c[1],widths[i]-8).length*headerFont*1.15+8));
+ pdf.setFont('helvetica','normal');pdf.setFontSize(bodyFont);
+ return rows.map(d=>{const cells=cols.map((c,i)=>pdf.splitTextToSize(String(reportValue(d,c[0])||'—'),Math.max(10,widths[i]-6)));return {cells,height:Math.max(rowMin,...cells.map(lines=>lines.length*lineHeight+padding))}});
+};
+let lowFont=1,highFont=10;
+for(let attempt=0;attempt<14;attempt++){
+ bodyFont=(lowFont+highFont)/2;const candidate=measure();
+ if(candidate.reduce((sum,r)=>sum+r.height,0)<=bottom-54-headerH)lowFont=bodyFont;else highFont=bodyFont;
+}
+bodyFont=lowFont;const measured=measure();
+let y=24;const drawTitle=()=>{pdf.setFont('helvetica','bold');pdf.setFontSize(16);pdf.text(title,margin,y);y+=16;pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text($('printMeta').textContent,margin,y);y+=14};const drawHeader=()=>{pdf.setFont('helvetica','bold');pdf.setFontSize(headerFont);let x=margin;cols.forEach((c,i)=>{pdf.setFillColor(230,237,245);pdf.rect(x,y,widths[i],headerH,'F');pdf.text(pdf.splitTextToSize(c[1],widths[i]-8),x+4,y+headerFont+3,{lineHeightFactor:1.15});x+=widths[i]});pdf.setDrawColor(185);pdf.line(margin,y+headerH,margin+usableW,y+headerH);y+=headerH;pdf.setFont('helvetica','normal');pdf.setFontSize(bodyFont)};drawTitle();drawHeader();rows.forEach((d,ri)=>{const {cells,height:rowH}=measured[ri];if(y+rowH>bottom){pdf.addPage();y=28;drawTitle();drawHeader()}if(ri%2===1){pdf.setFillColor(247,249,252);pdf.rect(margin,y,usableW,rowH,'F')}let x=margin;cells.forEach((lines,i)=>{pdf.text(lines,x+3,y+bodyFont+padding/2,{lineHeightFactor:lineHeight/bodyFont});pdf.setDrawColor(220);pdf.rect(x,y,widths[i],rowH);x+=widths[i]});y+=rowH});const pdfBlob=pdf.output('blob');const pdfFile=new File([pdfBlob],name+'.pdf',{type:'application/pdf'});const mobileShare=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Macintosh/i.test(navigator.userAgent)&&navigator.maxTouchPoints>1);if(mobileShare&&navigator.canShare&&navigator.canShare({files:[pdfFile]})&&navigator.share){navigator.share({files:[pdfFile],title:title,text:'Printer inventory report'}).then(()=>toast('Choose Save to Files in the share sheet to keep the PDF')).catch(err=>{if(err&&err.name!=='AbortError'){downloadBlob(pdfBlob,name+'.pdf');toast('PDF report generated')}})}else{downloadBlob(pdfBlob,name+'.pdf');toast('PDF report generated. Check your Downloads or browser share options to save it.')}}}
 // Fit the complete browser report to the printable Letter landscape area.
-window.addEventListener('beforeprint',()=>{
+function fitPrintedReport(){
  const main=document.querySelector('main');main.style.zoom='';
- const height=main.getBoundingClientRect().height;
- const scale=Math.min(1,(7.7*96)/Math.max(1,height));
- main.style.zoom=String(scale);
-});
-window.addEventListener('afterprint',()=>{document.querySelector('main').style.zoom=''});
+ // Keep the table at full printable width; adjust type rather than shrinking the page.
+ let low=1,high=10;
+ for(let i=0;i<12;i++){
+  const font=(low+high)/2;
+  main.style.setProperty('--report-font-size',font+'pt');
+  if(main.getBoundingClientRect().height<=7.9*96)low=font;else high=font;
+ }
+ main.style.setProperty('--report-font-size',low+'pt');
+}
+window.addEventListener('beforeprint',fitPrintedReport);
+window.addEventListener('afterprint',()=>{const main=document.querySelector('main');main.style.zoom='';main.style.removeProperty('--report-font-size')});
 $('saveReport').onclick=saveReport;
 $('printReportBtn').onclick=()=>{try{syncReportPrefs();const selected=selectedReportFields();if(!selected.length){toast('Select at least one report field.');return}prepareReport();closeDialog($('printDialog'));window.print()}catch(err){console.error('Print report failed',err);toast('Printing could not start. Try Save report → PDF instead.')}};
 function reportDateStamp(date=new Date()){const months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];return String(date.getDate()).padStart(2,'0')+months[date.getMonth()]+String(date.getFullYear()).slice(-2)}

@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-11-06 (Version 1.8.77)
+Last updated: 2026-11-06 (Version 1.8.78)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.77
+Current version: 1.8.78
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -571,3 +571,11 @@ No further code change is currently requested. The last request was to update th
 - Photo scanning only uses actual BarcodeDetector results. If no barcode can be decoded (including browsers without photo barcode support), show a retry/live-scan/manual-entry message and leave fields unchanged. No guessing from printed label text.
 - Changed photo button label to Take photo of barcode. Inventory/sync/report behavior unchanged.
 - Verification: JavaScript syntax and isolated headless Edge checks passed for mocked live barcode startup/detection/stop, serial OGZ602AB12 preservation, product capture, manual letter O preservation, no-result photos leaving fields empty, decoded photo results, and zero OCR library requests. Decoder results were mocked; physical iPhone/camera decoding was not tested.
+
+
+## Update — 2026-11-06 (v1.8.78)
+- Replaced fixed 6.5pt browser report text plus whole-page zoom with full-width Letter landscape fitting. The table stays 10.5 inches wide; a measured search chooses the largest body font up to 10pt that fits printable page height. This avoids shrinking the table width and leaving unused right-side space.
+- Print header text caps at 8pt for clean headings, product-number weight increased slightly to avoid splitting typical six-character numbers, and empty home-toolbar/list spacing is hidden during printing. afterprint clears print-only sizing.
+- PDF uses a measured largest-fitting font up to 10pt, including wrapped header height and scaled row spacing. Previously it only shrank from 7.5pt. Existing selected columns and all report data are retained.
+- Verification: JS syntax and headless Edge layout checks passed for 8- and 30-row sample inventories. Browser table width measured 1008px (10.5in); short report body measured approximately 10pt. Browser print and downloaded PDF samples each verified as one 792x612pt landscape page. Rendered short browser and long PDF layouts visually inspected. Dense reports necessarily use smaller text to retain the one-page requirement. No physical printer/iPhone testing.
+- Inventory persistence, Supabase sync, barcode-only scanning, Sale Pending/Sold behavior unchanged.
