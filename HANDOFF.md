@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-11-06 (Version 1.8.79)
+Last updated: 2026-11-06 (Version 1.8.80)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.79
+Current version: 1.8.80
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -587,3 +587,11 @@ No further code change is currently requested. The last request was to update th
 - Browser print and PDF recompute measured widths while choosing the largest font up to 10pt that fits the compact table on one page. Whole-page zoom remains disabled. One-page requirement retained per user clarification.
 - Verification: JS syntax; isolated headless Edge 8-row and 30-row reports; browser and PDF files each confirmed one landscape Letter page; rendered layouts visually inspected. Short browser body approximately 10pt; 30-row sample approximately 7.38pt (previous forced-width sample approximately 5.88pt). Full data visible in tested layouts; physical printer/iPhone not tested.
 - Inventory, synchronization, Sale Pending/Sold handling and barcode-only scanning unchanged.
+
+
+## Update — 2026-11-06 (v1.8.80)
+- Inspected the user’s actual open tab and downloaded reports. The tab was still running v1.8.74; navigated to the deployed v1.8.79 page. Actual v1.8.79 PDF revealed serial numbers/asset tags wrapping their final characters because width compression reduced their measured data width.
+- Column sizing now reserves the full measured width for identifiers, short values, money, and salesperson/technician names. Only descriptive text absorbs width compression; if minimum widths exceed the page, fit chooses a smaller font and remeasures instead of compressing identifier widths. Browser table explicitly uses Arial, matching measured font; single-line cells are marked nowrap.
+- Reduced measurement padding and retained compact, content-driven columns and one-page landscape fitting. Both browser and PDF fitting check width as well as height.
+- Verification used the actual 22-row report exported from the live app, reconstructed into a local-only fixture; no test/customer data committed and no live inventory writes. Browser checks assert identifier cells do not wrap or overflow. Both outputs verified one landscape page, all full serial strings present; actual rendered browser and PDF pages visually inspected. Physical printing not performed; in-app native print dialog could not be inspected through browser automation, so downloaded actual PDF and local browser print-to-PDF used.
+- Inventory/sync/scanner behavior unchanged. Users must refresh an existing tab to load the current version; old already-loaded tabs continue running old JavaScript.

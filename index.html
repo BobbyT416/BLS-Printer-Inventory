@@ -80,7 +80,7 @@ dialog{max-height:calc(var(--visible-vh, 100dvh) - 12px);margin:auto}dialog[open
 /* v1.8.73: compact report table; field widths follow selected columns. */
 @page{size:letter landscape;margin:0.25in}
 @media print{
- #printReportTable{display:table!important;width:var(--report-width,100%)!important;max-width:100%!important;table-layout:fixed;border-collapse:collapse!important}
+ #printReportTable{display:table!important;width:var(--report-width,100%)!important;max-width:none!important;font-family:Arial,sans-serif!important;table-layout:fixed;border-collapse:collapse!important}
  #printReportTable thead{display:table-header-group!important}
  #printReportTable tbody{display:table-row-group!important}
  #printReportTable tr{display:table-row!important;break-inside:avoid}
@@ -89,6 +89,7 @@ dialog{max-height:calc(var(--visible-vh, 100dvh) - 12px);margin:auto}dialog[open
  #printReportTable tbody tr:nth-child(even){background:#eef2f7!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
  main{width:10.5in!important;max-width:10.5in!important;min-height:0!important;padding:0!important;margin:0!important}
  #printReportTable th{font-size:min(8pt,var(--report-font-size,9pt))!important}
+ #printReportTable td.report-identifier{white-space:nowrap!important;overflow-wrap:normal!important}
  #printHeader{margin-bottom:5px}
  #printHeader h2{font-size:12pt;margin:0}
  #printMeta{font-size:7pt;margin:2px 0}
@@ -175,7 +176,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.79
+ Version 1.8.80
 </footer>
 <dialog id="detailDialog">
  <div class="modal-head"><h2 id="detailTitle">Printer details</h2><button id="closeDetail">✕</button></div>
@@ -569,13 +570,17 @@ function selectedReportFields(){return fields.filter(([key])=>printPrefs[key]);}
 function syncReportPrefs(){document.querySelectorAll('[data-print]').forEach(c=>{printPrefs[c.dataset.print]=c.checked});safeSet(PRINT,JSON.stringify(printPrefs));}
 function reportValue(d,key){if(key==='model')return shortModelName(d.model)||'—';if(key==='pageCount')return d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString();if(key==='cost'||key==='price')return money(d[key]);const v=d[key];return v===undefined||v===null||v===''?'—':String(v);}
 // Size columns from actual values; long prose wraps instead of inflating the whole report.
+const reportSingleLine=new Set(['model','productNumber','serialNumber','assetTag','deviceType','pageCount','fax','wirelessAccessory','cost','price','claimedBy','refurbishedBy']);
 function reportColumnWidths(rows,cols,measure,available=756,font=9){
- const limits={notes:140,acquiredFrom:100,refurbishedBy:85,claimedBy:85,model:95,serialNumber:100,productNumber:80};
- const minima=cols.map(([key,label])=>Math.max(24,...label.split(/\s+/).map(word=>measure(word.toUpperCase())*1.12*Math.min(8,font)/font+8)));
- const desired=cols.map(([key,label],i)=>Math.max(minima[i],Math.min(limits[key]||100,Math.max(0,...rows.map(d=>measure(reportValue(d,key))))+8)));
+ const limits={notes:145,acquiredFrom:90,refurbishedBy:65,claimedBy:60,disposition:95};
+ const minima=cols.map(([key,label])=>{
+  const heading=Math.max(...label.split(/\s+/).map(word=>measure(word.toUpperCase())*1.12*Math.min(8,font)/font))+7;
+  const value=Math.max(0,...rows.map(d=>measure(reportValue(d,key))))+7;
+  return Math.max(20,heading,reportSingleLine.has(key)?value:0);
+ });
+ const desired=cols.map(([key],i)=>reportSingleLine.has(key)?minima[i]:Math.max(minima[i],Math.min(limits[key]||90,Math.max(0,...rows.map(d=>measure(reportValue(d,key))))+7)));
  const total=desired.reduce((sum,w)=>sum+w,0),minimum=minima.reduce((sum,w)=>sum+w,0);
- if(total<=available)return desired;
- if(minimum>=available)return minima.map(w=>w*available/minimum);
+ if(total<=available||minimum>=available)return total<=available?desired:minima;
  const ratio=(available-minimum)/(total-minimum);
  return desired.map((w,i)=>minima[i]+(w-minima[i])*ratio);
 }
@@ -590,12 +595,12 @@ function sizeReportColumns(rows,cols,font){
 function fitPrintedReport(){
  const main=document.querySelector('main'),rows=getReportDevices(),cols=selectedReportFields();main.style.zoom='';
  let low=1,high=10;
- for(let i=0;i<12;i++){const font=(low+high)/2;sizeReportColumns(rows,cols,font);if(main.getBoundingClientRect().height<=7.9*96)low=font;else high=font}
+ for(let i=0;i<12;i++){const font=(low+high)/2;sizeReportColumns(rows,cols,font);if(main.getBoundingClientRect().height<=7.9*96&&$('printReportTable').getBoundingClientRect().width<=10.5*96)low=font;else high=font}
  sizeReportColumns(rows,cols,low);
 }
 window.addEventListener('beforeprint',fitPrintedReport);
 window.addEventListener('afterprint',()=>document.querySelector('main').style.removeProperty('--report-font-size'));
-function prepareReport(){const now=new Date(),reportDevices=getReportDevices(),cols=selectedReportFields();$('printMeta').textContent=`Generated ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · ${reportDevices.length} device(s)`;$('printHeader').querySelector('h2').textContent=$('reportTitle').value.trim()||'Printer Inventory Report';const table=$('printReportTable');table.querySelector('colgroup')?.remove();sizeReportColumns(reportDevices,cols,9);$('printReportTable').querySelector('thead').innerHTML='<tr>'+cols.map(([key,label])=>'<th>'+esc(label)+'</th>').join('')+'</tr>';$('printReportBody').innerHTML=reportDevices.map(d=>'<tr>'+cols.map(([key])=>'<td>'+esc(reportValue(d,key))+'</td>').join('')+'</tr>').join('');return reportDevices}
+function prepareReport(){const now=new Date(),reportDevices=getReportDevices(),cols=selectedReportFields();$('printMeta').textContent=`Generated ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · ${reportDevices.length} device(s)`;$('printHeader').querySelector('h2').textContent=$('reportTitle').value.trim()||'Printer Inventory Report';const table=$('printReportTable');table.querySelector('colgroup')?.remove();sizeReportColumns(reportDevices,cols,9);$('printReportTable').querySelector('thead').innerHTML='<tr>'+cols.map(([key,label])=>'<th>'+esc(label)+'</th>').join('')+'</tr>';$('printReportBody').innerHTML=reportDevices.map(d=>'<tr>'+cols.map(([key])=>'<td'+(reportSingleLine.has(key)?' class="report-identifier"':'')+'>'+esc(reportValue(d,key))+'</td>').join('')+'</tr>').join('');return reportDevices}
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 function reportBaseName(){const title=($('reportTitle').value.trim()||defaultReportTitle()).replace(/[^a-z0-9-_]+/gi,'-').replace(/^-|-$/g,'')||'printer-inventory-report';const now=new Date(),time=String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0')+String(now.getSeconds()).padStart(2,'0');return title+'-'+time}
 function reportCsv(rows){const cols=selectedReportFields();const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';return [cols.map(c=>q(c[1])).join(','),...rows.map(d=>cols.map(c=>q(reportValue(d,c[0])==='—'?'':reportValue(d,c[0]))).join(','))].join('\r\n')}
@@ -609,7 +614,7 @@ const measure=()=>{
  return rows.map(d=>{const cells=cols.map((c,i)=>pdf.splitTextToSize(String(reportValue(d,c[0])||'—'),Math.max(10,widths[i]-6)));return {cells,height:Math.max(rowMin,...cells.map(lines=>lines.length*lineHeight+padding))}});
 };
 let lowFont=1,highFont=10;
-for(let attempt=0;attempt<14;attempt++){bodyFont=(lowFont+highFont)/2;const candidate=measure();if(candidate.reduce((sum,r)=>sum+r.height,0)<=bottom-54-headerH)lowFont=bodyFont;else highFont=bodyFont}
+for(let attempt=0;attempt<14;attempt++){bodyFont=(lowFont+highFont)/2;const candidate=measure();if(tableW<=usableW&&candidate.reduce((sum,r)=>sum+r.height,0)<=bottom-54-headerH)lowFont=bodyFont;else highFont=bodyFont}
 bodyFont=lowFont;const measured=measure();
 let y=24;const drawTitle=()=>{pdf.setFont('helvetica','bold');pdf.setFontSize(16);pdf.text(title,margin,y);y+=16;pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text($('printMeta').textContent,margin,y);y+=14};const drawHeader=()=>{pdf.setFont('helvetica','bold');pdf.setFontSize(headerFont);let x=margin;cols.forEach((c,i)=>{pdf.setFillColor(230,237,245);pdf.rect(x,y,widths[i],headerH,'F');pdf.text(pdf.splitTextToSize(c[1],widths[i]-8),x+4,y+headerFont+3,{lineHeightFactor:1.15});x+=widths[i]});pdf.setDrawColor(185);pdf.line(margin,y+headerH,margin+tableW,y+headerH);y+=headerH;pdf.setFont('helvetica','normal');pdf.setFontSize(bodyFont)};drawTitle();drawHeader();rows.forEach((d,ri)=>{const {cells,height:rowH}=measured[ri];if(y+rowH>bottom){pdf.addPage();y=28;drawTitle();drawHeader()}if(ri%2===1){pdf.setFillColor(247,249,252);pdf.rect(margin,y,tableW,rowH,'F')}let x=margin;cells.forEach((lines,i)=>{pdf.text(lines,x+3,y+bodyFont+padding/2,{lineHeightFactor:lineHeight/bodyFont});pdf.setDrawColor(220);pdf.rect(x,y,widths[i],rowH);x+=widths[i]});y+=rowH});const pdfBlob=pdf.output('blob');const pdfFile=new File([pdfBlob],name+'.pdf',{type:'application/pdf'});const mobileShare=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Macintosh/i.test(navigator.userAgent)&&navigator.maxTouchPoints>1);if(mobileShare&&navigator.canShare&&navigator.canShare({files:[pdfFile]})&&navigator.share){navigator.share({files:[pdfFile],title:title,text:'Printer inventory report'}).then(()=>toast('Choose Save to Files in the share sheet to keep the PDF')).catch(err=>{if(err&&err.name!=='AbortError'){downloadBlob(pdfBlob,name+'.pdf');toast('PDF report generated')}})}else{downloadBlob(pdfBlob,name+'.pdf');toast('PDF report generated. Check your Downloads or browser share options to save it.')}}}
 $('saveReport').onclick=saveReport;
