@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-11-06 (Version 1.8.78)
+Last updated: 2026-11-06 (Version 1.8.79)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.78
+Current version: 1.8.79
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -579,3 +579,11 @@ No further code change is currently requested. The last request was to update th
 - PDF uses a measured largest-fitting font up to 10pt, including wrapped header height and scaled row spacing. Previously it only shrank from 7.5pt. Existing selected columns and all report data are retained.
 - Verification: JS syntax and headless Edge layout checks passed for 8- and 30-row sample inventories. Browser table width measured 1008px (10.5in); short report body measured approximately 10pt. Browser print and downloaded PDF samples each verified as one 792x612pt landscape page. Rendered short browser and long PDF layouts visually inspected. Dense reports necessarily use smaller text to retain the one-page requirement. No physical printer/iPhone testing.
 - Inventory persistence, Supabase sync, barcode-only scanning, Sale Pending/Sold behavior unchanged.
+
+
+## Update — 2026-11-06 (v1.8.79)
+- Preserve one-page landscape output while replacing proportional report column weights with measured content widths. Headers may wrap at spaces; narrow values such as Fax, Wireless, Type, and currency no longer receive oversized proportional widths.
+- Shared column calculation measures actual selected values and heading words with small padding; long prose is capped and wrapped. If natural widths are below printable width, the table stays compact instead of stretching to fill the page.
+- Browser print and PDF recompute measured widths while choosing the largest font up to 10pt that fits the compact table on one page. Whole-page zoom remains disabled. One-page requirement retained per user clarification.
+- Verification: JS syntax; isolated headless Edge 8-row and 30-row reports; browser and PDF files each confirmed one landscape Letter page; rendered layouts visually inspected. Short browser body approximately 10pt; 30-row sample approximately 7.38pt (previous forced-width sample approximately 5.88pt). Full data visible in tested layouts; physical printer/iPhone not tested.
+- Inventory, synchronization, Sale Pending/Sold handling and barcode-only scanning unchanged.
