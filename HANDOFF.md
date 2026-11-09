@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-11-09 (Version 1.8.83)
+Last updated: 2026-11-09 (Version 1.8.84)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.83
+Current version: 1.8.84
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -617,3 +617,8 @@ No further code change is currently requested. The last request was to update th
 - Added On Loan to the Add/Edit Printer disposition dropdown and the home disposition filter, selected by default. On Loan records remain in the main inventory and follow existing report filtering.
 - Uses the existing disposition persistence/Supabase JSON field; no migration or schema change. No inventory data written by this release.
 - Validation: inline JavaScript syntax passed; confirmed matching form/filter values and default inclusion. JavaScript (including save/sync/scanner/report behavior) is unchanged. No physical-device testing.
+
+
+## Update — 2026-11-09 (v1.8.84)
+- Removed the long instruction paragraph from Report setup. Field choices, report title/format, and action buttons are unchanged.
+- Validation: confirmed only the instruction paragraph and visible version changed in index.html; JavaScript syntax passed. No behavior or inventory data changes.
