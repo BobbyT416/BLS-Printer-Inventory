@@ -1,17 +1,17 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-11-09 (Version 1.8.84)
+Last updated: 2026-11-09 (Version 1.8.85)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.84
+Current version: 1.8.85
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
 
 ## Current home inventory design (v1.3.9)
-- Simple selectable list; tapping a machine opens read-only Machine Details.
-- Editing is through a separate Edit Printer button.
+- Simple selectable list; tapping a machine opens Edit Printer directly (v1.8.85).
+- No intermediate Machine Details page or extra Edit Printer button.
 - No visible column labels on the home list.
 - Two columns per machine, each machine row has two stacked lines:
   - Left column: Model number on top; Serial Number directly underneath.
@@ -622,3 +622,10 @@ No further code change is currently requested. The last request was to update th
 ## Update — 2026-11-09 (v1.8.84)
 - Removed the long instruction paragraph from Report setup. Field choices, report title/format, and action buttons are unchanged.
 - Validation: confirmed only the instruction paragraph and visible version changed in index.html; JavaScript syntax passed. No behavior or inventory data changes.
+
+
+## Update — 2026-11-09 (v1.8.85)
+- Home inventory row click, Enter, and Space open the existing Edit Printer form directly. Updated accessible row labels to Edit printer.
+- Removed read-only Machine Details dialog, its CSS, renderer, buttons, and obsolete save-time close calls.
+- Existing printer barcode is explicitly populated when opening Edit Printer, and cleared for Add Printer, avoiding accidental barcode loss/stale barcode reuse.
+- Validation: JavaScript syntax and isolated headless Edge navigation checks passed: click/Enter/Space open one Edit dialog; correct fields/barcode populated; Cancel discards changes; save updates the same record; reload retains updates/barcode; Add Printer starts empty. No live inventory writes, physical-device test, or scanner implementation change.
