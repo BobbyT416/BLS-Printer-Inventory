@@ -170,7 +170,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.87
+ Version 1.8.88
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -546,7 +546,7 @@ $('startCamera').onclick=startCamera;$('stopCamera').onclick=()=>{stopCamera();$
 $('useBarcode').onclick=()=>useScanned($('manualBarcode').value);
 $('manualBarcode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();useScanned(e.target.value)}});
 $('closeScan').onclick=$('cancelScan').onclick=()=>{stopCamera();closeDialog($('scanDialog'))};
-function getReportDevices(){return devices.filter(d=>(!$('search').value.trim()||[d.barcode,d.assetTag,d.family,d.model,d.serialNumber,d.notes,d.deviceType,d.claimedBy].some(v=>String(v||'').toLowerCase().includes($('search').value.trim().toLowerCase())))&&(!$('filterType').value||d.deviceType===$('filterType').value)&&([...document.querySelectorAll('.disposition-choice:checked')].some(el=>el.value===(d.disposition||'Not evaluated'))))}
+function getReportDevices(){return devices.filter(d=>(!$('search').value.trim()||[d.barcode,d.assetTag,d.family,d.model,d.serialNumber,d.notes,d.deviceType,d.claimedBy].some(v=>String(v||'').toLowerCase().includes($('search').value.trim().toLowerCase())))&&(!$('filterType').value||d.deviceType===$('filterType').value)&&([...document.querySelectorAll('.disposition-choice:checked')].some(el=>el.value===(d.disposition||'Not evaluated')))).sort(compareHomeDevices)}
 function selectedReportFields(){return fields.filter(([key])=>printPrefs[key]);}
 function syncReportPrefs(){document.querySelectorAll('[data-print]').forEach(c=>{printPrefs[c.dataset.print]=c.checked});safeSet(PRINT,JSON.stringify(printPrefs));}
 function reportValue(d,key){if(key==='model')return shortModelName(d.model)||'—';if(key==='pageCount')return d.pageCount===''||d.pageCount==null?'—':Number(d.pageCount).toLocaleString();if(key==='cost'||key==='price')return money(d[key]);const v=d[key];return v===undefined||v===null||v===''?'—':String(v);}

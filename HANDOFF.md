@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-11-09 (Version 1.8.87)
+Last updated: 2026-11-09 (Version 1.8.88)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.87
+Current version: 1.8.88
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -643,3 +643,8 @@ No further code change is currently requested. The last request was to update th
 - Home inventory now sorts by disposition: Ready for sale, Sale Pending, On Loan, Needs minor work, Waiting for parts, Needs major work, Not evaluated, Parts only / scrap, Sold. Blank disposition sorts as Not evaluated; unrecognized values sort last.
 - Within a disposition, existing newest Date Received then model ordering is preserved. Existing filters still apply; reports/storage/sync unchanged.
 - Validation: inline JS syntax passed; comparator verified with all nine dispositions in shuffled order and newest-first ordering within a disposition. No live inventory data writes.
+
+
+## Update — 2026-11-09 (v1.8.88)
+- Shared getReportDevices now sorts with compareHomeDevices, matching the home disposition priority and within-group date/model ordering for print, PDF, CSV, and Word reports. Filtering and layout are unchanged.
+- Validation: JavaScript syntax passed; exercised report filtering/sorting with shuffled dispositions and confirmed source inventory order is not mutated.
