@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-11-09 (Version 1.8.85)
+Last updated: 2026-11-09 (Version 1.8.86)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.85
+Current version: 1.8.86
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -629,3 +629,11 @@ No further code change is currently requested. The last request was to update th
 - Removed read-only Machine Details dialog, its CSS, renderer, buttons, and obsolete save-time close calls.
 - Existing printer barcode is explicitly populated when opening Edit Printer, and cleared for Add Printer, avoiding accidental barcode loss/stale barcode reuse.
 - Validation: JavaScript syntax and isolated headless Edge navigation checks passed: click/Enter/Space open one Edit dialog; correct fields/barcode populated; Cancel discards changes; save updates the same record; reload retains updates/barcode; Add Printer starts empty. No live inventory writes, physical-device test, or scanner implementation change.
+
+
+## Update — 2026-11-09 (v1.8.86)
+- Fixed blank Type on editing: storage/normalization/filter used Printer, while the edit select and single-function product lookup still used Single function printer. Edit select and lookup now consistently use Printer; legacy ingestion normalization remains supported.
+- Reset product-derived field flags and disposition interaction state each time Add/Edit opens, preventing another printer's old auto-fill state from clearing saved model/type values when editing an unrecognized product number.
+- Viewport adjustment now follows text inputs/textarea only, not dropdowns without a software keyboard, avoiding unnecessary scrolling during native Disposition selection.
+- Removed redundant two-second post-save dialog-close timer, which could close a different newly reopened edit screen. Successful Save already closes immediately.
+- Verification: JS syntax; isolated phone-sized touch Edge tests for Printer, legacy Single function printer, and MFP. Type populated; disposition saved with a single Save tap; saved type/barcode and one record preserved across reload; reopening survives past the old timer; product barcode K0Q14A sets Printer; stale auto-fill flags do not clear another saved type. Physical iPhone/native picker behavior not tested; Type mismatch confirmed, but a real-device two-tap symptom has not been directly reproduced. No live inventory writes.

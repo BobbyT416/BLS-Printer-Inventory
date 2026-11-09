@@ -170,7 +170,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
  </section>
 </main>
 <footer id="appVersion" style="text-align:center;padding:18px 12px 28px;color:#687586;font-size:12px;border-top:1px solid #dce3ea">
- Version 1.8.85
+ Version 1.8.86
 </footer>
 <dialog id="deviceDialog">
  <div class="modal-head"><h2 id="deviceTitle">Add printer</h2><button id="closeDevice">✕</button></div>
@@ -189,7 +189,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
     <div class="field"><label for="pageCount">Page count</label><input id="pageCount" type="number" min="0" step="1" placeholder="e.g. 128450"></div>
     <div class="field"><label for="fax">Fax</label><select id="fax"><option value="">Not recorded</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
     <div class="field"><label for="wirelessAccessory">Wireless</label><select id="wirelessAccessory"><option value="">Not recorded</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
-    <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="">Select type</option><option value="Single function printer">Single function printer</option><option value="MFP">MFP</option></select></div>
+    <div class="field"><label for="deviceType">Type *</label><select id="deviceType" required><option value="">Select type</option><option value="Printer">Printer</option><option value="MFP">MFP</option></select></div>
     
     <div class="field"><label for="disposition">Disposition / readiness</label><select id="disposition"><option>Not evaluated</option><option>Needs major work</option><option>Needs minor work</option><option>Waiting for parts</option><option>Ready for sale</option><option>Parts only / scrap</option><option>On Loan</option><option>Sale Pending</option><option>Sold</option></select></div>
     <div class="field"><label for="refurbishedBy">Refurbished by (optional)</label><input id="refurbishedBy" autocomplete="name" placeholder="Name of technician"></div>
@@ -237,7 +237,7 @@ main{position:relative;display:block;min-height:calc(100vh - var(--app-header-bo
 (() => {
 const $ = id => document.getElementById(id);
 let fieldVisibilityTimer=null,lastKeyboardVisibleHeight=0;
-function syncViewportRegions(){const header=document.querySelector('header');if(header)document.documentElement.style.setProperty('--app-header-bottom',Math.ceil(header.getBoundingClientRect().height)+'px');const vv=window.visualViewport;const visibleHeight=Math.round(vv?vv.height:window.innerHeight);document.documentElement.style.setProperty('--visible-vh',visibleHeight+'px');const dlg=document.getElementById('deviceDialog');if(!dlg||!dlg.open)return;const active=document.activeElement;if(!(active&&dlg.contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&active.type!=='checkbox'))return;if(fieldVisibilityTimer)clearTimeout(fieldVisibilityTimer);fieldVisibilityTimer=setTimeout(()=>{const body=dlg.querySelector('.modal-body'),current=document.activeElement;if(!body||!dlg.open||current!==active)return;const br=body.getBoundingClientRect(),ar=active.getBoundingClientRect(),viewportBottom=vv?vv.height+vv.offsetTop:window.innerHeight;const safeBottom=Math.min(br.bottom,viewportBottom)-16;let delta=0;if(ar.bottom>safeBottom)delta=ar.bottom-safeBottom+12;else if(ar.top<br.top+8)delta=ar.top-(br.top+8);if(Math.abs(delta)>2)body.scrollTo({top:Math.max(0,body.scrollTop+delta),behavior:'smooth'});},180)}
+function syncViewportRegions(){const header=document.querySelector('header');if(header)document.documentElement.style.setProperty('--app-header-bottom',Math.ceil(header.getBoundingClientRect().height)+'px');const vv=window.visualViewport;const visibleHeight=Math.round(vv?vv.height:window.innerHeight);document.documentElement.style.setProperty('--visible-vh',visibleHeight+'px');const dlg=document.getElementById('deviceDialog');if(!dlg||!dlg.open)return;const active=document.activeElement;if(!(active&&dlg.contains(active)&&/^(INPUT|TEXTAREA)$/.test(active.tagName)&&active.type!=='checkbox'))return;if(fieldVisibilityTimer)clearTimeout(fieldVisibilityTimer);fieldVisibilityTimer=setTimeout(()=>{const body=dlg.querySelector('.modal-body'),current=document.activeElement;if(!body||!dlg.open||current!==active)return;const br=body.getBoundingClientRect(),ar=active.getBoundingClientRect(),viewportBottom=vv?vv.height+vv.offsetTop:window.innerHeight;const safeBottom=Math.min(br.bottom,viewportBottom)-16;let delta=0;if(ar.bottom>safeBottom)delta=ar.bottom-safeBottom+12;else if(ar.top<br.top+8)delta=ar.top-(br.top+8);if(Math.abs(delta)>2)body.scrollTo({top:Math.max(0,body.scrollTop+delta),behavior:'smooth'});},180)}
 window.addEventListener('resize',syncViewportRegions,{passive:true});window.addEventListener('orientationchange',()=>setTimeout(syncViewportRegions,100));window.addEventListener('load',syncViewportRegions,{once:true});if(window.visualViewport){window.visualViewport.addEventListener('resize',syncViewportRegions,{passive:true});}if(window.ResizeObserver){new ResizeObserver(syncViewportRegions).observe(document.querySelector('header'))}
 requestAnimationFrame(syncViewportRegions);
 function showDialog(el){if(!el)return;if(typeof el.showModal==='function')el.showModal();else{el.setAttribute('open','');el.style.display='block'}}
@@ -294,6 +294,7 @@ function render(){
 }
 function openDevice(id=null,barcode=''){
  editingId=id;const d=id?devices.find(x=>x.id===id):{};
+ delete $('model').dataset.autoFromProduct;delete $('deviceType').dataset.autoFromProduct;delete $('disposition').dataset.userChanged;
  $('deviceTitle').textContent=id?'Edit printer':'Add printer';$('deleteBtn').style.display=id?'inline-block':'none';
  for(const [k] of fields){$(k).value=d?.[k]??(k==='disposition'?'Not evaluated':'')}
  $('barcode').value=d?.barcode||'';
@@ -332,14 +333,14 @@ serialInput.addEventListener('blur',()=>{serialInput.value=serialInput.value.tri
   '1PS54A':{model:'HP LaserJet Managed MFP E52645dn',type:'MFP',source:'Official HP E52645 series datasheet'},
   '1PS55A':{model:'HP LaserJet Managed Flow MFP E52645c',type:'MFP',source:'Official HP E52645 series datasheet'},
   'F2A80A':{model:'HP LaserJet Enterprise Flow MFP M527cm',type:'MFP',source:'HP product information'},
-  'K0Q14A':{model:'HP LaserJet Enterprise M607n',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q15A':{model:'HP LaserJet Enterprise M607dn',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q17A':{model:'HP LaserJet Enterprise M608n',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q18A':{model:'HP LaserJet Enterprise M608dn',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q19A':{model:'HP LaserJet Enterprise M608x',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'M0P32A':{model:'HP LaserJet Enterprise M609dn',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q21A':{model:'HP LaserJet Enterprise M609dn',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
-  'K0Q22A':{model:'HP LaserJet Enterprise M609x',type:'Single function printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q14A':{model:'HP LaserJet Enterprise M607n',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q15A':{model:'HP LaserJet Enterprise M607dn',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q17A':{model:'HP LaserJet Enterprise M608n',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q18A':{model:'HP LaserJet Enterprise M608dn',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q19A':{model:'HP LaserJet Enterprise M608x',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'M0P32A':{model:'HP LaserJet Enterprise M609dn',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q21A':{model:'HP LaserJet Enterprise M609dn',type:'Printer',source:'HP M607/M608/M609 user guide'},
+  'K0Q22A':{model:'HP LaserJet Enterprise M609x',type:'Printer',source:'HP M607/M608/M609 user guide'},
   'J8J63A':{model:'HP LaserJet Enterprise MFP M631dn',type:'MFP',source:'HP M631/M632/M633 user guide'},
   'J8J64A':{model:'HP LaserJet Enterprise MFP M631h',type:'MFP',source:'HP M631/M632/M633 user guide'}
  };
@@ -418,7 +419,6 @@ $('deviceForm').addEventListener('submit',e=>{
  ['search','filterType'].forEach(id=>$(id).value='');document.querySelectorAll('.disposition-choice').forEach(el=>el.checked=true);
  render();window.scrollTo({top:0,behavior:'smooth'});
  toast('Printer saved');
- setTimeout(()=>{closeDialog($('deviceDialog'));window.scrollTo({top:0,behavior:'smooth'});},2000);
 });
 $('deleteBtn').onclick=async()=>{if(!editingId)return;const d=devices.find(x=>x.id===editingId);if(!confirm(`Delete ${d?.model||'this printer'} (${d?.barcode}) from inventory? This cannot be undone unless you have a backup.`))return;const deletedId=editingId;if(supabaseClient&&remoteReady){try{await deleteCloudRecord(deletedId)}catch(e){console.error('Cloud delete failed',e);toast('Cloud deletion failed. The printer was kept. Check the connection and try again.');return}}devices=devices.filter(x=>String(x.id)!==String(deletedId));safeSet(STORE,JSON.stringify(devices));render();closeDevice();toast('Printer deleted'+(supabaseClient&&remoteReady?' from shared inventory':''))};
 
