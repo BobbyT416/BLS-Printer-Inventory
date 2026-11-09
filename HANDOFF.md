@@ -1,10 +1,10 @@
 # BLS Printer Inventory — Project Handoff
 
-Last updated: 2026-11-09 (Version 1.8.86)
+Last updated: 2026-11-09 (Version 1.8.87)
 Repository: https://github.com/BobbyT416/BLS-Printer-Inventory
 Live app: https://bobbyt416.github.io/BLS-Printer-Inventory/
 Production branch: main
-Current version: 1.8.86
+Current version: 1.8.87
 
 ## Purpose
 Mobile-friendly browser app for tracking printers received for refurbishment, disposition, costs, sale status, and inventory details.
@@ -637,3 +637,9 @@ No further code change is currently requested. The last request was to update th
 - Viewport adjustment now follows text inputs/textarea only, not dropdowns without a software keyboard, avoiding unnecessary scrolling during native Disposition selection.
 - Removed redundant two-second post-save dialog-close timer, which could close a different newly reopened edit screen. Successful Save already closes immediately.
 - Verification: JS syntax; isolated phone-sized touch Edge tests for Printer, legacy Single function printer, and MFP. Type populated; disposition saved with a single Save tap; saved type/barcode and one record preserved across reload; reopening survives past the old timer; product barcode K0Q14A sets Printer; stale auto-fill flags do not clear another saved type. Physical iPhone/native picker behavior not tested; Type mismatch confirmed, but a real-device two-tap symptom has not been directly reproduced. No live inventory writes.
+
+
+## Update — 2026-11-09 (v1.8.87)
+- Home inventory now sorts by disposition: Ready for sale, Sale Pending, On Loan, Needs minor work, Waiting for parts, Needs major work, Not evaluated, Parts only / scrap, Sold. Blank disposition sorts as Not evaluated; unrecognized values sort last.
+- Within a disposition, existing newest Date Received then model ordering is preserved. Existing filters still apply; reports/storage/sync unchanged.
+- Validation: inline JS syntax passed; comparator verified with all nine dispositions in shuffled order and newest-first ordering within a disposition. No live inventory data writes.
